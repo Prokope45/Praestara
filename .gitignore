@@ -1,0 +1,11 @@
+.vscode
+.env
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+LICENSE
+release-notes.md
+SECURITY.md
+.copier-answers.yml
