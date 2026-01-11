@@ -16,7 +16,7 @@ const Appearance = () => {
         <RadioGroup
           onValueChange={(e) => setTheme(e.value)}
           value={theme}
-          colorPalette="teal"
+          colorPalette="ui.main"
         >
           <Stack>
             <Radio value="system">System</Radio>
