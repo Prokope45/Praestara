@@ -4,16 +4,16 @@ import type { CancelablePromise } from "./core/CancelablePromise"
 import { OpenAPI } from "./core/OpenAPI"
 import { request as __request } from "./core/request"
 import type {
-  ItemsReadItemsData,
-  ItemsReadItemsResponse,
-  ItemsCreateItemData,
-  ItemsCreateItemResponse,
-  ItemsReadItemData,
-  ItemsReadItemResponse,
-  ItemsUpdateItemData,
-  ItemsUpdateItemResponse,
-  ItemsDeleteItemData,
-  ItemsDeleteItemResponse,
+  NotesReadNotesData,
+  NotesReadNotesResponse,
+  NotesCreateNoteData,
+  NotesCreateNoteResponse,
+  NotesReadNoteData,
+  NotesReadNoteResponse,
+  NotesUpdateNoteData,
+  NotesUpdateNoteResponse,
+  NotesDeleteNoteData,
+  NotesDeleteNoteResponse,
   LoginLoginAccessTokenData,
   LoginLoginAccessTokenResponse,
   LoginTestTokenResponse,
@@ -48,17 +48,17 @@ import type {
 
 export class ItemsService {
   /**
-   * Read Items
-   * Retrieve items.
+   * Read Notes
+   * Retrieve notes.
    * @param data The data for the request.
    * @param data.skip
    * @param data.limit
-   * @returns ItemsPublic Successful Response
+   * @returns NotesPublic Successful Response
    * @throws ApiError
    */
   public static readItems(
-    data: ItemsReadItemsData = {},
-  ): CancelablePromise<ItemsReadItemsResponse> {
+    data: NotesReadNotesData = {},
+  ): CancelablePromise<NotesReadNotesResponse> {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/v1/items/",
@@ -73,16 +73,16 @@ export class ItemsService {
   }
 
   /**
-   * Create Item
-   * Create new item.
+   * Create Note
+   * Create new note.
    * @param data The data for the request.
    * @param data.requestBody
-   * @returns ItemPublic Successful Response
+   * @returns NotePublic Successful Response
    * @throws ApiError
    */
   public static createItem(
-    data: ItemsCreateItemData,
-  ): CancelablePromise<ItemsCreateItemResponse> {
+    data: NotesCreateNoteData,
+  ): CancelablePromise<NotesCreateNoteResponse> {
     return __request(OpenAPI, {
       method: "POST",
       url: "/api/v1/items/",
@@ -95,16 +95,16 @@ export class ItemsService {
   }
 
   /**
-   * Read Item
-   * Get item by ID.
+   * Read Note
+   * Get note by ID.
    * @param data The data for the request.
    * @param data.id
-   * @returns ItemPublic Successful Response
+   * @returns NotePublic Successful Response
    * @throws ApiError
    */
   public static readItem(
-    data: ItemsReadItemData,
-  ): CancelablePromise<ItemsReadItemResponse> {
+    data: NotesReadNoteData,
+  ): CancelablePromise<NotesReadNoteResponse> {
     return __request(OpenAPI, {
       method: "GET",
       url: "/api/v1/items/{id}",
@@ -118,17 +118,17 @@ export class ItemsService {
   }
 
   /**
-   * Update Item
-   * Update an item.
+   * Update Note
+   * Update a note.
    * @param data The data for the request.
    * @param data.id
    * @param data.requestBody
-   * @returns ItemPublic Successful Response
+   * @returns NotePublic Successful Response
    * @throws ApiError
    */
   public static updateItem(
-    data: ItemsUpdateItemData,
-  ): CancelablePromise<ItemsUpdateItemResponse> {
+    data: NotesUpdateNoteData,
+  ): CancelablePromise<NotesUpdateNoteResponse> {
     return __request(OpenAPI, {
       method: "PUT",
       url: "/api/v1/items/{id}",
@@ -144,16 +144,16 @@ export class ItemsService {
   }
 
   /**
-   * Delete Item
-   * Delete an item.
+   * Delete Note
+   * Delete a note.
    * @param data The data for the request.
    * @param data.id
    * @returns Message Successful Response
    * @throws ApiError
    */
   public static deleteItem(
-    data: ItemsDeleteItemData,
-  ): CancelablePromise<ItemsDeleteItemResponse> {
+    data: NotesDeleteNoteData,
+  ): CancelablePromise<NotesDeleteNoteResponse> {
     return __request(OpenAPI, {
       method: "DELETE",
       url: "/api/v1/items/{id}",

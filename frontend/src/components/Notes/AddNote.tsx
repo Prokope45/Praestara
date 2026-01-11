@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { type SubmitHandler, useForm } from "react-hook-form"
+import { type SubmitHandler, useForm, Controller } from "react-hook-form"
 
 import {
   Button,
@@ -8,14 +8,17 @@ import {
   Input,
   Text,
   VStack,
+  Box,
 } from "@chakra-ui/react"
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
 import { useState } from "react"
 import { FaPlus } from "react-icons/fa"
 
-import { type ItemCreate, ItemsService } from "@/client"
-import type { ApiError } from "@/client/core/ApiError"
-import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
+import { type NoteCreate, ItemsService } from "../../client"
+import type { ApiError } from "../../client/core/ApiError"
+import useCustomToast from "../../hooks/useCustomToast"
+import { handleError } from "../../utils"
 import {
   DialogBody,
   DialogCloseTrigger,
@@ -27,7 +30,7 @@ import {
 } from "../ui/dialog"
 import { Field } from "../ui/field"
 
-const AddItem = () => {
+const AddNote = () => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast } = useCustomToast()
@@ -35,8 +38,9 @@ const AddItem = () => {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isValid, isSubmitting },
-  } = useForm<ItemCreate>({
+  } = useForm<NoteCreate>({
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
@@ -46,10 +50,10 @@ const AddItem = () => {
   })
 
   const mutation = useMutation({
-    mutationFn: (data: ItemCreate) =>
+    mutationFn: (data: NoteCreate) =>
       ItemsService.createItem({ requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Item created successfully.")
+      showSuccessToast("Note created successfully.")
       reset()
       setIsOpen(false)
     },
@@ -57,11 +61,11 @@ const AddItem = () => {
       handleError(err)
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["items"] })
+      queryClient.invalidateQueries({ queryKey: ["notes"] })
     },
   })
 
-  const onSubmit: SubmitHandler<ItemCreate> = (data) => {
+  const onSubmit: SubmitHandler<NoteCreate> = (data) => {
     mutation.mutate(data)
   }
 
@@ -73,18 +77,18 @@ const AddItem = () => {
       onOpenChange={({ open }) => setIsOpen(open)}
     >
       <DialogTrigger asChild>
-        <Button value="add-item" my={4}>
+        <Button value="add-note" my={4}>
           <FaPlus fontSize="16px" />
-          Add Item
+          Add Note
         </Button>
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle>Add Item</DialogTitle>
+            <DialogTitle>Add Note</DialogTitle>
           </DialogHeader>
           <DialogBody>
-            <Text mb={4}>Fill in the details to add a new item.</Text>
+            <Text mb={4}>Fill in the details to add a new note.</Text>
             <VStack gap={4}>
               <Field
                 required
@@ -105,14 +109,23 @@ const AddItem = () => {
               <Field
                 invalid={!!errors.description}
                 errorText={errors.description?.message}
-                label="Description"
+                label="Body"
               >
-                <Input
-                  id="description"
-                  {...register("description")}
-                  placeholder="Description"
-                  type="text"
-                />
+                <Box height="300px">
+                  <Controller
+                    name="description"
+                    control={control}
+                    render={({ field }) => (
+                      <ReactQuill
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        placeholder="Enter note content here..."
+                        style={{ height: '250px', marginBottom: '50px' }}
+                        theme="snow"
+                      />
+                    )}
+                  />
+                </Box>
               </Field>
             </VStack>
           </DialogBody>
@@ -143,4 +156,4 @@ const AddItem = () => {
   )
 }
 
-export default AddItem
+export default AddNote

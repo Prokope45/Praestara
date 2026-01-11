@@ -11,42 +11,42 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { FiSearch } from "react-icons/fi"
 import { z } from "zod"
 
-import { ItemsService } from "@/client"
-import { ItemActionsMenu } from "@/components/Common/ItemActionsMenu"
-import AddItem from "@/components/Items/AddItem"
-import PendingItems from "@/components/Pending/PendingItems"
+import { ItemsService } from "../../client"
+import { ItemActionsMenu } from "../../components/Common/ItemActionsMenu"
+import AddNote from "../../components/Notes/AddNote"
+import PendingItems from "../../components/Pending/PendingItems"
 import {
   PaginationItems,
   PaginationNextTrigger,
   PaginationPrevTrigger,
   PaginationRoot,
-} from "@/components/ui/pagination.tsx"
+} from "../../components/ui/pagination"
 
-const itemsSearchSchema = z.object({
+const notesSearchSchema = z.object({
   page: z.number().catch(1),
 })
 
 const PER_PAGE = 5
 
-function getItemsQueryOptions({ page }: { page: number }) {
+function getNotesQueryOptions({ page }: { page: number }) {
   return {
     queryFn: () =>
       ItemsService.readItems({ skip: (page - 1) * PER_PAGE, limit: PER_PAGE }),
-    queryKey: ["items", { page }],
+    queryKey: ["notes", { page }],
   }
 }
 
-export const Route = createFileRoute("/_layout/items")({
-  component: Items,
-  validateSearch: (search) => itemsSearchSchema.parse(search),
+export const Route = createFileRoute("/_layout/notes")({
+  component: Notes,
+  validateSearch: (search) => notesSearchSchema.parse(search),
 })
 
-function ItemsTable() {
+function NotesTable() {
   const navigate = useNavigate({ from: Route.fullPath })
   const { page } = Route.useSearch()
 
   const { data, isLoading, isPlaceholderData } = useQuery({
-    ...getItemsQueryOptions({ page }),
+    ...getNotesQueryOptions({ page }),
     placeholderData: (prevData) => prevData,
   })
 
@@ -55,14 +55,14 @@ function ItemsTable() {
       search: (prev: { [key: string]: string }) => ({ ...prev, page }),
     })
 
-  const items = data?.data.slice(0, PER_PAGE) ?? []
+  const notes = data?.data.slice(0, PER_PAGE) ?? []
   const count = data?.count ?? 0
 
   if (isLoading) {
     return <PendingItems />
   }
 
-  if (items.length === 0) {
+  if (notes.length === 0) {
     return (
       <EmptyState.Root>
         <EmptyState.Content>
@@ -70,9 +70,9 @@ function ItemsTable() {
             <FiSearch />
           </EmptyState.Indicator>
           <VStack textAlign="center">
-            <EmptyState.Title>You don't have any items yet</EmptyState.Title>
+            <EmptyState.Title>You don't have any notes yet</EmptyState.Title>
             <EmptyState.Description>
-              Add a new item to get started
+              Add a new note to get started
             </EmptyState.Description>
           </VStack>
         </EmptyState.Content>
@@ -85,30 +85,31 @@ function ItemsTable() {
       <Table.Root size={{ base: "sm", md: "md" }}>
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeader w="30%">ID</Table.ColumnHeader>
+            {/* <Table.ColumnHeader w="30%">ID</Table.ColumnHeader> */}
             <Table.ColumnHeader w="30%">Title</Table.ColumnHeader>
             <Table.ColumnHeader w="30%">Description</Table.ColumnHeader>
             <Table.ColumnHeader w="10%">Actions</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
-          {items?.map((item) => (
-            <Table.Row key={item.id} opacity={isPlaceholderData ? 0.5 : 1}>
+          {notes?.map((note) => (
+            <Table.Row key={note.id} opacity={isPlaceholderData ? 0.5 : 1}>
+              {/* <Table.Cell truncate maxW="30%">
+                {note.id}
+              </Table.Cell> */}
               <Table.Cell truncate maxW="30%">
-                {item.id}
+                {note.title}
               </Table.Cell>
-              <Table.Cell truncate maxW="30%">
-                {item.title}
-              </Table.Cell>
+              {/* TODO: Rename to preview; truncate and only show body without html. */}
               <Table.Cell
-                color={!item.description ? "gray" : "inherit"}
+                color={!note.description ? "gray" : "inherit"}
                 truncate
                 maxW="30%"
               >
-                {item.description || "N/A"}
+                {note.description || "N/A"}
               </Table.Cell>
               <Table.Cell width="10%">
-                <ItemActionsMenu item={item} />
+                <ItemActionsMenu note={note} />
               </Table.Cell>
             </Table.Row>
           ))}
@@ -131,14 +132,14 @@ function ItemsTable() {
   )
 }
 
-function Items() {
+function Notes() {
   return (
     <Container maxW="full">
       <Heading size="lg" pt={12}>
-        Items Management
+        Notes Management
       </Heading>
-      <AddItem />
-      <ItemsTable />
+      <AddNote />
+      <NotesTable />
     </Container>
   )
 }

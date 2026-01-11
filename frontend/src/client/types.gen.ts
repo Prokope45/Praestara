@@ -13,24 +13,24 @@ export type HTTPValidationError = {
   detail?: Array<ValidationError>
 }
 
-export type ItemCreate = {
+export type NoteCreate = {
   title: string
   description?: string | null
 }
 
-export type ItemPublic = {
+export type NotePublic = {
   title: string
   description?: string | null
   id: string
   owner_id: string
 }
 
-export type ItemsPublic = {
-  data: Array<ItemPublic>
+export type NotesPublic = {
+  data: Array<NotePublic>
   count: number
 }
 
-export type ItemUpdate = {
+export type NoteUpdate = {
   title?: string | null
   description?: string | null
 }
@@ -100,37 +100,37 @@ export type ValidationError = {
   type: string
 }
 
-export type ItemsReadItemsData = {
+export type NotesReadNotesData = {
   limit?: number
   skip?: number
 }
 
-export type ItemsReadItemsResponse = ItemsPublic
+export type NotesReadNotesResponse = NotesPublic
 
-export type ItemsCreateItemData = {
-  requestBody: ItemCreate
+export type NotesCreateNoteData = {
+  requestBody: NoteCreate
 }
 
-export type ItemsCreateItemResponse = ItemPublic
+export type NotesCreateNoteResponse = NotePublic
 
-export type ItemsReadItemData = {
+export type NotesReadNoteData = {
   id: string
 }
 
-export type ItemsReadItemResponse = ItemPublic
+export type NotesReadNoteResponse = NotePublic
 
-export type ItemsUpdateItemData = {
+export type NotesUpdateNoteData = {
   id: string
-  requestBody: ItemUpdate
+  requestBody: NoteUpdate
 }
 
-export type ItemsUpdateItemResponse = ItemPublic
+export type NotesUpdateNoteResponse = NotePublic
 
-export type ItemsDeleteItemData = {
+export type NotesDeleteNoteData = {
   id: string
 }
 
-export type ItemsDeleteItemResponse = Message
+export type NotesDeleteNoteResponse = Message
 
 export type LoginLoginAccessTokenData = {
   formData: Body_login_login_access_token

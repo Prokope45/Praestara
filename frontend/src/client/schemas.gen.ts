@@ -69,7 +69,7 @@ export const HTTPValidationErrorSchema = {
   title: "HTTPValidationError",
 } as const
 
-export const ItemCreateSchema = {
+export const NoteCreateSchema = { // Renamed from ItemCreateSchema
   properties: {
     title: {
       type: "string",
@@ -92,10 +92,10 @@ export const ItemCreateSchema = {
   },
   type: "object",
   required: ["title"],
-  title: "ItemCreate",
+  title: "NoteCreate", // Renamed from ItemCreate
 } as const
 
-export const ItemPublicSchema = {
+export const NotePublicSchema = { // Renamed from ItemPublicSchema
   properties: {
     title: {
       type: "string",
@@ -128,10 +128,10 @@ export const ItemPublicSchema = {
   },
   type: "object",
   required: ["title", "id", "owner_id"],
-  title: "ItemPublic",
+  title: "NotePublic", // Renamed from ItemPublic
 } as const
 
-export const ItemUpdateSchema = {
+export const NoteUpdateSchema = { // Renamed from ItemUpdateSchema
   properties: {
     title: {
       anyOf: [
@@ -160,14 +160,14 @@ export const ItemUpdateSchema = {
     },
   },
   type: "object",
-  title: "ItemUpdate",
+  title: "NoteUpdate", // Renamed from ItemUpdate
 } as const
 
-export const ItemsPublicSchema = {
+export const NotesPublicSchema = { // Renamed from ItemsPublicSchema
   properties: {
     data: {
       items: {
-        $ref: "#/components/schemas/ItemPublic",
+        $ref: "#/components/schemas/NotePublic", // Updated $ref
       },
       type: "array",
       title: "Data",
@@ -179,7 +179,7 @@ export const ItemsPublicSchema = {
   },
   type: "object",
   required: ["data", "count"],
-  title: "ItemsPublic",
+  title: "NotesPublic", // Renamed from ItemsPublic
 } as const
 
 export const MessageSchema = {

@@ -5,15 +5,19 @@ import {
   Input,
   Text,
   VStack,
+  Box,
 } from "@chakra-ui/react"
+import ReactQuill from 'react-quill'
+import 'react-quill/dist/quill.snow.css'
+import { Controller } from "react-hook-form"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import { FaExchangeAlt } from "react-icons/fa"
 
-import { type ApiError, type ItemPublic, ItemsService } from "@/client"
-import useCustomToast from "@/hooks/useCustomToast"
-import { handleError } from "@/utils"
+import { type ApiError, type NotePublic, ItemsService } from "../../client"
+import useCustomToast from "../../hooks/useCustomToast"
+import { handleError } from "../../utils"
 import {
   DialogBody,
   DialogCloseTrigger,
@@ -26,16 +30,16 @@ import {
 } from "../ui/dialog"
 import { Field } from "../ui/field"
 
-interface EditItemProps {
-  item: ItemPublic
+interface EditNoteProps {
+  note: NotePublic
 }
 
-interface ItemUpdateForm {
+interface NoteUpdateForm {
   title: string
   description?: string
 }
 
-const EditItem = ({ item }: EditItemProps) => {
+const EditNote = ({ note }: EditNoteProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast } = useCustomToast()
@@ -43,21 +47,22 @@ const EditItem = ({ item }: EditItemProps) => {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
-  } = useForm<ItemUpdateForm>({
+  } = useForm<NoteUpdateForm>({
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
-      ...item,
-      description: item.description ?? undefined,
+      ...note,
+      description: note.description ?? undefined,
     },
   })
 
   const mutation = useMutation({
-    mutationFn: (data: ItemUpdateForm) =>
-      ItemsService.updateItem({ id: item.id, requestBody: data }),
+    mutationFn: (data: NoteUpdateForm) =>
+      ItemsService.updateItem({ id: note.id, requestBody: data }),
     onSuccess: () => {
-      showSuccessToast("Item updated successfully.")
+      showSuccessToast("Note updated successfully.")
       reset()
       setIsOpen(false)
     },
@@ -65,11 +70,11 @@ const EditItem = ({ item }: EditItemProps) => {
       handleError(err)
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["items"] })
+      queryClient.invalidateQueries({ queryKey: ["notes"] })
     },
   })
 
-  const onSubmit: SubmitHandler<ItemUpdateForm> = async (data) => {
+  const onSubmit: SubmitHandler<NoteUpdateForm> = async (data) => {
     mutation.mutate(data)
   }
 
@@ -83,16 +88,16 @@ const EditItem = ({ item }: EditItemProps) => {
       <DialogTrigger asChild>
         <Button variant="ghost">
           <FaExchangeAlt fontSize="16px" />
-          Edit Item
+          Edit Note
         </Button>
       </DialogTrigger>
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogHeader>
-            <DialogTitle>Edit Item</DialogTitle>
+            <DialogTitle>Edit Note</DialogTitle>
           </DialogHeader>
           <DialogBody>
-            <Text mb={4}>Update the item details below.</Text>
+            <Text mb={4}>Update the note details below.</Text>
             <VStack gap={4}>
               <Field
                 required
@@ -113,14 +118,23 @@ const EditItem = ({ item }: EditItemProps) => {
               <Field
                 invalid={!!errors.description}
                 errorText={errors.description?.message}
-                label="Description"
+                label="Body"
               >
-                <Input
-                  id="description"
-                  {...register("description")}
-                  placeholder="Description"
-                  type="text"
-                />
+                <Box height="300px">
+                  <Controller
+                    name="description"
+                    control={control}
+                    render={({ field }) => (
+                      <ReactQuill
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        placeholder="Enter note content here..."
+                        style={{ height: '250px', marginBottom: '50px' }}
+                        theme="snow"
+                      />
+                    )}
+                  />
+                </Box>
               </Field>
             </VStack>
           </DialogBody>
@@ -148,4 +162,4 @@ const EditItem = ({ item }: EditItemProps) => {
   )
 }
 
-export default EditItem
+export default EditNote

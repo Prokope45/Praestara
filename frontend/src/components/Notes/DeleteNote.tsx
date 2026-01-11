@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { FiTrash2 } from "react-icons/fi"
 
-import { ItemsService } from "@/client"
+import { ItemsService } from "../../client"
 import {
   DialogActionTrigger,
   DialogBody,
@@ -14,10 +14,10 @@ import {
   DialogHeader,
   DialogRoot,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import useCustomToast from "@/hooks/useCustomToast"
+} from "../../components/ui/dialog"
+import useCustomToast from "../../hooks/useCustomToast"
 
-const DeleteItem = ({ id }: { id: string }) => {
+const DeleteNote = ({ id }: { id: string }) => {
   const [isOpen, setIsOpen] = useState(false)
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
@@ -26,21 +26,21 @@ const DeleteItem = ({ id }: { id: string }) => {
     formState: { isSubmitting },
   } = useForm()
 
-  const deleteItem = async (id: string) => {
+  const deleteNote = async (id: string) => {
     await ItemsService.deleteItem({ id: id })
   }
 
   const mutation = useMutation({
-    mutationFn: deleteItem,
+    mutationFn: deleteNote,
     onSuccess: () => {
-      showSuccessToast("The item was deleted successfully")
+      showSuccessToast("The note was deleted successfully")
       setIsOpen(false)
     },
     onError: () => {
-      showErrorToast("An error occurred while deleting the item")
+      showErrorToast("An error occurred while deleting the note")
     },
     onSettled: () => {
-      queryClient.invalidateQueries()
+      queryClient.invalidateQueries() // Invalidate all queries, assuming no specific queryKey for notes yet
     },
   })
 
@@ -59,7 +59,7 @@ const DeleteItem = ({ id }: { id: string }) => {
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" colorPalette="red">
           <FiTrash2 fontSize="16px" />
-          Delete Item
+          Delete Note
         </Button>
       </DialogTrigger>
 
@@ -67,11 +67,11 @@ const DeleteItem = ({ id }: { id: string }) => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogCloseTrigger />
           <DialogHeader>
-            <DialogTitle>Delete Item</DialogTitle>
+            <DialogTitle>Delete Note</DialogTitle>
           </DialogHeader>
           <DialogBody>
             <Text mb={4}>
-              This item will be permanently deleted. Are you sure? You will not
+              This note will be permanently deleted. Are you sure? You will not
               be able to undo this action.
             </Text>
           </DialogBody>
@@ -101,4 +101,4 @@ const DeleteItem = ({ id }: { id: string }) => {
   )
 }
 
-export default DeleteItem
+export default DeleteNote

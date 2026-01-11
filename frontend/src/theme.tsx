@@ -27,28 +27,28 @@ export const system = createSystem(defaultConfig, {
       colors: {
         // Semantic background colors with Dark Mode support
         bg: {
-          canvas: { 
-            value: { _light: "{colors.brand.50}", _dark: "{colors.brand.500}" } 
+          canvas: {
+            value: { _light: "{colors.brand.50}", _dark: "#1a1a1a" } // Darker anthracite color for dark mode
           },
-          surface: { 
-            value: { _light: "{colors.brand.100}", _dark: "{colors.brand.500}" } 
+          surface: {
+            value: { _light: "{colors.brand.100}", _dark: "#2a2a2a" } // Slightly lighter anthracite for surfaces
           },
           subtle: {
-            value: { _light: "{colors.brand.50}", _dark: "{colors.brand.500}" }, // Subtle text for buttons, etc.
+            value: { _light: "{colors.brand.50}", _dark: "#3a3a3a" }, // Subtle text for buttons, etc.
           },
-          muted: { 
-            value: { _light: "{colors.brand.50}", _dark: "#42265e" } // Slightly darker purple for contrast
+          muted: {
+            value: { _light: "{colors.brand.50}", _dark: "#2a2a2a" } // Slightly darker purple for contrast
           },
           // Custom token for your table requirement
           table: {
             value: { _light: "#ffffff", _dark: "{colors.brand.500}" }
           },
           // BUTTON BACKGROUNDS (Static - same in both modes)
-          button: {
-            primary: { value: { _light: "{colors.brand.200}", _dark: "{colors.brand.600}" }},
-            secondary: { value: "{colors.brand.600}" },
-            subtle: { value: "{colors.brand.100}" },
-          }
+          // button: {
+          //   primary: { value: { _light: "{colors.brand.200}", _dark: "{colors.brand.600}" }},
+          //   secondary: { value: "{colors.brand.600}" },
+          //   subtle: { value: "{colors.brand.100}" },
+          // }
         },
         // Semantic foreground (text) colors
         fg: {
@@ -59,14 +59,41 @@ export const system = createSystem(defaultConfig, {
             value: { _light: "{colors.brand.600}", _dark: "{colors.brand.200}" } 
           },
           // BUTTON TEXT (Static - same in both modes)
-          button: {
-            primary: { value: "{colors.brand.50}" },
-            subtle: { value: "{colors.brand.500}" },
-          }
+          // button: {
+          //   primary: { value: "{colors.brand.50}" },
+          //   subtle: { value: "{colors.brand.500}" },
+          // }
         },
         accent: {
           fg: { value: "{colors.brand.500}" },
           emphasis: { value: "{colors.brand.200}" },
+        },
+        // Primary and secondary color mappings
+        primary: {
+          default: { value: "{colors.brand.500}" }, // Deep Purple
+          emphasis: { value: "{colors.brand.200}" }, // Peach
+          subtle: { value: "{colors.brand.100}" },   // Apricot
+        },
+        secondary: {
+          default: { value: "{colors.brand.600}" }, // Muted Purple
+          emphasis: { value: "{colors.brand.200}" }, // Peach
+          subtle: { value: "{colors.brand.100}" },   // Apricot
+        },
+        success: {
+          default: { value: "#48bb78" },
+          emphasis: { value: "#68d391" },
+        },
+        warning: {
+          default: { value: "#ed8936" },
+          emphasis: { value: "#f6ad55" },
+        },
+        danger: {
+          default: { value: "#f56565" },
+          emphasis: { value: "#fc8181" },
+        },
+        info: {
+          default: { value: "{colors.brand.200}" }, // Peach for info
+          emphasis: { value: "{colors.brand.100}" }, // Apricot for info emphasis
         },
       },
     },
@@ -89,7 +116,76 @@ export const system = createSystem(defaultConfig, {
       width: "100%",
       "& th, & td": {
         borderColor: { _light: "brand.200", _dark: "brand.600" },
-      }
+      },
+      "& th": {
+        color: "primary.default",
+        bg: { _light: "primary.subtle", _dark: "primary.default" },
+      },
+      "& tr:hover": {
+        bg: { _light: "secondary.subtle", _dark: "secondary.default" },
+      },
+    },
+    // Link styling with primary colors
+    "a, .link": {
+      color: "primary.default",
+      _hover: {
+        color: "primary.emphasis",
+        textDecoration: "underline",
+      },
+    },
+    // Button styling enhancements
+    "button, .button": {
+      _focus: {
+        boxShadow: "0 0 0 3px rgba(82, 47, 117, 0.3)",
+      },
+    },
+    // Primary button styling
+    ".primary-button": {
+      bg: "primary.default",
+      color: "white",
+      _hover: {
+        bg: "primary.emphasis",
+      },
+    },
+    // Secondary button styling
+    ".secondary-button": {
+      bg: "secondary.default",
+      color: "white",
+      _hover: {
+        bg: "secondary.emphasis",
+      },
+    },
+    // Success button styling
+    ".success-button": {
+      bg: "success.default",
+      color: "white",
+      _hover: {
+        bg: "success.emphasis",
+      },
+    },
+    // Warning button styling
+    ".warning-button": {
+      bg: "warning.default",
+      color: "white",
+      _hover: {
+        bg: "warning.emphasis",
+      },
+    },
+    // Danger button styling
+    ".danger-button": {
+      bg: "danger.default",
+      color: "white",
+      _hover: {
+        bg: "danger.emphasis",
+      },
+    },
+    // Info button styling
+    ".info-button": {
+      bg: "info.default",
+      color: "primary.default",
+      _hover: {
+        bg: "info.emphasis",
+      },
     },
     ".main-link": {
       color: { _light: "brand.500", _dark: "brand.200" },
