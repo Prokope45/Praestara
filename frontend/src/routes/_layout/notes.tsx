@@ -1,11 +1,16 @@
 import {
   Container,
-  EmptyState,
-  Flex,
-  Heading,
+  Typography,
+  Box,
   Table,
-  VStack,
-} from "@chakra-ui/react"
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Stack,
+} from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { FiSearch } from "react-icons/fi"
@@ -52,7 +57,7 @@ function NotesTable() {
 
   const setPage = (page: number) =>
     navigate({
-      search: (prev: { [key: string]: string }) => ({ ...prev, page }),
+      search: (prev: Record<string, unknown>) => ({ ...prev, page }),
     })
 
   const notes = data?.data.slice(0, PER_PAGE) ?? []
@@ -64,80 +69,97 @@ function NotesTable() {
 
   if (notes.length === 0) {
     return (
-      <EmptyState.Root>
-        <EmptyState.Content>
-          <EmptyState.Indicator>
-            <FiSearch />
-          </EmptyState.Indicator>
-          <VStack textAlign="center">
-            <EmptyState.Title>You don't have any notes yet</EmptyState.Title>
-            <EmptyState.Description>
-              Add a new note to get started
-            </EmptyState.Description>
-          </VStack>
-        </EmptyState.Content>
-      </EmptyState.Root>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          py: 8,
+          textAlign: "center",
+        }}
+      >
+        <FiSearch size={48} style={{ marginBottom: 16, opacity: 0.5 }} />
+        <Stack spacing={1}>
+          <Typography variant="h6">You don't have any notes yet</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Add a new note to get started
+          </Typography>
+        </Stack>
+      </Box>
     )
   }
 
   return (
     <>
-      <Table.Root size={{ base: "sm", md: "md" }}>
-        <Table.Header>
-          <Table.Row>
-            {/* <Table.ColumnHeader w="30%">ID</Table.ColumnHeader> */}
-            <Table.ColumnHeader w="30%">Title</Table.ColumnHeader>
-            <Table.ColumnHeader w="30%">Description</Table.ColumnHeader>
-            <Table.ColumnHeader w="10%">Actions</Table.ColumnHeader>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {notes?.map((note) => (
-            <Table.Row key={note.id} opacity={isPlaceholderData ? 0.5 : 1}>
-              {/* <Table.Cell truncate maxW="30%">
-                {note.id}
-              </Table.Cell> */}
-              <Table.Cell truncate maxW="30%">
-                {note.title}
-              </Table.Cell>
-              {/* TODO: Rename to preview; truncate and only show body without html. */}
-              <Table.Cell
-                color={!note.description ? "gray" : "inherit"}
-                truncate
-                maxW="30%"
+      <TableContainer component={Paper} sx={{ mt: 2 }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell width="30%">Title</TableCell>
+              <TableCell width="30%">Description</TableCell>
+              <TableCell width="10%">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {notes?.map((note) => (
+              <TableRow 
+                key={note.id} 
+                sx={{ opacity: isPlaceholderData ? 0.5 : 1 }}
               >
-                {note.description || "N/A"}
-              </Table.Cell>
-              <Table.Cell width="10%">
-                <ItemActionsMenu note={note} />
-              </Table.Cell>
-            </Table.Row>
-          ))}
-        </Table.Body>
-      </Table.Root>
-      <Flex justifyContent="flex-end" mt={4}>
+                <TableCell
+                  sx={{
+                    maxWidth: "30%",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {note.title}
+                </TableCell>
+                <TableCell
+                  sx={{
+                    color: !note.description ? "text.secondary" : "inherit",
+                    maxWidth: "30%",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {note.description || "N/A"}
+                </TableCell>
+                <TableCell width="10%">
+                  <ItemActionsMenu note={note} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Box display="flex" justifyContent="flex-end" mt={2}>
         <PaginationRoot
           count={count}
           pageSize={PER_PAGE}
+          page={page}
           onPageChange={({ page }) => setPage(page)}
         >
-          <Flex>
+          <Box display="flex" gap={1}>
             <PaginationPrevTrigger />
             <PaginationItems />
             <PaginationNextTrigger />
-          </Flex>
+          </Box>
         </PaginationRoot>
-      </Flex>
+      </Box>
     </>
   )
 }
 
 function Notes() {
   return (
-    <Container maxW="full">
-      <Heading size="lg" pt={12}>
+    <Container maxWidth={false}>
+      <Typography variant="h4" component="h1" sx={{ pt: 6 }}>
         Notes Management
-      </Heading>
+      </Typography>
       <AddNote />
       <NotesTable />
     </Container>

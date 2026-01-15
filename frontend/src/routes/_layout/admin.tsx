@@ -1,4 +1,16 @@
-import { Badge, Container, Flex, Heading, Table } from "@chakra-ui/react"
+import {
+  Container,
+  Typography,
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+} from "@mui/material"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { z } from "zod"
@@ -46,7 +58,7 @@ function UsersTable() {
 
   const setPage = (page: number) =>
     navigate({
-      search: (prev: { [key: string]: string }) => ({ ...prev, page }),
+      search: (prev: Record<string, unknown>) => ({ ...prev, page }),
     })
 
   const users = data?.data.slice(0, PER_PAGE) ?? []
@@ -58,67 +70,76 @@ function UsersTable() {
 
   return (
     <>
-      <Table.Root size={{ base: "sm", md: "md" }}>
-        <Table.Header>
-          <Table.Row>
-            <Table.ColumnHeader w="20%">Full name</Table.ColumnHeader>
-            <Table.ColumnHeader w="25%">Email</Table.ColumnHeader>
-            <Table.ColumnHeader w="15%">Role</Table.ColumnHeader>
-            <Table.ColumnHeader w="20%">Status</Table.ColumnHeader>
-            <Table.ColumnHeader w="20%">Actions</Table.ColumnHeader>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {users?.map((user) => (
-            <Table.Row key={user.id} opacity={isPlaceholderData ? 0.5 : 1}>
-              <Table.Cell w="20%" color={!user.full_name ? "gray" : "inherit"}>
-                {user.full_name || "N/A"}
-                {currentUser?.id === user.id && (
-                  <Badge ml="1" colorScheme="teal">
-                    You
-                  </Badge>
-                )}
-              </Table.Cell>
-              <Table.Cell w="25%">{user.email}</Table.Cell>
-              <Table.Cell w="15%">
-                {user.is_superuser ? "Superuser" : "User"}
-              </Table.Cell>
-              <Table.Cell w="20%">
-                {user.is_active ? "Active" : "Inactive"}
-              </Table.Cell>
-              <Table.Cell w="20%">
-                <UserActionsMenu
-                  user={user}
-                  disabled={currentUser?.id === user.id}
-                />
-              </Table.Cell>
-            </Table.Row>
-          ))}
-        </Table.Body>
-      </Table.Root>
-      <Flex justifyContent="flex-end" mt={4}>
+      <TableContainer component={Paper} sx={{ mt: 2 }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell width="20%">Full name</TableCell>
+              <TableCell width="25%">Email</TableCell>
+              <TableCell width="15%">Role</TableCell>
+              <TableCell width="20%">Status</TableCell>
+              <TableCell width="20%">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {users?.map((user) => (
+              <TableRow 
+                key={user.id} 
+                sx={{ opacity: isPlaceholderData ? 0.5 : 1 }}
+              >
+                <TableCell sx={{ color: !user.full_name ? "text.secondary" : "inherit" }}>
+                  {user.full_name || "N/A"}
+                  {currentUser?.id === user.id && (
+                    <Chip 
+                      label="You" 
+                      color="primary" 
+                      size="small" 
+                      sx={{ ml: 1 }}
+                    />
+                  )}
+                </TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>
+                  {user.is_superuser ? "Superuser" : "User"}
+                </TableCell>
+                <TableCell>
+                  {user.is_active ? "Active" : "Inactive"}
+                </TableCell>
+                <TableCell>
+                  <UserActionsMenu
+                    user={user}
+                    disabled={currentUser?.id === user.id}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Box display="flex" justifyContent="flex-end" mt={2}>
         <PaginationRoot
           count={count}
           pageSize={PER_PAGE}
+          page={page}
           onPageChange={({ page }) => setPage(page)}
         >
-          <Flex>
+          <Box display="flex" gap={1}>
             <PaginationPrevTrigger />
             <PaginationItems />
             <PaginationNextTrigger />
-          </Flex>
+          </Box>
         </PaginationRoot>
-      </Flex>
+      </Box>
     </>
   )
 }
 
 function Admin() {
   return (
-    <Container maxW="full">
-      <Heading size="lg" pt={12}>
+    <Container maxWidth={false}>
+      <Typography variant="h4" component="h1" sx={{ pt: 6 }}>
         Users Management
-      </Heading>
+      </Typography>
 
       <AddUser />
       <UsersTable />

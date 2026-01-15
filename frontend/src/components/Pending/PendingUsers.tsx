@@ -1,38 +1,49 @@
-import { Skeleton, Table } from "@chakra-ui/react"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+} from "@mui/material"
+import { Skeleton } from "../ui/skeleton"
 
 const PendingUsers = () => (
-  <Table.Root size={{ base: "sm", md: "md" }}>
-    <Table.Header>
-      <Table.Row>
-        <Table.ColumnHeader w="20%">Full name</Table.ColumnHeader>
-        <Table.ColumnHeader w="25%">Email</Table.ColumnHeader>
-        <Table.ColumnHeader w="15%">Role</Table.ColumnHeader>
-        <Table.ColumnHeader w="20%">Status</Table.ColumnHeader>
-        <Table.ColumnHeader w="20%">Actions</Table.ColumnHeader>
-      </Table.Row>
-    </Table.Header>
-    <Table.Body>
-      {[...Array(5)].map((_, index) => (
-        <Table.Row key={index}>
-          <Table.Cell>
-            <Skeleton h="20px" />
-          </Table.Cell>
-          <Table.Cell>
-            <Skeleton h="20px" />
-          </Table.Cell>
-          <Table.Cell>
-            <Skeleton h="20px" />
-          </Table.Cell>
-          <Table.Cell>
-            <Skeleton h="20px" />
-          </Table.Cell>
-          <Table.Cell>
-            <Skeleton h="20px" />
-          </Table.Cell>
-        </Table.Row>
-      ))}
-    </Table.Body>
-  </Table.Root>
+  <TableContainer component={Paper} sx={{ mt: 2 }}>
+    <Table size="small">
+      <TableHead>
+        <TableRow>
+          <TableCell width="20%">Full name</TableCell>
+          <TableCell width="25%">Email</TableCell>
+          <TableCell width="15%">Role</TableCell>
+          <TableCell width="20%">Status</TableCell>
+          <TableCell width="20%">Actions</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {[...Array(5)].map((_, index) => (
+          <TableRow key={index}>
+            <TableCell>
+              <Skeleton h="20px" />
+            </TableCell>
+            <TableCell>
+              <Skeleton h="20px" />
+            </TableCell>
+            <TableCell>
+              <Skeleton h="20px" />
+            </TableCell>
+            <TableCell>
+              <Skeleton h="20px" />
+            </TableCell>
+            <TableCell>
+              <Skeleton h="20px" />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
 )
 
 export default PendingUsers

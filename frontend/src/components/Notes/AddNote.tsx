@@ -1,15 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { type SubmitHandler, useForm, Controller } from "react-hook-form"
-
-import {
-  Button,
-  DialogActionTrigger,
-  DialogTitle,
-  Input,
-  Text,
-  VStack,
-  Box,
-} from "@chakra-ui/react"
+import { Box, Stack, TextField, Typography } from '@mui/material'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { useState } from "react"
@@ -20,15 +11,12 @@ import type { ApiError } from "../../client/core/ApiError"
 import useCustomToast from "../../hooks/useCustomToast"
 import { handleError } from "../../utils"
 import {
-  DialogBody,
-  DialogCloseTrigger,
+  DialogRoot,
+  DialogTitle,
   DialogContent,
   DialogFooter,
-  DialogHeader,
-  DialogRoot,
-  DialogTrigger,
 } from "../ui/dialog"
-import { Field } from "../ui/field"
+import { Button } from "../ui/button"
 
 const AddNote = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -70,48 +58,47 @@ const AddNote = () => {
   }
 
   return (
-    <DialogRoot
-      size={{ base: "xs", md: "md" }}
-      placement="center"
-      open={isOpen}
-      onOpenChange={({ open }) => setIsOpen(open)}
-    >
-      <DialogTrigger asChild>
-        <Button value="add-note" my={4}>
-          <FaPlus fontSize="16px" />
-          Add Note
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogHeader>
-            <DialogTitle>Add Note</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <Text mb={4}>Fill in the details to add a new note.</Text>
-            <VStack gap={4}>
-              <Field
-                required
-                invalid={!!errors.title}
-                errorText={errors.title?.message}
-                label="Title"
-              >
-                <Input
-                  id="title"
-                  {...register("title", {
-                    required: "Title is required.",
-                  })}
-                  placeholder="Title"
-                  type="text"
-                />
-              </Field>
+    <>
+      <Button
+        variant="contained"
+        startIcon={<FaPlus />}
+        onClick={() => setIsOpen(true)}
+        sx={{ my: 4 }}
+      >
+        Add Note
+      </Button>
 
-              <Field
-                invalid={!!errors.description}
-                errorText={errors.description?.message}
-                label="Body"
-              >
-                <Box height="300px">
+      <DialogRoot
+        open={isOpen}
+        onOpenChange={(open) => setIsOpen(open)}
+        maxWidth="md"
+        fullWidth
+      >
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <DialogTitle>Add Note</DialogTitle>
+          <DialogContent>
+            <Typography sx={{ mb: 2 }}>
+              Fill in the details to add a new note.
+            </Typography>
+            <Stack spacing={3} sx={{ mt: 2 }}>
+              <TextField
+                id="title"
+                label="Title"
+                required
+                fullWidth
+                error={!!errors.title}
+                helperText={errors.title?.message}
+                {...register("title", {
+                  required: "Title is required.",
+                })}
+                placeholder="Title"
+              />
+
+              <Box>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  Body
+                </Typography>
+                <Box sx={{ height: '300px' }}>
                   <Controller
                     name="description"
                     control={control}
@@ -120,28 +107,26 @@ const AddNote = () => {
                         value={field.value || ''}
                         onChange={field.onChange}
                         placeholder="Enter note content here..."
-                        style={{ height: '250px', marginBottom: '50px' }}
+                        style={{ height: '250px', marginBottom: '50px', width: '100%' }}
                         theme="snow"
                       />
                     )}
                   />
                 </Box>
-              </Field>
-            </VStack>
-          </DialogBody>
+              </Box>
+            </Stack>
+          </DialogContent>
 
-          <DialogFooter gap={2}>
-            <DialogActionTrigger asChild>
-              <Button
-                variant="subtle"
-                colorPalette="gray"
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-            </DialogActionTrigger>
+          <DialogFooter>
             <Button
-              variant="solid"
+              variant="outlined"
+              onClick={() => setIsOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
               type="submit"
               disabled={!isValid}
               loading={isSubmitting}
@@ -150,9 +135,8 @@ const AddNote = () => {
             </Button>
           </DialogFooter>
         </form>
-        <DialogCloseTrigger />
-      </DialogContent>
-    </DialogRoot>
+      </DialogRoot>
+    </>
   )
 }
 

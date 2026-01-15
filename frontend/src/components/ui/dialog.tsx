@@ -1,62 +1,95 @@
-import { Dialog as ChakraDialog, Portal } from "@chakra-ui/react"
 import * as React from "react"
-import { CloseButton } from "./close-button"
+import {
+  Dialog as MuiDialog,
+  DialogTitle as MuiDialogTitle,
+  DialogContent as MuiDialogContent,
+  DialogActions as MuiDialogActions,
+  DialogProps,
+  IconButton,
+} from "@mui/material"
+import { IoClose } from "react-icons/io5"
 
-interface DialogContentProps extends ChakraDialog.ContentProps {
-  portalled?: boolean
-  portalRef?: React.RefObject<HTMLElement>
-  backdrop?: boolean
+interface DialogRootProps extends DialogProps {
+  open: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export const DialogContent = React.forwardRef<
-  HTMLDivElement,
-  DialogContentProps
->(function DialogContent(props, ref) {
-  const {
-    children,
-    portalled = true,
-    portalRef,
-    backdrop = true,
-    ...rest
-  } = props
+export const DialogRoot = React.forwardRef<HTMLDivElement, DialogRootProps>(
+  function DialogRoot({ open, onOpenChange, children, ...props }, ref) {
+    const handleClose = () => {
+      onOpenChange?.(false)
+    }
 
+    return (
+      <MuiDialog open={open} onClose={handleClose} ref={ref} {...props}>
+        {children}
+      </MuiDialog>
+    )
+  }
+)
+
+export const DialogContent = MuiDialogContent
+
+export const DialogHeader = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<typeof MuiDialogTitle>
+>(function DialogHeader(props, ref) {
+  return <MuiDialogTitle ref={ref} {...props} />
+})
+
+export const DialogFooter = MuiDialogActions
+
+export const DialogBody = MuiDialogContent
+
+export const DialogTitle = MuiDialogTitle
+
+export const DialogDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(function DialogDescription(props, ref) {
   return (
-    <Portal disabled={!portalled} container={portalRef}>
-      {backdrop && <ChakraDialog.Backdrop />}
-      <ChakraDialog.Positioner>
-        <ChakraDialog.Content ref={ref} {...rest} asChild={false}>
-          {children}
-        </ChakraDialog.Content>
-      </ChakraDialog.Positioner>
-    </Portal>
+    <p
+      ref={ref}
+      style={{ margin: 0, color: 'text.secondary' }}
+      {...props}
+    />
   )
 })
 
 export const DialogCloseTrigger = React.forwardRef<
   HTMLButtonElement,
-  ChakraDialog.CloseTriggerProps
+  React.ComponentProps<typeof IconButton>
 >(function DialogCloseTrigger(props, ref) {
   return (
-    <ChakraDialog.CloseTrigger
-      position="absolute"
-      top="2"
-      insetEnd="2"
+    <IconButton
+      aria-label="close"
+      ref={ref}
+      sx={{
+        position: 'absolute',
+        right: 8,
+        top: 8,
+      }}
       {...props}
-      asChild
     >
-      <CloseButton size="sm" ref={ref}>
-        {props.children}
-      </CloseButton>
-    </ChakraDialog.CloseTrigger>
+      <IoClose />
+    </IconButton>
   )
 })
 
-export const DialogRoot = ChakraDialog.Root
-export const DialogFooter = ChakraDialog.Footer
-export const DialogHeader = ChakraDialog.Header
-export const DialogBody = ChakraDialog.Body
-export const DialogBackdrop = ChakraDialog.Backdrop
-export const DialogTitle = ChakraDialog.Title
-export const DialogDescription = ChakraDialog.Description
-export const DialogTrigger = ChakraDialog.Trigger
-export const DialogActionTrigger = ChakraDialog.ActionTrigger
+export const DialogBackdrop = React.forwardRef<HTMLDivElement, any>(
+  function DialogBackdrop(props, ref) {
+    return <div ref={ref} {...props} />
+  }
+)
+
+export const DialogTrigger = React.forwardRef<HTMLButtonElement, any>(
+  function DialogTrigger(props, ref) {
+    return <button ref={ref} {...props} />
+  }
+)
+
+export const DialogActionTrigger = React.forwardRef<HTMLButtonElement, any>(
+  function DialogActionTrigger(props, ref) {
+    return <button ref={ref} {...props} />
+  }
+)

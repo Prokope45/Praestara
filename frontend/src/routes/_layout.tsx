@@ -1,12 +1,11 @@
-import { Flex } from "@chakra-ui/react"
+import { Box } from "@mui/material"
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 
-import Navbar from "@/components/Common/Navbar"
 import Sidebar from "@/components/Common/Sidebar"
 import { isLoggedIn } from "@/hooks/useAuth"
+import Navbar from "../components/Common/Navbar"
 
 export const Route = createFileRoute("/_layout")({
-  component: Layout,
   beforeLoad: async () => {
     if (!isLoggedIn()) {
       throw redirect({
@@ -14,20 +13,26 @@ export const Route = createFileRoute("/_layout")({
       })
     }
   },
+  component: Layout,
 })
 
 function Layout() {
   return (
-    <Flex direction="column" h="100vh">
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <Navbar />
-      <Flex flex="1" overflow="hidden">
+      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <Sidebar />
-        <Flex flex="1" direction="column" p={4} overflowY="auto">
+        <Box
+          component="main"
+          sx={{
+            flex: 1,
+            overflow: 'auto',
+            p: { xs: 2, md: 4 },
+          }}
+        >
           <Outlet />
-        </Flex>
-      </Flex>
-    </Flex>
+        </Box>
+      </Box>
+    </Box>
   )
 }
-
-export default Layout

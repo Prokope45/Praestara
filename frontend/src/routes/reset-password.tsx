@@ -1,4 +1,4 @@
-import { Container, Heading, Text } from "@chakra-ui/react"
+import { Container, Typography, Stack, Box } from "@mui/material"
 import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 import { type SubmitHandler, useForm } from "react-hook-form"
@@ -68,39 +68,52 @@ function ResetPassword() {
   }
 
   return (
-    <Container
-      as="form"
-      onSubmit={handleSubmit(onSubmit)}
-      h="100vh"
-      maxW="sm"
-      alignItems="stretch"
-      justifyContent="center"
-      gap={4}
-      centerContent
+    <Box
+      sx={{
+        display: 'flex',
+        minHeight: '100vh',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
     >
-      <Heading size="xl" color="ui.main" textAlign="center" mb={2}>
-        Reset Password
-      </Heading>
-      <Text textAlign="center">
-        Please enter your new password and confirm it to reset your password.
-      </Text>
-      <PasswordInput
-        startElement={<FiLock />}
-        type="new_password"
-        errors={errors}
-        {...register("new_password", passwordRules())}
-        placeholder="New Password"
-      />
-      <PasswordInput
-        startElement={<FiLock />}
-        type="confirm_password"
-        errors={errors}
-        {...register("confirm_password", confirmPasswordRules(getValues))}
-        placeholder="Confirm Password"
-      />
-      <Button variant="solid" type="submit">
-        Reset Password
-      </Button>
-    </Container>
+      <Container
+        component="form"
+        onSubmit={handleSubmit(onSubmit)}
+        maxWidth="sm"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'stretch',
+          gap: 2,
+          py: 4,
+        }}
+      >
+        <Typography variant="h4" color="primary" sx={{ textAlign: 'center', mb: 1 }}>
+          Reset Password
+        </Typography>
+        <Typography sx={{ textAlign: 'center', mb: 2 }}>
+          Please enter your new password and confirm it to reset your password.
+        </Typography>
+        <Stack spacing={2}>
+          <PasswordInput
+            startElement={<FiLock />}
+            type="new_password"
+            errors={errors}
+            {...register("new_password", passwordRules())}
+            placeholder="New Password"
+          />
+          <PasswordInput
+            startElement={<FiLock />}
+            type="confirm_password"
+            errors={errors}
+            {...register("confirm_password", confirmPasswordRules(getValues))}
+            placeholder="Confirm Password"
+          />
+          <Button variant="contained" type="submit">
+            Reset Password
+          </Button>
+        </Stack>
+      </Container>
+    </Box>
   )
 }

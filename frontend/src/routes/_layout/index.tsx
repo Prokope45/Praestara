@@ -1,4 +1,4 @@
-import { Box, Container, Text } from "@chakra-ui/react"
+import { Box, Container, Typography } from "@mui/material"
 import { createFileRoute } from "@tanstack/react-router"
 
 import useAuth from "@/hooks/useAuth"
@@ -12,12 +12,14 @@ function Dashboard() {
 
   return (
     <>
-      <Container maxW="full">
-        <Box pt={12} m={4}>
-          <Text fontSize="2xl">
+      <Container maxWidth={false}>
+        <Box sx={{ pt: 6, m: 2 }}>
+          <Typography variant="h4" component="h1">
             Hi, {currentUser?.full_name || currentUser?.email} 👋🏼
-          </Text>
-          <Text>Welcome back, nice to see you again!</Text>
+          </Typography>
+          <Typography variant="body1" sx={{ mt: 1 }}>
+            Welcome back, nice to see you again!
+          </Typography>
         </Box>
       </Container>
     </>

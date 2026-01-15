@@ -1,4 +1,4 @@
-import { Container, Image, Input, Text } from "@chakra-ui/react"
+import { Container, Box, Typography } from "@mui/material"
 import {
   Link as RouterLink,
   createFileRoute,
@@ -55,61 +55,70 @@ function Login() {
   }
 
   return (
-    <>
-      <Container
-        as="form"
-        onSubmit={handleSubmit(onSubmit)}
-        h="100vh"
-        maxW="sm"
-        alignItems="stretch"
-        justifyContent="center"
-        gap={4}
-        centerContent
-      >
-        <Image
+    <Container
+      component="form"
+      onSubmit={handleSubmit(onSubmit)}
+      maxWidth="sm"
+      sx={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 2,
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 3 }}>
+        <Box
+          component="img"
           src={Logo}
-          alt="FastAPI logo"
-          height="auto"
-          maxW="2xs"
-          alignSelf="center"
-          mb={4}
+          alt="Logo"
+          sx={{ width: 100, maxWidth: 'sm', px: 2, mt: 1 }}
         />
-        <Field
-          invalid={!!errors.username}
-          errorText={errors.username?.message || !!error}
-        >
-          <InputGroup w="100%" startElement={<FiMail />}>
-            <Input
-              id="username"
-              {...register("username", {
-                required: "Username is required",
-                pattern: emailPattern,
-              })}
-              placeholder="Email"
-              type="email"
-            />
-          </InputGroup>
-        </Field>
-        <PasswordInput
-          type="password"
-          startElement={<FiLock />}
-          {...register("password", passwordRules())}
-          placeholder="Password"
-          errors={errors}
+        <Typography variant="h3" fontWeight="bold" sx={{ px: 2, mt: 4 }}>
+          Praestara
+        </Typography>
+      </Box>
+      
+      <Field
+        invalid={!!errors.username}
+        errorText={errors.username?.message || (error ? 'Invalid credentials' : '')}
+        sx={{ width: '100%' }}
+      >
+        <InputGroup
+          startElement={<FiMail />}
+          {...register("username", {
+            required: "Username is required",
+            pattern: emailPattern,
+          })}
+          placeholder="Email"
+          type="email"
+          fullWidth
         />
-        <RouterLink to="/recover-password" className="main-link">
-          Forgot Password?
+      </Field>
+
+      <PasswordInput
+        type="password"
+        startElement={<FiLock />}
+        {...register("password", passwordRules())}
+        placeholder="Password"
+        errors={errors}
+      />
+
+      <RouterLink to="/recover-password" style={{ alignSelf: 'flex-start', color: 'inherit' }}>
+        Forgot Password?
+      </RouterLink>
+
+      <Button variant="contained" type="submit" loading={isSubmitting} size="medium" fullWidth>
+        Log In
+      </Button>
+
+      <Typography>
+        Don't have an account?{" "}
+        <RouterLink to="/signup" style={{ color: 'inherit', fontWeight: 'bold' }}>
+          Sign Up
         </RouterLink>
-        <Button variant="solid" type="submit" loading={isSubmitting} size="md">
-          Log In
-        </Button>
-        <Text>
-          Don't have an account?{" "}
-          <RouterLink to="/signup" className="main-link">
-            Sign Up
-          </RouterLink>
-        </Text>
-      </Container>
-    </>
+      </Typography>
+    </Container>
   )
 }

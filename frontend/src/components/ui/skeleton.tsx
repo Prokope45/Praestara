@@ -1,47 +1,73 @@
-import type {
-  SkeletonProps as ChakraSkeletonProps,
-  CircleProps,
-} from "@chakra-ui/react"
-import { Skeleton as ChakraSkeleton, Circle, Stack } from "@chakra-ui/react"
 import * as React from "react"
+import { Skeleton as MuiSkeleton, Stack } from "@mui/material"
 
-export interface SkeletonCircleProps extends ChakraSkeletonProps {
-  size?: CircleProps["size"]
+export interface SkeletonCircleProps {
+  size?: string | number
 }
 
-export const SkeletonCircle = React.forwardRef<
-  HTMLDivElement,
-  SkeletonCircleProps
->(function SkeletonCircle(props, ref) {
-  const { size, ...rest } = props
-  return (
-    <Circle size={size} asChild ref={ref}>
-      <ChakraSkeleton {...rest} />
-    </Circle>
-  )
-})
+export const SkeletonCircle = React.forwardRef<HTMLDivElement, SkeletonCircleProps>(
+  function SkeletonCircle(props, ref) {
+    const { size = 40, ...rest } = props
+    return (
+      <MuiSkeleton
+        ref={ref}
+        variant="circular"
+        width={size}
+        height={size}
+        {...rest}
+      />
+    )
+  }
+)
 
-export interface SkeletonTextProps extends ChakraSkeletonProps {
+export interface SkeletonTextProps {
   noOfLines?: number
+  gap?: number
 }
 
 export const SkeletonText = React.forwardRef<HTMLDivElement, SkeletonTextProps>(
   function SkeletonText(props, ref) {
-    const { noOfLines = 3, gap, ...rest } = props
+    const { noOfLines = 3, gap = 2, ...rest } = props
     return (
-      <Stack gap={gap} width="full" ref={ref}>
+      <Stack gap={gap} width="100%" ref={ref}>
         {Array.from({ length: noOfLines }).map((_, index) => (
-          <ChakraSkeleton
-            height="4"
+          <MuiSkeleton
             key={index}
-            {...props}
-            _last={{ maxW: "80%" }}
+            variant="text"
+            sx={{
+              height: 16,
+              ...(index === noOfLines - 1 && { maxWidth: '80%' })
+            }}
             {...rest}
           />
         ))}
       </Stack>
     )
-  },
+  }
 )
 
-export const Skeleton = ChakraSkeleton
+export interface SkeletonProps {
+  h?: string | number
+  height?: string | number
+  w?: string | number
+  width?: string | number
+  variant?: "text" | "rectangular" | "rounded" | "circular"
+}
+
+export const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
+  function Skeleton(props, ref) {
+    const { h, height, w, width, variant = "rectangular", ...rest } = props
+    const finalHeight = h || height
+    const finalWidth = w || width
+    
+    return (
+      <MuiSkeleton
+        ref={ref}
+        variant={variant}
+        height={finalHeight}
+        width={finalWidth}
+        {...rest}
+      />
+    )
+  }
+)

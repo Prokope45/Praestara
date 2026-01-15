@@ -1,4 +1,4 @@
-import { Box, Flex, Icon, Text } from "@chakra-ui/react"
+import { Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material"
 import { useQueryClient } from "@tanstack/react-query"
 import { Link as RouterLink } from "@tanstack/react-router"
 import { FiFileText, FiHome, FiSettings, FiUsers } from "react-icons/fi"
@@ -9,6 +9,7 @@ import type { UserPublic } from "@/client"
 const items = [
   { icon: FiHome, title: "Dashboard", path: "/" },
   { icon: FiFileText, title: "Notes", path: "/notes" },
+  { icon: FiFileText, title: "Tasks", path: "/tasks" },
   { icon: FiSettings, title: "User Settings", path: "/settings" },
 ]
 
@@ -30,31 +31,42 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
     ? [...items, { icon: FiUsers, title: "Admin", path: "/admin" }]
     : items
 
-  const listItems = finalItems.map(({ icon, title, path }) => (
-    <RouterLink key={title} to={path} onClick={onClose}>
-      <Flex
-        gap={4}
-        px={4}
-        py={2}
-        _hover={{
-          background: "secondary.default",
-          color: "secondary.emphasis"
-        }}
-        alignItems="center"
-        fontSize="sm"
-      >
-        <Icon as={icon} alignSelf="center" />
-        <Text ml={2}>{title}</Text>
-      </Flex>
-    </RouterLink>
-  ))
-
   return (
     <>
-      <Text fontSize="xs" px={4} py={2} fontWeight="bold">
+      <Typography 
+        variant="caption" 
+        sx={{ px: 4, py: 2, fontWeight: 'bold', display: 'block' }}
+      >
         Menu
-      </Text>
-      <Box>{listItems}</Box>
+      </Typography>
+      <List>
+        {finalItems.map(({ icon: Icon, title, path }) => (
+          <ListItem key={title} disablePadding>
+            <ListItemButton
+              component={RouterLink}
+              to={path}
+              onClick={onClose}
+              sx={{
+                gap: 2,
+                px: 4,
+                py: 2,
+                '&:hover': {
+                  bgcolor: 'secondary.main',
+                  color: 'secondary.contrastText',
+                },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 'auto', color: 'inherit' }}>
+                <Icon />
+              </ListItemIcon>
+              <ListItemText 
+                primary={title} 
+                primaryTypographyProps={{ fontSize: 'small' }}
+              />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
     </>
   )
 }

@@ -1,4 +1,4 @@
-import { Button, DialogTitle, Text } from "@chakra-ui/react"
+import { Typography, MenuItem } from '@mui/material'
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
@@ -6,15 +6,12 @@ import { FiTrash2 } from "react-icons/fi"
 
 import { UsersService } from "@/client"
 import {
-  DialogActionTrigger,
-  DialogBody,
-  DialogCloseTrigger,
+  DialogRoot,
+  DialogTitle,
   DialogContent,
   DialogFooter,
-  DialogHeader,
-  DialogRoot,
-  DialogTrigger,
 } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 import useCustomToast from "@/hooks/useCustomToast"
 
 const DeleteUser = ({ id }: { id: string }) => {
@@ -49,55 +46,48 @@ const DeleteUser = ({ id }: { id: string }) => {
   }
 
   return (
-    <DialogRoot
-      size={{ base: "xs", md: "md" }}
-      placement="center"
-      role="alertdialog"
-      open={isOpen}
-      onOpenChange={({ open }) => setIsOpen(open)}
-    >
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" colorPalette="red">
-          <FiTrash2 fontSize="16px" />
-          Delete User
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
+    <>
+      <MenuItem onClick={() => setIsOpen(true)} sx={{ color: 'error.main' }}>
+        <FiTrash2 style={{ marginRight: 8 }} />
+        Delete User
+      </MenuItem>
+
+      <DialogRoot
+        open={isOpen}
+        onOpenChange={(open) => setIsOpen(open)}
+        maxWidth="md"
+        fullWidth
+      >
         <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogHeader>
-            <DialogTitle>Delete User</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <Text mb={4}>
+          <DialogTitle>Delete User</DialogTitle>
+          <DialogContent>
+            <Typography sx={{ mb: 2 }}>
               All items associated with this user will also be{" "}
               <strong>permanently deleted.</strong> Are you sure? You will not
               be able to undo this action.
-            </Text>
-          </DialogBody>
+            </Typography>
+          </DialogContent>
 
-          <DialogFooter gap={2}>
-            <DialogActionTrigger asChild>
-              <Button
-                variant="subtle"
-                colorPalette="gray"
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-            </DialogActionTrigger>
+          <DialogFooter>
             <Button
-              variant="solid"
-              colorPalette="red"
+              variant="outlined"
+              onClick={() => setIsOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
               type="submit"
               loading={isSubmitting}
             >
               Delete
             </Button>
           </DialogFooter>
-          <DialogCloseTrigger />
         </form>
-      </DialogContent>
-    </DialogRoot>
+      </DialogRoot>
+    </>
   )
 }
 

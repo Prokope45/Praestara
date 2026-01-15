@@ -1,18 +1,44 @@
-"use client"
-
-import { ChakraProvider } from "@chakra-ui/react"
-import React, { type PropsWithChildren } from "react"
-import { system } from "../../theme"
-import { ColorModeProvider } from "./color-mode"
+import React, { type PropsWithChildren, useMemo, useState } from "react"
+import { ThemeProvider, CssBaseline } from "@mui/material"
+import { lightTheme, darkTheme } from "../../theme"
 import { Toaster } from "./toaster"
+
+// Create a context for theme mode
+export const ColorModeContext = React.createContext({ 
+  toggleColorMode: () => {},
+  mode: 'light' as 'light' | 'dark'
+})
+
+export function ColorModeProvider({ children, defaultTheme = 'light' }: PropsWithChildren<{ defaultTheme?: 'light' | 'dark' }>) {
+  const [mode, setMode] = useState<'light' | 'dark'>(defaultTheme)
+
+  const colorMode = useMemo(
+    () => ({
+      toggleColorMode: () => {
+        setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'))
+      },
+      mode,
+    }),
+    [mode],
+  )
+
+  const theme = useMemo(() => (mode === 'light' ? lightTheme : darkTheme), [mode])
+
+  return (
+    <ColorModeContext.Provider value={colorMode}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        {children}
+      </ThemeProvider>
+    </ColorModeContext.Provider>
+  )
+}
 
 export function CustomProvider(props: PropsWithChildren) {
   return (
-    <ChakraProvider value={system}>
-      <ColorModeProvider defaultTheme="light">
-        {props.children}
-      </ColorModeProvider>
+    <ColorModeProvider defaultTheme="light">
+      {props.children}
       <Toaster />
-    </ChakraProvider>
+    </ColorModeProvider>
   )
 }

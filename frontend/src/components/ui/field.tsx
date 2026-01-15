@@ -1,33 +1,34 @@
-import { Field as ChakraField } from "@chakra-ui/react"
 import * as React from "react"
+import { FormControl, FormLabel, FormHelperText, FormControlProps } from "@mui/material"
 
-export interface FieldProps extends Omit<ChakraField.RootProps, "label"> {
+export interface FieldProps extends FormControlProps {
   label?: React.ReactNode
   helperText?: React.ReactNode
   errorText?: React.ReactNode
   optionalText?: React.ReactNode
+  invalid?: boolean
 }
 
 export const Field = React.forwardRef<HTMLDivElement, FieldProps>(
   function Field(props, ref) {
-    const { label, children, helperText, errorText, optionalText, ...rest } =
+    const { label, children, helperText, errorText, optionalText, invalid, ...rest } =
       props
     return (
-      <ChakraField.Root ref={ref} {...rest}>
+      <FormControl ref={ref} error={invalid} {...rest}>
         {label && (
-          <ChakraField.Label>
+          <FormLabel>
             {label}
-            <ChakraField.RequiredIndicator fallback={optionalText} />
-          </ChakraField.Label>
+            {optionalText && <span style={{ marginLeft: 4 }}>{optionalText}</span>}
+          </FormLabel>
         )}
         {children}
-        {helperText && (
-          <ChakraField.HelperText>{helperText}</ChakraField.HelperText>
+        {helperText && !invalid && (
+          <FormHelperText>{helperText}</FormHelperText>
         )}
-        {errorText && (
-          <ChakraField.ErrorText>{errorText}</ChakraField.ErrorText>
+        {errorText && invalid && (
+          <FormHelperText error>{errorText}</FormHelperText>
         )}
-      </ChakraField.Root>
+      </FormControl>
     )
   },
 )

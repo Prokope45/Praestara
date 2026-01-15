@@ -1,16 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Controller, type SubmitHandler, useForm } from "react-hook-form"
-
-import {
-  Button,
-  DialogActionTrigger,
-  DialogRoot,
-  DialogTrigger,
-  Flex,
-  Input,
-  Text,
-  VStack,
-} from "@chakra-ui/react"
+import { Box, Stack, TextField, Typography, MenuItem, FormControlLabel } from '@mui/material'
 import { useState } from "react"
 import { FaExchangeAlt } from "react-icons/fa"
 
@@ -20,14 +10,12 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { emailPattern, handleError } from "@/utils"
 import { Checkbox } from "../ui/checkbox"
 import {
-  DialogBody,
-  DialogCloseTrigger,
+  DialogRoot,
+  DialogTitle,
   DialogContent,
   DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from "../ui/dialog"
-import { Field } from "../ui/field"
+import { Button } from "../ui/button"
 
 interface EditUserProps {
   user: UserPublic
@@ -78,144 +66,135 @@ const EditUser = ({ user }: EditUserProps) => {
   }
 
   return (
-    <DialogRoot
-      size={{ base: "xs", md: "md" }}
-      placement="center"
-      open={isOpen}
-      onOpenChange={({ open }) => setIsOpen(open)}
-    >
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <FaExchangeAlt fontSize="16px" />
-          Edit User
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
+    <>
+      <MenuItem onClick={() => setIsOpen(true)}>
+        <FaExchangeAlt style={{ marginRight: 8 }} />
+        Edit User
+      </MenuItem>
+
+      <DialogRoot
+        open={isOpen}
+        onOpenChange={(open) => setIsOpen(open)}
+        maxWidth="md"
+        fullWidth
+      >
         <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <Text mb={4}>Update the user details below.</Text>
-            <VStack gap={4}>
-              <Field
-                required
-                invalid={!!errors.email}
-                errorText={errors.email?.message}
+          <DialogTitle>Edit User</DialogTitle>
+          <DialogContent>
+            <Typography sx={{ mb: 2 }}>
+              Update the user details below.
+            </Typography>
+            <Stack spacing={3} sx={{ mt: 2 }}>
+              <TextField
+                id="email"
                 label="Email"
-              >
-                <Input
-                  id="email"
-                  {...register("email", {
-                    required: "Email is required",
-                    pattern: emailPattern,
-                  })}
-                  placeholder="Email"
-                  type="email"
-                />
-              </Field>
+                required
+                fullWidth
+                type="email"
+                error={!!errors.email}
+                helperText={errors.email?.message}
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: emailPattern,
+                })}
+                placeholder="Email"
+              />
 
-              <Field
-                invalid={!!errors.full_name}
-                errorText={errors.full_name?.message}
+              <TextField
+                id="name"
                 label="Full Name"
-              >
-                <Input
-                  id="name"
-                  {...register("full_name")}
-                  placeholder="Full name"
-                  type="text"
-                />
-              </Field>
+                fullWidth
+                error={!!errors.full_name}
+                helperText={errors.full_name?.message}
+                {...register("full_name")}
+                placeholder="Full name"
+              />
 
-              <Field
-                required
-                invalid={!!errors.password}
-                errorText={errors.password?.message}
+              <TextField
+                id="password"
                 label="Set Password"
-              >
-                <Input
-                  id="password"
-                  {...register("password", {
-                    minLength: {
-                      value: 8,
-                      message: "Password must be at least 8 characters",
-                    },
-                  })}
-                  placeholder="Password"
-                  type="password"
-                />
-              </Field>
+                fullWidth
+                type="password"
+                error={!!errors.password}
+                helperText={errors.password?.message}
+                {...register("password", {
+                  minLength: {
+                    value: 8,
+                    message: "Password must be at least 8 characters",
+                  },
+                })}
+                placeholder="Password"
+              />
 
-              <Field
-                required
-                invalid={!!errors.confirm_password}
-                errorText={errors.confirm_password?.message}
+              <TextField
+                id="confirm_password"
                 label="Confirm Password"
-              >
-                <Input
-                  id="confirm_password"
-                  {...register("confirm_password", {
-                    validate: (value) =>
-                      value === getValues().password ||
-                      "The passwords do not match",
-                  })}
-                  placeholder="Password"
-                  type="password"
+                fullWidth
+                type="password"
+                error={!!errors.confirm_password}
+                helperText={errors.confirm_password?.message}
+                {...register("confirm_password", {
+                  validate: (value) =>
+                    value === getValues().password ||
+                    "The passwords do not match",
+                })}
+                placeholder="Password"
+              />
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Controller
+                  control={control}
+                  name="is_superuser"
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                        />
+                      }
+                      label="Is superuser?"
+                    />
+                  )}
                 />
-              </Field>
-            </VStack>
+                <Controller
+                  control={control}
+                  name="is_active"
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={field.value}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                        />
+                      }
+                      label="Is active?"
+                    />
+                  )}
+                />
+              </Box>
+            </Stack>
+          </DialogContent>
 
-            <Flex mt={4} direction="column" gap={4}>
-              <Controller
-                control={control}
-                name="is_superuser"
-                render={({ field }) => (
-                  <Field disabled={field.disabled} colorPalette="ui.main">
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={({ checked }) => field.onChange(checked)}
-                    >
-                      Is superuser?
-                    </Checkbox>
-                  </Field>
-                )}
-              />
-              <Controller
-                control={control}
-                name="is_active"
-                render={({ field }) => (
-                  <Field disabled={field.disabled} colorPalette="ui.main">
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={({ checked }) => field.onChange(checked)}
-                    >
-                      Is active?
-                    </Checkbox>
-                  </Field>
-                )}
-              />
-            </Flex>
-          </DialogBody>
-
-          <DialogFooter gap={2}>
-            <DialogActionTrigger asChild>
-              <Button
-                variant="subtle"
-                colorPalette="gray"
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-            </DialogActionTrigger>
-            <Button variant="solid" type="submit" loading={isSubmitting}>
+          <DialogFooter>
+            <Button
+              variant="outlined"
+              onClick={() => setIsOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              type="submit"
+              loading={isSubmitting}
+            >
               Save
             </Button>
           </DialogFooter>
-          <DialogCloseTrigger />
         </form>
-      </DialogContent>
-    </DialogRoot>
+      </DialogRoot>
+    </>
   )
 }
 

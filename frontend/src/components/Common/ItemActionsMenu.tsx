@@ -1,6 +1,7 @@
-import { IconButton } from "@chakra-ui/react"
+import { IconButton } from "@mui/material"
 import { BsThreeDotsVertical } from "react-icons/bs"
-import { MenuContent, MenuRoot, MenuTrigger } from "../ui/menu"
+import { Menu } from "../ui/menu"
+import { useState } from "react"
 
 import type { NotePublic } from "@/client"
 import DeleteNote from "../Notes/DeleteNote"
@@ -11,17 +12,34 @@ interface ItemActionsMenuProps {
 }
 
 export const ItemActionsMenu = ({ note }: ItemActionsMenuProps) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const open = Boolean(anchorEl)
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleClose = () => {
+    setAnchorEl(null)
+  }
+
   return (
-    <MenuRoot>
-      <MenuTrigger asChild>
-        <IconButton variant="ghost" color="inherit">
-          <BsThreeDotsVertical />
-        </IconButton>
-      </MenuTrigger>
-      <MenuContent>
+    <>
+      <IconButton
+        onClick={handleClick}
+        size="small"
+        aria-label="note actions"
+      >
+        <BsThreeDotsVertical />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+      >
         <EditNote note={note} />
         <DeleteNote id={note.id} />
-      </MenuContent>
-    </MenuRoot>
+      </Menu>
+    </>
   )
 }

@@ -1,4 +1,4 @@
-import { Container, Flex, Image, Input, Text } from "@chakra-ui/react"
+import { Container, Box, TextField, Typography, Stack } from "@mui/material"
 import {
   Link as RouterLink,
   createFileRoute,
@@ -9,7 +9,6 @@ import { FiLock, FiUser } from "react-icons/fi"
 
 import type { UserRegister } from "@/client"
 import { Button } from "@/components/ui/button"
-import { Field } from "@/components/ui/field"
 import { InputGroup } from "@/components/ui/input-group"
 import { PasswordInput } from "@/components/ui/password-input"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
@@ -54,56 +53,66 @@ function SignUp() {
   }
 
   return (
-    <>
-      <Flex flexDir={{ base: "column", md: "row" }} justify="center" h="100vh">
-        <Container
-          as="form"
-          onSubmit={handleSubmit(onSubmit)}
-          h="100vh"
-          maxW="sm"
-          alignItems="stretch"
-          justifyContent="center"
-          gap={4}
-          centerContent
-        >
-          <Image
-            src={Logo}
-            alt="FastAPI logo"
-            height="auto"
-            maxW="2xs"
-            alignSelf="center"
-            mb={4}
-          />
-          <Field
-            invalid={!!errors.full_name}
-            errorText={errors.full_name?.message}
-          >
-            <InputGroup w="100%" startElement={<FiUser />}>
-              <Input
-                id="full_name"
-                minLength={3}
-                {...register("full_name", {
-                  required: "Full Name is required",
-                })}
-                placeholder="Full Name"
-                type="text"
-              />
-            </InputGroup>
-          </Field>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: { xs: 'column', md: 'row' },
+        justifyContent: 'center',
+        minHeight: '100vh',
+        alignItems: 'center',
+      }}
+    >
+      <Container
+        component="form"
+        onSubmit={handleSubmit(onSubmit)}
+        maxWidth="sm"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'stretch',
+          justifyContent: 'center',
+          gap: 2,
+          py: 4,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 3 }}>
+          <img src={Logo} alt="Logo" style={{ width: '100px', maxWidth: '100%', padding: '8px', marginTop: '4px' }} />
+          <Typography sx={{ fontWeight: 'bold', fontSize: 35, px: 1, mt: 2 }}>
+            Praestara
+          </Typography>
+        </Box>
 
-          <Field invalid={!!errors.email} errorText={errors.email?.message}>
-            <InputGroup w="100%" startElement={<FiUser />}>
-              <Input
-                id="email"
-                {...register("email", {
-                  required: "Email is required",
-                  pattern: emailPattern,
-                })}
-                placeholder="Email"
-                type="email"
-              />
-            </InputGroup>
-          </Field>
+        <Stack spacing={2}>
+          <InputGroup startElement={<FiUser />}>
+            <TextField
+              id="full_name"
+              fullWidth
+              error={!!errors.full_name}
+              helperText={errors.full_name?.message}
+              {...register("full_name", {
+                required: "Full Name is required",
+                minLength: 3,
+              })}
+              placeholder="Full Name"
+              type="text"
+            />
+          </InputGroup>
+
+          <InputGroup startElement={<FiUser />}>
+            <TextField
+              id="email"
+              fullWidth
+              error={!!errors.email}
+              helperText={errors.email?.message}
+              {...register("email", {
+                required: "Email is required",
+                pattern: emailPattern,
+              })}
+              placeholder="Email"
+              type="email"
+            />
+          </InputGroup>
+
           <PasswordInput
             type="password"
             startElement={<FiLock />}
@@ -111,6 +120,7 @@ function SignUp() {
             placeholder="Password"
             errors={errors}
           />
+
           <PasswordInput
             type="confirm_password"
             startElement={<FiLock />}
@@ -118,18 +128,20 @@ function SignUp() {
             placeholder="Confirm Password"
             errors={errors}
           />
-          <Button variant="solid" type="submit" loading={isSubmitting}>
+
+          <Button variant="contained" type="submit" loading={isSubmitting}>
             Sign Up
           </Button>
-          <Text>
+
+          <Typography sx={{ textAlign: 'center' }}>
             Already have an account?{" "}
             <RouterLink to="/login" className="main-link">
               Log In
             </RouterLink>
-          </Text>
-        </Container>
-      </Flex>
-    </>
+          </Typography>
+        </Stack>
+      </Container>
+    </Box>
   )
 }
 

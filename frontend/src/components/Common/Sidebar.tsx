@@ -1,4 +1,4 @@
-import { Box, Flex, IconButton, Text } from "@chakra-ui/react"
+import { Box, IconButton, Typography } from "@mui/material"
 import { useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { FaBars } from "react-icons/fa"
@@ -7,12 +7,10 @@ import { FiLogOut } from "react-icons/fi"
 import type { UserPublic } from "@/client"
 import useAuth from "@/hooks/useAuth"
 import {
-  DrawerBackdrop,
+  DrawerRoot,
+  DrawerContent,
   DrawerBody,
   DrawerCloseTrigger,
-  DrawerContent,
-  DrawerRoot,
-  DrawerTrigger,
 } from "../ui/drawer"
 import SidebarItems from "./SidebarItems"
 
@@ -30,65 +28,72 @@ const Sidebar = () => {
     <>
       {/* Mobile */}
       <DrawerRoot
-        placement="start"
+        placement="left"
         open={open}
-        onOpenChange={(e) => setOpen(e.open)}
+        onOpenChange={setOpen}
       >
-        <DrawerBackdrop />
-        <DrawerTrigger asChild>
-          <IconButton
-            variant="ghost"
-            color="inherit"
-            display={{ base: "flex", md: "none" }}
-            aria-label="Open Menu"
-            position="absolute"
-            zIndex="100"
-            m={4}
-          >
-            <FaBars />
-          </IconButton>
-        </DrawerTrigger>
-        <DrawerContent maxW="280px">
+        <DrawerContent>
           <DrawerCloseTrigger />
           <DrawerBody>
-            <Flex flexDir="column" justify="space-between">
+            <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
               <Box>
                 <SidebarItems />
-                <Flex
-                  as="button"
+                <Box
+                  component="button"
                   onClick={handleLogout}
-                  alignItems="center"
-                  gap={4}
-                  px={4}
-                  py={2}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    px: 4,
+                    py: 2,
+                    border: 'none',
+                    background: 'none',
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'left',
+                  }}
                 >
                   <FiLogOut />
-                  <Text>Log Out</Text>
-                </Flex>
+                  <Typography>Log Out</Typography>
+                </Box>
               </Box>
               {currentUser?.email && (
-                <Text fontSize="sm" p={2}>
+                <Typography variant="body2" sx={{ p: 2 }}>
                   Logged in as: {currentUser.email}
-                </Text>
+                </Typography>
               )}
-            </Flex>
+            </Box>
           </DrawerBody>
-          <DrawerCloseTrigger />
         </DrawerContent>
       </DrawerRoot>
 
-      {/* Desktop */}
-
-      <Box
-        display={{ base: "none", md: "flex" }}
-        position="sticky"
-        bg="bg.subtle"
-        top={0}
-        minW="280px"
-        h="100vh"
-        p={4}
+      <IconButton
+        onClick={() => setOpen(true)}
+        sx={{
+          display: { xs: 'flex', md: 'none' },
+          position: 'absolute',
+          zIndex: 100,
+          m: 4,
+        }}
+        aria-label="Open Menu"
       >
-        <Box w="100%">
+        <FaBars />
+      </IconButton>
+
+      {/* Desktop */}
+      <Box
+        sx={{
+          display: { xs: 'none', md: 'flex' },
+          position: 'sticky',
+          bgcolor: 'background.default',
+          top: 0,
+          minWidth: 280,
+          height: '100vh',
+          p: 4,
+        }}
+      >
+        <Box sx={{ width: '100%' }}>
           <SidebarItems />
         </Box>
       </Box>

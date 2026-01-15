@@ -1,31 +1,27 @@
-import { Container, Heading, Stack } from "@chakra-ui/react"
-import { useTheme } from "next-themes"
-
+import { Container, Typography, Stack } from "@mui/material"
+import { useColorMode } from "@/components/ui/color-mode"
 import { Radio, RadioGroup } from "@/components/ui/radio"
 
 const Appearance = () => {
-  const { theme, setTheme } = useTheme()
+  const { colorMode, setColorMode } = useColorMode()
 
   return (
-    <>
-      <Container maxW="full">
-        <Heading size="sm" py={4}>
-          Appearance
-        </Heading>
+    <Container maxWidth="lg">
+      <Typography variant="h6" sx={{ py: 2 }}>
+        Appearance
+      </Typography>
 
-        <RadioGroup
-          onValueChange={(e) => setTheme(e.value)}
-          value={theme}
-          colorPalette="ui.main"
-        >
-          <Stack>
-            <Radio value="system">System</Radio>
-            <Radio value="light">Light Mode</Radio>
-            <Radio value="dark">Dark Mode</Radio>
-          </Stack>
-        </RadioGroup>
-      </Container>
-    </>
+      <RadioGroup
+        value={colorMode}
+        onValueChange={(value) => setColorMode(value as "light" | "dark")}
+      >
+        <Stack spacing={1}>
+          <Radio value="light">Light Mode</Radio>
+          <Radio value="dark">Dark Mode</Radio>
+        </Stack>
+      </RadioGroup>
+    </Container>
   )
 }
+
 export default Appearance

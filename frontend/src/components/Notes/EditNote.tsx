@@ -1,12 +1,4 @@
-import {
-  Button,
-  ButtonGroup,
-  DialogActionTrigger,
-  Input,
-  Text,
-  VStack,
-  Box,
-} from "@chakra-ui/react"
+import { Box, Stack, TextField, Typography, MenuItem } from '@mui/material'
 import ReactQuill from 'react-quill'
 import 'react-quill/dist/quill.snow.css'
 import { Controller } from "react-hook-form"
@@ -19,16 +11,12 @@ import { type ApiError, type NotePublic, ItemsService } from "../../client"
 import useCustomToast from "../../hooks/useCustomToast"
 import { handleError } from "../../utils"
 import {
-  DialogBody,
-  DialogCloseTrigger,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
   DialogRoot,
   DialogTitle,
-  DialogTrigger,
+  DialogContent,
+  DialogFooter,
 } from "../ui/dialog"
-import { Field } from "../ui/field"
+import { Button } from "../ui/button"
 
 interface EditNoteProps {
   note: NotePublic
@@ -79,48 +67,43 @@ const EditNote = ({ note }: EditNoteProps) => {
   }
 
   return (
-    <DialogRoot
-      size={{ base: "xs", md: "md" }}
-      placement="center"
-      open={isOpen}
-      onOpenChange={({ open }) => setIsOpen(open)}
-    >
-      <DialogTrigger asChild>
-        <Button variant="ghost">
-          <FaExchangeAlt fontSize="16px" />
-          Edit Note
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogHeader>
-            <DialogTitle>Edit Note</DialogTitle>
-          </DialogHeader>
-          <DialogBody>
-            <Text mb={4}>Update the note details below.</Text>
-            <VStack gap={4}>
-              <Field
-                required
-                invalid={!!errors.title}
-                errorText={errors.title?.message}
-                label="Title"
-              >
-                <Input
-                  id="title"
-                  {...register("title", {
-                    required: "Title is required",
-                  })}
-                  placeholder="Title"
-                  type="text"
-                />
-              </Field>
+    <>
+      <MenuItem onClick={() => setIsOpen(true)}>
+        <FaExchangeAlt style={{ marginRight: 8 }} />
+        Edit Note
+      </MenuItem>
 
-              <Field
-                invalid={!!errors.description}
-                errorText={errors.description?.message}
-                label="Body"
-              >
-                <Box height="300px">
+      <DialogRoot
+        open={isOpen}
+        onOpenChange={(open) => setIsOpen(open)}
+        maxWidth="md"
+        fullWidth
+      >
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <DialogTitle>Edit Note</DialogTitle>
+          <DialogContent>
+            <Typography sx={{ mb: 2 }}>
+              Update the note details below.
+            </Typography>
+            <Stack spacing={3} sx={{ mt: 2 }}>
+              <TextField
+                id="title"
+                label="Title"
+                required
+                fullWidth
+                error={!!errors.title}
+                helperText={errors.title?.message}
+                {...register("title", {
+                  required: "Title is required",
+                })}
+                placeholder="Title"
+              />
+
+              <Box>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  Body
+                </Typography>
+                <Box sx={{ height: '300px' }}>
                   <Controller
                     name="description"
                     control={control}
@@ -135,30 +118,29 @@ const EditNote = ({ note }: EditNoteProps) => {
                     )}
                   />
                 </Box>
-              </Field>
-            </VStack>
-          </DialogBody>
+              </Box>
+            </Stack>
+          </DialogContent>
 
-          <DialogFooter gap={2}>
-            <ButtonGroup>
-              <DialogActionTrigger asChild>
-                <Button
-                  variant="subtle"
-                  colorPalette="gray"
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-              </DialogActionTrigger>
-              <Button variant="solid" type="submit" loading={isSubmitting}>
-                Save
-              </Button>
-            </ButtonGroup>
+          <DialogFooter>
+            <Button
+              variant="outlined"
+              onClick={() => setIsOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              type="submit"
+              loading={isSubmitting}
+            >
+              Save
+            </Button>
           </DialogFooter>
         </form>
-        <DialogCloseTrigger />
-      </DialogContent>
-    </DialogRoot>
+      </DialogRoot>
+    </>
   )
 }
 

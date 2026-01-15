@@ -1,6 +1,7 @@
-import { IconButton } from "@chakra-ui/react"
+import { IconButton } from "@mui/material"
 import { BsThreeDotsVertical } from "react-icons/bs"
-import { MenuContent, MenuRoot, MenuTrigger } from "../ui/menu"
+import { Menu } from "../ui/menu"
+import { useState } from "react"
 
 import type { UserPublic } from "@/client"
 import DeleteUser from "../Admin/DeleteUser"
@@ -12,17 +13,35 @@ interface UserActionsMenuProps {
 }
 
 export const UserActionsMenu = ({ user, disabled }: UserActionsMenuProps) => {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const open = Boolean(anchorEl)
+
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleClose = () => {
+    setAnchorEl(null)
+  }
+
   return (
-    <MenuRoot>
-      <MenuTrigger asChild>
-        <IconButton variant="ghost" color="inherit" disabled={disabled}>
-          <BsThreeDotsVertical />
-        </IconButton>
-      </MenuTrigger>
-      <MenuContent>
+    <>
+      <IconButton
+        onClick={handleClick}
+        size="small"
+        disabled={disabled}
+        aria-label="user actions"
+      >
+        <BsThreeDotsVertical />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+      >
         <EditUser user={user} />
         <DeleteUser id={user.id} />
-      </MenuContent>
-    </MenuRoot>
+      </Menu>
+    </>
   )
 }

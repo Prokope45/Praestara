@@ -1,21 +1,25 @@
-"use client"
-
-import { toaster } from "@/components/ui/toaster"
+import { useSnackbar } from 'notistack'
 
 const useCustomToast = () => {
+  const { enqueueSnackbar } = useSnackbar()
+
   const showSuccessToast = (description: string) => {
-    toaster.create({
-      title: "Success!",
-      description,
-      type: "success",
+    enqueueSnackbar(description, {
+      variant: 'success',
+      anchorOrigin: {
+        vertical: 'top',
+        horizontal: 'right',
+      },
     })
   }
 
   const showErrorToast = (description: string) => {
-    toaster.create({
-      title: "Something went wrong!",
-      description,
-      type: "error",
+    enqueueSnackbar(description, {
+      variant: 'error',
+      anchorOrigin: {
+        vertical: 'top',
+        horizontal: 'right',
+      },
     })
   }
 

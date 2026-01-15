@@ -1,36 +1,45 @@
-import { Flex, Image, Text, useBreakpointValue } from "@chakra-ui/react"
+import { AppBar, Toolbar, Box, Typography, useMediaQuery, useTheme } from "@mui/material"
 import { Link } from "@tanstack/react-router"
 
 import Logo from "/assets/images/praestara-logo.png"
 import UserMenu from "./UserMenu"
 
 function Navbar() {
-  const display = useBreakpointValue({ base: "none", md: "flex" })
+  const theme = useTheme()
+  const isMdUp = useMediaQuery(theme.breakpoints.up('md'))
+
+  if (!isMdUp) {
+    return null
+  }
 
   return (
-    <Flex
-      display={display}
-      justify="space-between"
-      position="sticky"
-      color="white"
-      align="center"
-      bg="bg.muted"
-      w="100%"
-      top={0}
-      p={4}
+    <AppBar 
+      position="sticky" 
+      sx={{ 
+        bgcolor: 'background.paper',
+        color: 'text.primary',
+        boxShadow: 1
+      }}
     >
-      <Link to="/">
-        <Flex alignItems="center">
-          <Image src={Logo} alt="Logo" w="50px" maxW="2xs" px={2} />
-          <Text fontWeight="bold" fontSize="lg" px={2}>
-            Praestara
-          </Text>
-        </Flex>
-      </Link>
-      <Flex gap={2} alignItems="center">
-        <UserMenu />
-      </Flex>
-    </Flex>
+      <Toolbar sx={{ justifyContent: 'space-between' }}>
+        <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box
+              component="img"
+              src={Logo}
+              alt="Logo"
+              sx={{ width: 50, maxWidth: '2xs', px: 2 }}
+            />
+            <Typography variant="h6" fontWeight="bold" sx={{ px: 2 }}>
+              Praestara
+            </Typography>
+          </Box>
+        </Link>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <UserMenu />
+        </Box>
+      </Toolbar>
+    </AppBar>
   )
 }
 

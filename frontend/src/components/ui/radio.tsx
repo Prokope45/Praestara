@@ -1,24 +1,45 @@
-import { RadioGroup as ChakraRadioGroup } from "@chakra-ui/react"
-import * as React from "react"
+import {
+  Radio as MuiRadio,
+  RadioGroup as MuiRadioGroup,
+  FormControlLabel,
+  RadioGroupProps,
+  RadioProps as MuiRadioProps,
+} from '@mui/material';
+import * as React from 'react';
 
-export interface RadioProps extends ChakraRadioGroup.ItemProps {
-  rootRef?: React.Ref<HTMLDivElement>
-  inputProps?: React.InputHTMLAttributes<HTMLInputElement>
+export interface RadioProps extends MuiRadioProps {
+  children?: React.ReactNode;
 }
 
-export const Radio = React.forwardRef<HTMLInputElement, RadioProps>(
-  function Radio(props, ref) {
-    const { children, inputProps, rootRef, ...rest } = props
-    return (
-      <ChakraRadioGroup.Item ref={rootRef} {...rest}>
-        <ChakraRadioGroup.ItemHiddenInput ref={ref} {...inputProps} />
-        <ChakraRadioGroup.ItemIndicator />
-        {children && (
-          <ChakraRadioGroup.ItemText>{children}</ChakraRadioGroup.ItemText>
-        )}
-      </ChakraRadioGroup.Item>
-    )
-  },
-)
+export const Radio = React.forwardRef<HTMLButtonElement, RadioProps>(
+  function Radio({ children, ...props }, ref) {
+    if (children) {
+      return (
+        <FormControlLabel
+          control={<MuiRadio ref={ref} {...props} />}
+          label={children}
+        />
+      );
+    }
+    return <MuiRadio ref={ref} {...props} />;
+  }
+);
 
-export const RadioGroup = ChakraRadioGroup.Root
+interface RadioGroupPropsExtended extends RadioGroupProps {
+  onValueChange?: (value: string) => void;
+}
+
+export const RadioGroup = React.forwardRef<HTMLDivElement, RadioGroupPropsExtended>(
+  function RadioGroup({ onValueChange, onChange, ...props }, ref) {
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (onValueChange) {
+        onValueChange(event.target.value);
+      }
+      if (onChange) {
+        onChange(event, event.target.value);
+      }
+    };
+
+    return <MuiRadioGroup ref={ref} onChange={handleChange} {...props} />;
+  }
+);

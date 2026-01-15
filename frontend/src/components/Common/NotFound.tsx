@@ -1,56 +1,63 @@
-import { Button, Center, Flex, Text } from "@chakra-ui/react"
+import { Box, Typography } from "@mui/material"
 import { Link } from "@tanstack/react-router"
+import { Button } from "@/components/ui/button"
 
 const NotFound = () => {
   return (
-    <>
-      <Flex
-        height="100vh"
-        align="center"
-        justify="center"
-        flexDir="column"
-        data-testid="not-found"
-        p={4}
-      >
-        <Flex alignItems="center" zIndex={1}>
-          <Flex flexDir="column" ml={4} align="center" justify="center" p={4}>
-            <Text
-              fontSize={{ base: "6xl", md: "8xl" }}
-              fontWeight="bold"
-              lineHeight="1"
-              mb={4}
-            >
-              404
-            </Text>
-            <Text fontSize="2xl" fontWeight="bold" mb={2}>
-              Oops!
-            </Text>
-          </Flex>
-        </Flex>
-
-        <Text
-          fontSize="lg"
-          color="gray.600"
-          mb={4}
-          textAlign="center"
-          zIndex={1}
+    <Box
+      sx={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        p: 4,
+      }}
+      data-testid="not-found"
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', zIndex: 1 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            ml: 4,
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 4,
+          }}
         >
-          The page you are looking for was not found.
-        </Text>
-        <Center zIndex={1}>
-          <Link to="/">
-            <Button
-              variant="solid"
-              colorScheme="teal"
-              mt={4}
-              alignSelf="center"
-            >
-              Go Back
-            </Button>
-          </Link>
-        </Center>
-      </Flex>
-    </>
+          <Typography
+            variant="h1"
+            sx={{
+              fontSize: { xs: '6rem', md: '8rem' },
+              fontWeight: 'bold',
+              lineHeight: 1,
+              mb: 4,
+            }}
+          >
+            404
+          </Typography>
+          <Typography variant="h4" fontWeight="bold" sx={{ mb: 2 }}>
+            Oops!
+          </Typography>
+        </Box>
+      </Box>
+
+      <Typography
+        variant="h6"
+        color="text.secondary"
+        sx={{ mb: 4, textAlign: 'center', zIndex: 1 }}
+      >
+        The page you are looking for was not found.
+      </Typography>
+      <Box sx={{ zIndex: 1 }}>
+        <Link to="/">
+          <Button variant="contained" color="primary" sx={{ mt: 4 }}>
+            Go Back
+          </Button>
+        </Link>
+      </Box>
+    </Box>
   )
 }
 

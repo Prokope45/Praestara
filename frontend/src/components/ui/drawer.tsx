@@ -1,52 +1,117 @@
-import { Drawer as ChakraDrawer, Portal } from "@chakra-ui/react"
 import * as React from "react"
-import { CloseButton } from "./close-button"
+import {
+  Drawer as MuiDrawer,
+  DrawerProps,
+  Box,
+  IconButton,
+  Typography,
+} from "@mui/material"
+import { IoClose } from "react-icons/io5"
 
-interface DrawerContentProps extends ChakraDrawer.ContentProps {
-  portalled?: boolean
-  portalRef?: React.RefObject<HTMLElement>
-  offset?: ChakraDrawer.ContentProps["padding"]
+interface DrawerRootProps extends DrawerProps {
+  open: boolean
+  onOpenChange?: (open: boolean) => void
+  placement?: 'left' | 'right' | 'top' | 'bottom'
 }
+
+export const DrawerRoot = React.forwardRef<HTMLDivElement, DrawerRootProps>(
+  function DrawerRoot({ open, onOpenChange, placement = 'right', children, ...props }, ref) {
+    const handleClose = () => {
+      onOpenChange?.(false)
+    }
+
+    return (
+      <MuiDrawer 
+        open={open} 
+        onClose={handleClose} 
+        anchor={placement}
+        ref={ref}
+        {...props}
+      >
+        {children}
+      </MuiDrawer>
+    )
+  }
+)
 
 export const DrawerContent = React.forwardRef<
   HTMLDivElement,
-  DrawerContentProps
->(function DrawerContent(props, ref) {
-  const { children, portalled = true, portalRef, offset, ...rest } = props
+  React.HTMLAttributes<HTMLDivElement> & { portalled?: boolean; portalRef?: React.RefObject<HTMLElement>; offset?: any }
+>(function DrawerContent({ children, portalled, portalRef, offset, ...props }, ref) {
   return (
-    <Portal disabled={!portalled} container={portalRef}>
-      <ChakraDrawer.Positioner padding={offset}>
-        <ChakraDrawer.Content ref={ref} {...rest} asChild={false}>
-          {children}
-        </ChakraDrawer.Content>
-      </ChakraDrawer.Positioner>
-    </Portal>
+    <Box ref={ref} sx={{ width: 350, p: 2 }} {...props}>
+      {children}
+    </Box>
   )
+})
+
+export const DrawerHeader = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(function DrawerHeader(props, ref) {
+  return (
+    <Box ref={ref} sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} {...props} />
+  )
+})
+
+export const DrawerBody = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(function DrawerBody(props, ref) {
+  return <Box ref={ref} sx={{ flex: 1 }} {...props} />
+})
+
+export const DrawerFooter = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(function DrawerFooter(props, ref) {
+  return <Box ref={ref} sx={{ mt: 2, display: 'flex', gap: 1, justifyContent: 'flex-end' }} {...props} />
+})
+
+export const DrawerTitle = React.forwardRef<
+  HTMLHeadingElement,
+  React.HTMLAttributes<HTMLHeadingElement>
+>(function DrawerTitle(props, ref) {
+  return <Typography ref={ref} variant="h6" component="h2" {...props} />
+})
+
+export const DrawerDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(function DrawerDescription(props, ref) {
+  return <Typography ref={ref} variant="body2" color="text.secondary" {...props} />
 })
 
 export const DrawerCloseTrigger = React.forwardRef<
   HTMLButtonElement,
-  ChakraDrawer.CloseTriggerProps
+  React.ComponentProps<typeof IconButton>
 >(function DrawerCloseTrigger(props, ref) {
   return (
-    <ChakraDrawer.CloseTrigger
-      position="absolute"
-      top="2"
-      insetEnd="2"
+    <IconButton
+      aria-label="close"
+      ref={ref}
+      size="small"
       {...props}
-      asChild
     >
-      <CloseButton size="sm" ref={ref} />
-    </ChakraDrawer.CloseTrigger>
+      <IoClose />
+    </IconButton>
   )
 })
 
-export const DrawerTrigger = ChakraDrawer.Trigger
-export const DrawerRoot = ChakraDrawer.Root
-export const DrawerFooter = ChakraDrawer.Footer
-export const DrawerHeader = ChakraDrawer.Header
-export const DrawerBody = ChakraDrawer.Body
-export const DrawerBackdrop = ChakraDrawer.Backdrop
-export const DrawerDescription = ChakraDrawer.Description
-export const DrawerTitle = ChakraDrawer.Title
-export const DrawerActionTrigger = ChakraDrawer.ActionTrigger
+export const DrawerBackdrop = React.forwardRef<HTMLDivElement, any>(
+  function DrawerBackdrop(props, ref) {
+    return <div ref={ref} {...props} />
+  }
+)
+
+export const DrawerTrigger = React.forwardRef<HTMLButtonElement, any>(
+  function DrawerTrigger(props, ref) {
+    return <button ref={ref} {...props} />
+  }
+)
+
+export const DrawerActionTrigger = React.forwardRef<HTMLButtonElement, any>(
+  function DrawerActionTrigger(props, ref) {
+    return <button ref={ref} {...props} />
+  }
+)

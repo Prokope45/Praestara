@@ -1,63 +1,65 @@
-import { Box, Button, Flex, Text } from "@chakra-ui/react"
+import { Box, Button, Menu, MenuItem, Typography } from "@mui/material"
 import { Link } from "@tanstack/react-router"
 import { FaUserAstronaut } from "react-icons/fa"
 import { FiLogOut, FiUser } from "react-icons/fi"
+import { useState } from "react"
 
 import useAuth from "@/hooks/useAuth"
-import { MenuContent, MenuItem, MenuRoot, MenuTrigger } from "../ui/menu"
 
 const UserMenu = () => {
   const { user, logout } = useAuth()
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const open = Boolean(anchorEl)
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleClose = () => {
+    setAnchorEl(null)
+  }
 
   const handleLogout = async () => {
+    handleClose()
     logout()
   }
 
   return (
-    <>
-      {/* Desktop */}
-      <Flex>
-        <MenuRoot>
-          <MenuTrigger asChild p={2}>
-            <Button
-              data-testid="user-menu"
-              variant="solid"
-              maxW="150px"
-              truncate
-            >
-              <FaUserAstronaut fontSize="18" />
-              <Text>{user?.full_name || "User"}</Text>
-            </Button>
-          </MenuTrigger>
+    <Box>
+      <Button
+        data-testid="user-menu"
+        variant="contained"
+        onClick={handleClick}
+        startIcon={<FaUserAstronaut />}
+        sx={{ maxWidth: 150, textTransform: 'none' }}
+      >
+        <Typography noWrap>{user?.full_name || "User"}</Typography>
+      </Button>
 
-          <MenuContent>
-            <Link to="settings">
-              <MenuItem
-                closeOnSelect
-                value="user-settings"
-                gap={2}
-                py={2}
-                style={{ cursor: "pointer" }}
-              >
-                <FiUser fontSize="18px" />
-                <Box flex="1">My Profile</Box>
-              </MenuItem>
-            </Link>
+      <Menu
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+      >
+        <MenuItem 
+          component={Link} 
+          to="/settings" 
+          onClick={handleClose}
+          sx={{ gap: 2, py: 2 }}
+        >
+          <FiUser fontSize="18px" />
+          <Box flex="1">My Profile</Box>
+        </MenuItem>
 
-            <MenuItem
-              value="logout"
-              gap={2}
-              py={2}
-              onClick={handleLogout}
-              style={{ cursor: "pointer" }}
-            >
-              <FiLogOut />
-              Log Out
-            </MenuItem>
-          </MenuContent>
-        </MenuRoot>
-      </Flex>
-    </>
+        <MenuItem
+          onClick={handleLogout}
+          sx={{ gap: 2, py: 2 }}
+        >
+          <FiLogOut />
+          Log Out
+        </MenuItem>
+      </Menu>
+    </Box>
   )
 }
 

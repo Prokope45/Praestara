@@ -1,25 +1,40 @@
-import { Checkbox as ChakraCheckbox } from "@chakra-ui/react"
 import * as React from "react"
+import {
+  Checkbox as MuiCheckbox,
+  CheckboxProps as MuiCheckboxProps,
+  FormControlLabel,
+} from "@mui/material"
 
-export interface CheckboxProps extends ChakraCheckbox.RootProps {
+export interface CheckboxProps extends Omit<MuiCheckboxProps, 'icon'> {
   icon?: React.ReactNode
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>
   rootRef?: React.Ref<HTMLLabelElement>
+  children?: React.ReactNode
 }
 
-export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
+export const Checkbox = React.forwardRef<HTMLButtonElement, CheckboxProps>(
   function Checkbox(props, ref) {
     const { icon, children, inputProps, rootRef, ...rest } = props
-    return (
-      <ChakraCheckbox.Root ref={rootRef} {...rest}>
-        <ChakraCheckbox.HiddenInput ref={ref} {...inputProps} />
-        <ChakraCheckbox.Control>
-          {icon || <ChakraCheckbox.Indicator />}
-        </ChakraCheckbox.Control>
-        {children != null && (
-          <ChakraCheckbox.Label>{children}</ChakraCheckbox.Label>
-        )}
-      </ChakraCheckbox.Root>
+    
+    const checkbox = (
+      <MuiCheckbox 
+        ref={ref} 
+        icon={icon}
+        inputProps={inputProps}
+        {...rest} 
+      />
     )
+
+    if (children != null) {
+      return (
+        <FormControlLabel
+          ref={rootRef}
+          control={checkbox}
+          label={children}
+        />
+      )
+    }
+
+    return checkbox
   },
 )

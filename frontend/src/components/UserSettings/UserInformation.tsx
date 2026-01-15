@@ -1,12 +1,10 @@
 import {
   Box,
-  Button,
   Container,
-  Flex,
-  Heading,
-  Input,
-  Text,
-} from "@chakra-ui/react"
+  Typography,
+  TextField,
+  Stack,
+} from "@mui/material"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
@@ -20,7 +18,7 @@ import {
 import useAuth from "@/hooks/useAuth"
 import useCustomToast from "@/hooks/useCustomToast"
 import { emailPattern, handleError } from "@/utils"
-import { Field } from "../ui/field"
+import { Button } from "../ui/button"
 
 const UserInformation = () => {
   const queryClient = useQueryClient()
@@ -70,82 +68,95 @@ const UserInformation = () => {
   }
 
   return (
-    <>
-      <Container maxW="full">
-        <Heading size="sm" py={4}>
-          User Information
-        </Heading>
-        <Box
-          w={{ sm: "full", md: "50%" }}
-          as="form"
-          onSubmit={handleSubmit(onSubmit)}
-        >
-          <Field label="Full name">
+    <Container maxWidth="lg">
+      <Typography variant="h6" sx={{ py: 2 }}>
+        User Information
+      </Typography>
+      <Box
+        component="form"
+        onSubmit={handleSubmit(onSubmit)}
+        sx={{ maxWidth: { xs: '100%', md: '50%' } }}
+      >
+        <Stack spacing={3}>
+          <Box>
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+              Full name
+            </Typography>
             {editMode ? (
-              <Input
+              <TextField
                 {...register("full_name", { maxLength: 30 })}
                 type="text"
-                size="md"
-                w="auto"
+                size="small"
+                fullWidth
               />
             ) : (
-              <Text
-                fontSize="md"
-                py={2}
-                color={!currentUser?.full_name ? "gray" : "inherit"}
-                truncate
-                maxWidth="250px"
+              <Typography
+                sx={{
+                  py: 1,
+                  color: !currentUser?.full_name ? 'text.secondary' : 'inherit',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '250px',
+                }}
               >
                 {currentUser?.full_name || "N/A"}
-              </Text>
+              </Typography>
             )}
-          </Field>
-          <Field
-            mt={4}
-            label="Email"
-            invalid={!!errors.email}
-            errorText={errors.email?.message}
-          >
+          </Box>
+
+          <Box>
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+              Email
+            </Typography>
             {editMode ? (
-              <Input
+              <TextField
                 {...register("email", {
                   required: "Email is required",
                   pattern: emailPattern,
                 })}
                 type="email"
-                size="md"
-                w="auto"
+                size="small"
+                fullWidth
+                error={!!errors.email}
+                helperText={errors.email?.message}
               />
             ) : (
-              <Text fontSize="md" py={2} truncate maxWidth="250px">
-                {currentUser?.email}
-              </Text>
-            )}
-          </Field>
-          <Flex mt={4} gap={3}>
-            <Button
-              variant="solid"
-              onClick={toggleEditMode}
-              type={editMode ? "button" : "submit"}
-              loading={editMode ? isSubmitting : false}
-              disabled={editMode ? !isDirty || !getValues("email") : false}
-            >
-              {editMode ? "Save" : "Edit"}
-            </Button>
-            {editMode && (
-              <Button
-                variant="subtle"
-                colorPalette="gray"
-                onClick={onCancel}
-                disabled={isSubmitting}
+              <Typography
+                sx={{
+                  py: 1,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '250px',
+                }}
               >
-                Cancel
-              </Button>
+                {currentUser?.email}
+              </Typography>
             )}
-          </Flex>
-        </Box>
-      </Container>
-    </>
+          </Box>
+        </Stack>
+
+        <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+          <Button
+            variant="contained"
+            onClick={editMode ? undefined : toggleEditMode}
+            type={editMode ? "submit" : "button"}
+            loading={editMode ? isSubmitting : false}
+            disabled={editMode ? !isDirty || !getValues("email") : false}
+          >
+            {editMode ? "Save" : "Edit"}
+          </Button>
+          {editMode && (
+            <Button
+              variant="outlined"
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+          )}
+        </Stack>
+      </Box>
+    </Container>
   )
 }
 
