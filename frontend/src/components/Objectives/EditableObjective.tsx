@@ -12,6 +12,8 @@ import ReactFlow, {
   addEdge,
   Connection,
   NodeProps,
+  Handle,
+  Position,
 } from "reactflow"
 import "reactflow/dist/style.css"
 import { FiSave, FiPlus, FiEdit2, FiAlertCircle } from "react-icons/fi"
@@ -38,10 +40,15 @@ const getPriorityColor = (priority: TaskPriority): string => {
   }
 }
 
-// Custom node component with edit button
+// Custom node component with edit button and connection handles
 const CustomNode = ({ data, id }: NodeProps) => {
   return (
     <Box sx={{ position: "relative" }}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        style={{ background: '#555' }}
+      />
       {data.label}
       <IconButton
         size="small"
@@ -57,6 +64,11 @@ const CustomNode = ({ data, id }: NodeProps) => {
       >
         <FiEdit2 size={12} />
       </IconButton>
+      <Handle
+        type="source"
+        position={Position.Right}
+        style={{ background: '#555' }}
+      />
     </Box>
   )
 }
@@ -362,6 +374,10 @@ const EditableObjective = ({ objective }: EditableObjectiveProps) => {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             nodeTypes={nodeTypes}
+            nodesDraggable={true}
+            nodesConnectable={true}
+            elementsSelectable={true}
+            selectNodesOnDrag={false}
             fitView
             attributionPosition="bottom-left"
           >
