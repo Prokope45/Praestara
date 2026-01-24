@@ -9,7 +9,7 @@ export interface OrientationTrait {
 
 export interface OrientationPublic {
   id: string
-  title: string // e.g., "I want to be a good father"
+  title: string // e.g., "I want to be a friendlier person"
   description?: string
   traits: OrientationTrait[] // Peripheral traits that make up the goal
   createdAt: string

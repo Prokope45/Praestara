@@ -199,7 +199,7 @@ const EditableOrientation = ({ orientation }: EditableOrientationProps) => {
               onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
               required
               fullWidth
-              placeholder="e.g., 'I want to be a great father'"
+              placeholder="e.g., 'I want to be a friendlier person'"
             />
             <TextField
               label="Description"

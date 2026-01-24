@@ -12,17 +12,22 @@ import {
   Paper,
   Stack,
   Chip,
+  Card,
+  CardContent,
+  CardActions,
 } from "@mui/material"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { FiSearch } from "react-icons/fi"
 import { z } from "zod"
+import { useState } from "react"
 
 import AddOrientation from "../../components/Orientations/AddOrientation"
 import EditableOrientation from "../../components/Orientations/EditableOrientation"
 import OrientationDetail from "../../components/Orientations/OrientationDetail"
 import OrientationActionsMenu from "../../components/Orientations/OrientationActionsMenu"
 import PendingItems from "../../components/Pending/PendingItems"
+import ViewSwitcher, { ViewMode } from "../../components/Common/ViewSwitcher"
 import {
   PaginationItems,
   PaginationNextTrigger,
@@ -61,10 +66,11 @@ export const Route = createFileRoute("/_layout/orientations")({
   validateSearch: (search) => orientationsSearchSchema.parse(search),
 })
 
-function OrientationsTable() {
+function OrientationsView() {
   const navigate = useNavigate({ from: Route.fullPath })
   const queryClient = useQueryClient()
   const { page } = Route.useSearch()
+  const [viewMode, setViewMode] = useState<ViewMode>("card")
 
   const { data, isLoading, isPlaceholderData } = useQuery({
     ...getOrientationsQueryOptions({ page }),
@@ -113,83 +119,182 @@ function OrientationsTable() {
 
   return (
     <>
-      <TableContainer component={Paper} sx={{ mt: 2 }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell width="35%">Title</TableCell>
-              <TableCell width="35%">Description</TableCell>
-              <TableCell width="15%">Traits</TableCell>
-              <TableCell width="15%">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {orientations?.map((orientation) => {
-              const totalTraits = orientation.traits.length
-              const averageValue =
-                totalTraits > 0
-                  ? Math.round(
-                      orientation.traits.reduce((sum, trait) => sum + trait.value, 0) /
-                        totalTraits
-                    )
-                  : 0
+      {/* View Switcher */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, mb: 2 }}>
+        <ViewSwitcher defaultView="card" onViewChange={setViewMode} />
+      </Box>
 
-              return (
-                <TableRow key={orientation.id} sx={{ opacity: isPlaceholderData ? 0.5 : 1 }}>
-                  <TableCell
+      {/* Card View */}
+      {viewMode === "card" && (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              md: "repeat(3, 1fr)",
+            },
+            gap: 2,
+            mb: 2,
+          }}
+        >
+          {orientations.map((orientation) => {
+            const totalTraits = orientation.traits.length
+            const averageValue =
+              totalTraits > 0
+                ? Math.round(
+                    orientation.traits.reduce((sum, trait) => sum + trait.value, 0) /
+                      totalTraits
+                  )
+                : 0
+
+            return (
+              <Card
+                key={orientation.id}
+                sx={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  opacity: isPlaceholderData ? 0.5 : 1,
+                  transition: "transform 0.2s, box-shadow 0.2s",
+                  cursor: "pointer",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: 4,
+                  },
+                }}
+                onClick={() =>
+                  navigate({
+                    search: (prev: Record<string, unknown>) => ({
+                      ...prev,
+                      orientationId: orientation.id,
+                    }),
+                  })
+                }
+              >
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+                    {orientation.title}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
                     sx={{
-                      maxWidth: "35%",
+                      mb: 2,
                       overflow: "hidden",
                       textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
                     }}
                   >
-                    <Button
-                      variant="text"
-                      onClick={() =>
-                        navigate({
-                          search: (prev: Record<string, unknown>) => ({
-                            ...prev,
-                            orientationId: orientation.id,
-                          }),
-                        })
-                      }
+                    {orientation.description || "No description"}
+                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+                    <Chip label={`${totalTraits} traits`} size="small" variant="outlined" />
+                    {totalTraits > 0 && (
+                      <Chip
+                        label={`${averageValue}% avg`}
+                        size="small"
+                        color={averageValue >= 70 ? "success" : "default"}
+                      />
+                    )}
+                  </Box>
+                </CardContent>
+                <CardActions
+                  sx={{ justifyContent: "flex-end", pt: 0 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <OrientationActionsMenu orientation={orientation} onDelete={handleDelete} />
+                </CardActions>
+              </Card>
+            )
+          })}
+        </Box>
+      )}
+
+      {/* Table View */}
+      {viewMode === "table" && (
+        <TableContainer component={Paper} sx={{ mb: 2 }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell width="35%">Title</TableCell>
+                <TableCell width="35%">Description</TableCell>
+                <TableCell width="15%">Traits</TableCell>
+                <TableCell width="15%">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {orientations.map((orientation) => {
+                const totalTraits = orientation.traits.length
+                const averageValue =
+                  totalTraits > 0
+                    ? Math.round(
+                        orientation.traits.reduce((sum, trait) => sum + trait.value, 0) /
+                          totalTraits
+                      )
+                    : 0
+
+                return (
+                  <TableRow key={orientation.id} sx={{ opacity: isPlaceholderData ? 0.5 : 1 }}>
+                    <TableCell
+                      sx={{
+                        maxWidth: "35%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
                     >
-                      {orientation.title}
-                    </Button>
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      color: !orientation.description ? "text.secondary" : "inherit",
-                      maxWidth: "35%",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {orientation.description || "N/A"}
-                  </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Typography variant="body2">{totalTraits} traits</Typography>
-                      {totalTraits > 0 && (
-                        <Chip
-                          label={`${averageValue}% avg`}
-                          size="small"
-                          color={averageValue >= 70 ? "success" : "default"}
-                        />
-                      )}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <OrientationActionsMenu orientation={orientation} onDelete={handleDelete} />
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                      <Button
+                        variant="text"
+                        onClick={() =>
+                          navigate({
+                            search: (prev: Record<string, unknown>) => ({
+                              ...prev,
+                              orientationId: orientation.id,
+                            }),
+                          })
+                        }
+                      >
+                        {orientation.title}
+                      </Button>
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        color: !orientation.description ? "text.secondary" : "inherit",
+                        maxWidth: "35%",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {orientation.description || "N/A"}
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Typography variant="body2">{totalTraits} traits</Typography>
+                        {totalTraits > 0 && (
+                          <Chip
+                            label={`${averageValue}% avg`}
+                            size="small"
+                            color={averageValue >= 70 ? "success" : "default"}
+                          />
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <OrientationActionsMenu orientation={orientation} onDelete={handleDelete} />
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+
+      {/* Pagination */}
       <Box display="flex" justifyContent="flex-end" mt={2}>
         <PaginationRoot
           count={count}
@@ -236,7 +341,7 @@ function Orientations() {
           Define who you want to be and track the traits that make up your aspirations
         </Typography>
         <AddOrientation />
-        <OrientationsTable />
+        <OrientationsView />
       </Box>
     </Container>
   )

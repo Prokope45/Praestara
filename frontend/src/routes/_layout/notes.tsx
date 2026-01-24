@@ -10,16 +10,21 @@ import {
   TableRow,
   Paper,
   Stack,
+  Card,
+  CardContent,
+  CardActions,
 } from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { FiSearch } from "react-icons/fi"
 import { z } from "zod"
+import { useState } from "react"
 
 import { ItemsService } from "../../client"
 import { ItemActionsMenu } from "../../components/Common/ItemActionsMenu"
 import AddNote from "../../components/Notes/AddNote"
 import PendingItems from "../../components/Pending/PendingItems"
+import ViewSwitcher, { ViewMode } from "../../components/Common/ViewSwitcher"
 import {
   PaginationItems,
   PaginationNextTrigger,
@@ -46,9 +51,10 @@ export const Route = createFileRoute("/_layout/notes")({
   validateSearch: (search) => notesSearchSchema.parse(search),
 })
 
-function NotesTable() {
+function NotesView() {
   const navigate = useNavigate({ from: Route.fullPath })
   const { page } = Route.useSearch()
+  const [viewMode, setViewMode] = useState<ViewMode>("card")
 
   const { data, isLoading, isPlaceholderData } = useQuery({
     ...getNotesQueryOptions({ page }),
@@ -92,50 +98,112 @@ function NotesTable() {
 
   return (
     <>
-      <TableContainer component={Paper} sx={{ mt: 2 }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell width="30%">Title</TableCell>
-              <TableCell width="30%">Description</TableCell>
-              <TableCell width="10%">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {notes?.map((note) => (
-              <TableRow 
-                key={note.id} 
-                sx={{ opacity: isPlaceholderData ? 0.5 : 1 }}
-              >
-                <TableCell
-                  sx={{
-                    maxWidth: "30%",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
+      {/* View Switcher */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, mb: 2 }}>
+        <ViewSwitcher defaultView="card" onViewChange={setViewMode} />
+      </Box>
+
+      {/* Card View */}
+      {viewMode === "card" && (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              md: "repeat(3, 1fr)",
+            },
+            gap: 2,
+            mb: 2,
+          }}
+        >
+          {notes.map((note) => (
+            <Card
+              key={note.id}
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                opacity: isPlaceholderData ? 0.5 : 1,
+                transition: "transform 0.2s, box-shadow 0.2s",
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  boxShadow: 4,
+                },
+              }}
+            >
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
                   {note.title}
-                </TableCell>
-                <TableCell
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
                   sx={{
-                    color: !note.description ? "text.secondary" : "inherit",
-                    maxWidth: "30%",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: "vertical",
                   }}
                 >
-                  {note.description || "N/A"}
-                </TableCell>
-                <TableCell width="10%">
-                  <ItemActionsMenu note={note} />
-                </TableCell>
+                  {note.description || "No description"}
+                </Typography>
+              </CardContent>
+              <CardActions sx={{ justifyContent: "flex-end", pt: 0 }}>
+                <ItemActionsMenu note={note} />
+              </CardActions>
+            </Card>
+          ))}
+        </Box>
+      )}
+
+      {/* Table View */}
+      {viewMode === "table" && (
+        <TableContainer component={Paper} sx={{ mb: 2 }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell width="30%">Title</TableCell>
+                <TableCell width="30%">Description</TableCell>
+                <TableCell width="10%">Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {notes.map((note) => (
+                <TableRow key={note.id} sx={{ opacity: isPlaceholderData ? 0.5 : 1 }}>
+                  <TableCell
+                    sx={{
+                      maxWidth: "30%",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {note.title}
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      color: !note.description ? "text.secondary" : "inherit",
+                      maxWidth: "30%",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {note.description || "N/A"}
+                  </TableCell>
+                  <TableCell width="10%">
+                    <ItemActionsMenu note={note} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+
+      {/* Pagination */}
       <Box display="flex" justifyContent="flex-end" mt={2}>
         <PaginationRoot
           count={count}
@@ -161,7 +229,7 @@ function Notes() {
         Notes Management
       </Typography>
       <AddNote />
-      <NotesTable />
+      <NotesView />
     </Container>
   )
 }
