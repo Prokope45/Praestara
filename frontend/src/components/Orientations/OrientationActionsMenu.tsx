@@ -3,13 +3,15 @@ import { FiEdit, FiEye, FiMoreVertical, FiTrash } from "react-icons/fi"
 import { useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
 import { Menu, MenuItem } from "../ui/menu"
-import type { ObjectivePublic } from "../../types/objectives"
+import type { OrientationPublic } from "../../types/orientations"
+import { deleteTempOrientation } from "../../utils/tempOrientationStorage"
 
-interface ObjectiveActionsMenuProps {
-  objective: ObjectivePublic
+interface OrientationActionsMenuProps {
+  orientation: OrientationPublic
+  onDelete?: () => void
 }
 
-const ObjectiveActionsMenu = ({ objective }: ObjectiveActionsMenuProps) => {
+const OrientationActionsMenu = ({ orientation, onDelete }: OrientationActionsMenuProps) => {
   const navigate = useNavigate()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
@@ -24,33 +26,33 @@ const ObjectiveActionsMenu = ({ objective }: ObjectiveActionsMenuProps) => {
 
   const handleView = () => {
     navigate({
-      to: "/tasks",
-      search: { objectiveId: objective.id },
+      to: "/orientations",
+      search: { orientationId: orientation.id },
     })
     handleClose()
   }
 
   const handleEdit = () => {
     navigate({
-      to: "/tasks",
-      search: { objectiveId: objective.id, editMode: "true" },
+      to: "/orientations",
+      search: { orientationId: orientation.id, editMode: "true" },
     })
     handleClose()
   }
 
   const handleDelete = () => {
-    // TODO: Implement delete objective functionality
-    console.log("Delete objective clicked", objective)
+    if (confirm(`Are you sure you want to delete "${orientation.title}"?`)) {
+      deleteTempOrientation(orientation.id)
+      if (onDelete) {
+        onDelete()
+      }
+    }
     handleClose()
   }
 
   return (
     <>
-      <IconButton
-        onClick={handleClick}
-        size="small"
-        aria-label="objective actions"
-      >
+      <IconButton onClick={handleClick} size="small" aria-label="orientation actions">
         <FiMoreVertical />
       </IconButton>
       <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
@@ -77,4 +79,4 @@ const ObjectiveActionsMenu = ({ objective }: ObjectiveActionsMenuProps) => {
   )
 }
 
-export default ObjectiveActionsMenu
+export default OrientationActionsMenu

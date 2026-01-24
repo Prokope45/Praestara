@@ -11,10 +11,10 @@ import {
 import { useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
 import { FiPlus, FiAlertCircle } from "react-icons/fi"
-import type { ObjectivePublic } from "../../types/objectives"
-import { saveTempObjective } from "../../utils/tempObjectiveStorage"
+import type { OrientationPublic } from "../../types/orientations"
+import { saveTempOrientation } from "../../utils/tempOrientationStorage"
 
-const AddObjective = () => {
+const AddOrientation = () => {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [formData, setFormData] = useState({
@@ -31,23 +31,23 @@ const AddObjective = () => {
   const handleSubmit = () => {
     if (!formData.title.trim()) return
 
-    const newObjective: ObjectivePublic = {
+    const newOrientation: OrientationPublic = {
       id: `temp-${Date.now()}`,
       title: formData.title,
       description: formData.description,
-      tasks: [],
-      edges: [],
+      traits: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      notes: "",
     }
 
     // Save to temporary storage
-    saveTempObjective(newObjective)
+    saveTempOrientation(newOrientation)
 
-    // Navigate to edit mode for the new objective
+    // Navigate to edit mode for the new orientation
     navigate({
-      to: "/tasks",
-      search: { objectiveId: newObjective.id, editMode: "true" },
+      to: "/orientations",
+      search: { orientationId: newOrientation.id, editMode: "true" },
     })
 
     handleClose()
@@ -62,26 +62,27 @@ const AddObjective = () => {
           startIcon={<FiPlus />}
           onClick={handleOpen}
         >
-          Add Objective
+          Add Orientation
         </Button>
       </Box>
 
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        <DialogTitle>Create New Objective</DialogTitle>
+        <DialogTitle>Create New Orientation</DialogTitle>
         <DialogContent>
           <Alert severity="info" icon={<FiAlertCircle />} sx={{ mb: 2, mt: 1 }}>
-            <strong>Temporary Storage:</strong> This objective will be saved in your browser's
+            <strong>Temporary Storage:</strong> This orientation will be saved in your browser's
             localStorage only. Data will be lost if you clear browser data.
           </Alert>
 
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField
-              label="Title"
+              label="Title (e.g., 'I want to be a great father')"
               value={formData.title}
               onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
               required
               fullWidth
               autoFocus
+              placeholder="Who do you want to be?"
             />
 
             <TextField
@@ -91,6 +92,7 @@ const AddObjective = () => {
               multiline
               rows={3}
               fullWidth
+              placeholder="Describe your aspiration and what it means to you"
             />
           </Box>
         </DialogContent>
@@ -109,4 +111,4 @@ const AddObjective = () => {
   )
 }
 
-export default AddObjective
+export default AddOrientation
