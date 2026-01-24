@@ -66,11 +66,14 @@ export const Route = createFileRoute("/_layout/orientations")({
   validateSearch: (search) => orientationsSearchSchema.parse(search),
 })
 
-function OrientationsView() {
+interface OrientationsViewProps {
+  viewMode: ViewMode
+}
+
+function OrientationsView({ viewMode }: OrientationsViewProps) {
   const navigate = useNavigate({ from: Route.fullPath })
   const queryClient = useQueryClient()
   const { page } = Route.useSearch()
-  const [viewMode, setViewMode] = useState<ViewMode>("card")
 
   const { data, isLoading, isPlaceholderData } = useQuery({
     ...getOrientationsQueryOptions({ page }),
@@ -119,11 +122,6 @@ function OrientationsView() {
 
   return (
     <>
-      {/* View Switcher */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, mb: 2 }}>
-        <ViewSwitcher defaultView="card" onViewChange={setViewMode} />
-      </Box>
-
       {/* Card View */}
       {viewMode === "card" && (
         <Box
@@ -315,6 +313,7 @@ function OrientationsView() {
 
 function Orientations() {
   const { orientationId, editMode } = Route.useSearch()
+  const [viewMode, setViewMode] = useState<ViewMode>("card")
 
   if (orientationId) {
     // Find the orientation by ID - check temp orientations first, then sample orientations
@@ -340,8 +339,11 @@ function Orientations() {
         <Typography variant="body1" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
           Define who you want to be and track the traits that make up your aspirations
         </Typography>
-        <AddOrientation />
-        <OrientationsView />
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 3, mb: 2 }}>
+          <AddOrientation />
+          <ViewSwitcher defaultView="card" onViewChange={setViewMode} />
+        </Box>
+        <OrientationsView viewMode={viewMode} />
       </Box>
     </Container>
   )

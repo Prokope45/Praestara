@@ -192,6 +192,7 @@ function Dashboard() {
                         <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                           {orientation.title}
                         </Typography>
+                        {/* FIXME: uses hard-coded temp value; create generic chip component. */}
                         {orientation.id.startsWith("temp-") && (
                           <Chip label="Temp" size="small" color="warning" />
                         )}

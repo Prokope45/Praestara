@@ -104,16 +104,14 @@ const AddOrientation = () => {
 
   return (
     <>
-      <Box sx={{ mt: 3, mb: 2 }}>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<FiPlus />}
-          onClick={handleOpen}
-        >
-          Add Orientation
-        </Button>
-      </Box>
+      <Button
+        variant="contained"
+        color="primary"
+        startIcon={<FiPlus />}
+        onClick={handleOpen}
+      >
+        Add Orientation
+      </Button>
 
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle>Create New Orientation</DialogTitle>
@@ -131,7 +129,7 @@ const AddOrientation = () => {
               </Typography>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <TextField
-                  label="Title (e.g., 'I want to be a great father')"
+                  label="Title (e.g., 'I want to be a friendlier person')"
                   value={formData.title}
                   onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                   required

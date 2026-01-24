@@ -63,7 +63,6 @@ const AddNote = () => {
         variant="contained"
         startIcon={<FaPlus />}
         onClick={() => setIsOpen(true)}
-        sx={{ my: 4 }}
       >
         Add Note
       </Button>

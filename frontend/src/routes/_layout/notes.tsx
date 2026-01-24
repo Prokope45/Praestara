@@ -51,10 +51,13 @@ export const Route = createFileRoute("/_layout/notes")({
   validateSearch: (search) => notesSearchSchema.parse(search),
 })
 
-function NotesView() {
+interface NotesViewProps {
+  viewMode: ViewMode
+}
+
+function NotesView({ viewMode }: NotesViewProps) {
   const navigate = useNavigate({ from: Route.fullPath })
   const { page } = Route.useSearch()
-  const [viewMode, setViewMode] = useState<ViewMode>("card")
 
   const { data, isLoading, isPlaceholderData } = useQuery({
     ...getNotesQueryOptions({ page }),
@@ -98,11 +101,6 @@ function NotesView() {
 
   return (
     <>
-      {/* View Switcher */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, mb: 2 }}>
-        <ViewSwitcher defaultView="card" onViewChange={setViewMode} />
-      </Box>
-
       {/* Card View */}
       {viewMode === "card" && (
         <Box
@@ -223,13 +221,18 @@ function NotesView() {
 }
 
 function Notes() {
+  const [viewMode, setViewMode] = useState<ViewMode>("card")
+
   return (
     <Container maxWidth={false}>
       <Typography variant="h4" component="h1" sx={{ pt: 6 }}>
         Notes Management
       </Typography>
-      <AddNote />
-      <NotesView />
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 3, mb: 2 }}>
+        <AddNote />
+        <ViewSwitcher defaultView="card" onViewChange={setViewMode} />
+      </Box>
+      <NotesView viewMode={viewMode} />
     </Container>
   )
 }
