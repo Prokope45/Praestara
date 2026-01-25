@@ -1,7 +1,8 @@
 import uuid
 from typing import Any
+import base64
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlmodel import col, delete, func, select
 
 from app import crud
@@ -115,6 +116,49 @@ def update_password_me(
     session.add(current_user)
     session.commit()
     return Message(message="Password updated successfully")
+
+
+@router.post("/me/profile-image", response_model=UserPublic)
+async def upload_profile_image(
+    *, session: SessionDep, current_user: CurrentUser, file: UploadFile = File(...)
+) -> Any:
+    """
+    Upload profile image for current user.
+    """
+    # Validate file type
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+    
+    # Validate file size (max 5MB)
+    contents = await file.read()
+    if len(contents) > 5 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File size must be less than 5MB")
+    
+    # Convert to base64 data URL
+    base64_image = base64.b64encode(contents).decode('utf-8')
+    data_url = f"data:{file.content_type};base64,{base64_image}"
+    
+    # Update user profile image
+    current_user.profile_image = data_url
+    session.add(current_user)
+    session.commit()
+    session.refresh(current_user)
+    
+    return current_user
+
+
+@router.delete("/me/profile-image", response_model=UserPublic)
+def delete_profile_image(
+    *, session: SessionDep, current_user: CurrentUser
+) -> Any:
+    """
+    Delete profile image for current user.
+    """
+    current_user.profile_image = None
+    session.add(current_user)
+    session.commit()
+    session.refresh(current_user)
+    return current_user
 
 
 @router.get("/me", response_model=UserPublic)

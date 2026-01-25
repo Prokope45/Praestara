@@ -9,6 +9,10 @@ export type Body_login_login_access_token = {
     client_secret?: (string | null);
 };
 
+export type Body_users_upload_profile_image = {
+    file: (Blob | File);
+};
+
 export type HTTPValidationError = {
     detail?: Array<ValidationError>;
 };
@@ -107,6 +111,7 @@ export type UserCreate = {
     is_active?: boolean;
     is_superuser?: boolean;
     full_name?: (string | null);
+    profile_image?: (string | null);
     password: string;
 };
 
@@ -115,6 +120,7 @@ export type UserPublic = {
     is_active?: boolean;
     is_superuser?: boolean;
     full_name?: (string | null);
+    profile_image?: (string | null);
     id: string;
 };
 
@@ -134,6 +140,7 @@ export type UserUpdate = {
     is_active?: boolean;
     is_superuser?: boolean;
     full_name?: (string | null);
+    profile_image?: (string | null);
     password?: (string | null);
 };
 
@@ -272,6 +279,14 @@ export type UsersUpdatePasswordMeData = {
 };
 
 export type UsersUpdatePasswordMeResponse = (Message);
+
+export type UsersUploadProfileImageData = {
+    formData: Body_users_upload_profile_image;
+};
+
+export type UsersUploadProfileImageResponse = (UserPublic);
+
+export type UsersDeleteProfileImageResponse = (UserPublic);
 
 export type UsersRegisterUserData = {
     requestBody: UserRegister;
