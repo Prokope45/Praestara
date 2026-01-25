@@ -68,14 +68,14 @@ function Login() {
         gap: 2,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <Box
           component="img"
           src={Logo}
           alt="Logo"
-          sx={{ width: 100, maxWidth: 'sm', px: 2, mt: 1 }}
+          sx={{ width: 125, maxWidth: 'md' }}
         />
-        <Typography variant="h3" fontWeight="bold" sx={{ px: 2, mt: 4 }}>
+        <Typography variant="h3" fontWeight="bold">
           Praestara
         </Typography>
       </Box>

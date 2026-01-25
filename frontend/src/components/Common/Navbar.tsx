@@ -28,9 +28,9 @@ function Navbar() {
               component="img"
               src={Logo}
               alt="Logo"
-              sx={{ width: 50, maxWidth: '2xs', px: 2 }}
+              sx={{ width: 100, maxWidth: '2xs', pr: 2}}
             />
-            <Typography variant="h6" fontWeight="bold" sx={{ px: 2 }}>
+            <Typography variant="h3" fontWeight="bold">
               Praestara
             </Typography>
           </Box>
