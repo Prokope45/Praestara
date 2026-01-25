@@ -3,12 +3,12 @@ import { BsThreeDotsVertical } from "react-icons/bs"
 import { Menu } from "../ui/menu"
 import { useState } from "react"
 
-import type { NotePublic } from "@/client"
+import type { ItemPublic } from "@/client"
 import DeleteNote from "../Notes/DeleteNote"
 import EditNote from "../Notes/EditNote"
 
 interface ItemActionsMenuProps {
-  note: NotePublic
+  note: ItemPublic
 }
 
 export const ItemActionsMenu = ({ note }: ItemActionsMenuProps) => {

@@ -7,7 +7,7 @@ import { useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import { FaExchangeAlt } from "react-icons/fa"
 
-import { type ApiError, type NotePublic, ItemsService } from "../../client"
+import { type ApiError, type ItemPublic, ItemsService } from "../../client"
 import useCustomToast from "../../hooks/useCustomToast"
 import { handleError } from "../../utils"
 import {
@@ -19,7 +19,7 @@ import {
 import { Button } from "../ui/button"
 
 interface EditNoteProps {
-  note: NotePublic
+  note: ItemPublic
 }
 
 interface NoteUpdateForm {

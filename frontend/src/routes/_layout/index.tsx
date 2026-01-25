@@ -1,11 +1,11 @@
 import { Box, Container, Typography, Paper, Card, CardContent, Chip, Button, Stack } from "@mui/material"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useMemo } from "react"
-import { FiTarget, FiCheckCircle, FiClock, FiTrendingUp, FiArrowRight } from "react-icons/fi"
+import { useQuery } from "@tanstack/react-query"
+import { FiCompass, FiTrendingUp, FiArrowRight, FiTarget } from "react-icons/fi"
 
 import useAuth from "@/hooks/useAuth"
-import { sampleObjectives } from "@/data/sampleObjectives"
-import { getTempObjectives } from "@/utils/tempObjectiveStorage"
+import { OrientationsService } from "@/client"
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
@@ -15,38 +15,41 @@ function Dashboard() {
   const { user: currentUser } = useAuth()
   const navigate = useNavigate()
 
-  // Combine sample and temp objectives
-  const allObjectives = useMemo(() => {
-    const tempObjectives = getTempObjectives()
-    return [...tempObjectives, ...sampleObjectives]
-  }, [])
+  // Fetch orientations from API
+  const { data: orientationsData } = useQuery({
+    queryKey: ["orientations"],
+    queryFn: () => OrientationsService.readOrientations({ limit: 100 }),
+  })
+
+  const allOrientations = useMemo(() => {
+    return orientationsData?.data || []
+  }, [orientationsData])
 
   // Calculate overall metrics
   const metrics = useMemo(() => {
-    const totalObjectives = allObjectives.length
-    const totalTasks = allObjectives.reduce((sum, obj) => sum + obj.tasks.length, 0)
-    const completedTasks = allObjectives.reduce(
-      (sum, obj) => sum + obj.tasks.filter((t) => !t.isActive).length,
-      0
-    )
-    const activeTasks = totalTasks - completedTasks
-    const percentComplete = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+    const totalOrientations = allOrientations.length
+    const totalTraits = allOrientations.reduce((sum, ori) => sum + (ori.traits?.length || 0), 0)
+    const averageTraitValue =
+      totalTraits > 0
+        ? Math.round(
+            allOrientations.reduce(
+              (sum, ori) => sum + (ori.traits?.reduce((s, t) => s + t.value, 0) || 0),
+              0
+            ) / totalTraits
+          )
+        : 0
 
     return {
-      totalObjectives,
-      totalTasks,
-      completedTasks,
-      activeTasks,
-      percentComplete,
+      totalOrientations,
+      totalTraits,
+      averageTraitValue,
     }
-  }, [allObjectives])
+  }, [allOrientations])
 
-  // Get recent objectives (top 3)
-  const recentObjectives = useMemo(() => {
-    return allObjectives
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      .slice(0, 3)
-  }, [allObjectives])
+  // Get recent orientations (top 3) - just take the first 3 since API returns them sorted
+  const recentOrientations = useMemo(() => {
+    return allOrientations.slice(0, 3)
+  }, [allOrientations])
 
   return (
     <Container maxWidth={false}>
@@ -69,16 +72,16 @@ function Dashboard() {
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <FiTarget size={24} />
+              <FiCompass size={24} />
               <Typography variant="h6" sx={{ ml: 1 }}>
-                Objectives
+                Orientations
               </Typography>
             </Box>
             <Typography variant="h3" sx={{ fontWeight: "bold" }}>
-              {metrics.totalObjectives}
+              {metrics.totalOrientations}
             </Typography>
             <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
-              Total active objectives
+              Active orientations
             </Typography>
           </Paper>
 
@@ -91,38 +94,16 @@ function Dashboard() {
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <FiCheckCircle size={24} />
+              <FiTarget size={24} />
               <Typography variant="h6" sx={{ ml: 1 }}>
-                Completed
+                Traits
               </Typography>
             </Box>
             <Typography variant="h3" sx={{ fontWeight: "bold" }}>
-              {metrics.completedTasks}
+              {metrics.totalTraits}
             </Typography>
             <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
-              Tasks finished
-            </Typography>
-          </Paper>
-
-          <Paper
-            sx={{
-              p: 3,
-              flex: 1,
-              background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-              color: "white",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <FiClock size={24} />
-              <Typography variant="h6" sx={{ ml: 1 }}>
-                Active
-              </Typography>
-            </Box>
-            <Typography variant="h3" sx={{ fontWeight: "bold" }}>
-              {metrics.activeTasks}
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
-              Tasks in progress
+              Total traits tracked
             </Typography>
           </Paper>
 
@@ -137,57 +118,61 @@ function Dashboard() {
             <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
               <FiTrendingUp size={24} />
               <Typography variant="h6" sx={{ ml: 1 }}>
-                Progress
+                Average Level
               </Typography>
             </Box>
             <Typography variant="h3" sx={{ fontWeight: "bold" }}>
-              {metrics.percentComplete}%
+              {metrics.averageTraitValue}%
             </Typography>
             <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
-              Overall completion
+              Across all traits
             </Typography>
           </Paper>
         </Stack>
 
-        {/* Recent Objectives */}
+        {/* Recent Orientations */}
         <Paper sx={{ p: 3, mb: 3 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
             <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-              Recent Objectives
+              Recent Orientations
             </Typography>
             <Button
               variant="outlined"
               endIcon={<FiArrowRight />}
-              onClick={() => navigate({ to: "/tasks" })}
+              onClick={() => navigate({ to: "/orientations" })}
             >
               View All
             </Button>
           </Box>
 
-          {recentObjectives.length === 0 ? (
+          {recentOrientations.length === 0 ? (
             <Box sx={{ textAlign: "center", py: 4 }}>
               <Typography variant="body1" color="text.secondary">
-                No objectives yet. Create your first objective to get started!
+                No orientations yet. Create your first orientation to get started!
               </Typography>
               <Button
                 variant="contained"
                 sx={{ mt: 2 }}
-                onClick={() => navigate({ to: "/tasks" })}
+                onClick={() => navigate({ to: "/orientations" })}
               >
-                Create Objective
+                Create Orientation
               </Button>
             </Box>
           ) : (
             <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-              {recentObjectives.map((objective) => {
-                const completedTasks = objective.tasks.filter((t) => !t.isActive).length
-                const totalTasks = objective.tasks.length
-                const percentComplete =
-                  totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+              {recentOrientations.map((orientation) => {
+                const totalTraits = orientation.traits?.length || 0
+                const averageValue =
+                  totalTraits > 0
+                    ? Math.round(
+                        (orientation.traits?.reduce((sum, trait) => sum + trait.value, 0) || 0) /
+                          totalTraits
+                      )
+                    : 0
 
                 return (
                   <Card
-                    key={objective.id}
+                    key={orientation.id}
                     sx={{
                       flex: 1,
                       cursor: "pointer",
@@ -199,19 +184,16 @@ function Dashboard() {
                     }}
                     onClick={() =>
                       navigate({
-                        to: "/tasks",
-                        search: { objectiveId: objective.id },
+                        to: "/orientations",
+                        search: { orientationId: orientation.id },
                       })
                     }
                   >
                     <CardContent>
                       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
                         <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                          {objective.title}
+                          {orientation.title}
                         </Typography>
-                        {objective.id.startsWith("temp-") && (
-                          <Chip label="Temp" size="small" color="warning" />
-                        )}
                       </Box>
                       <Typography
                         variant="body2"
@@ -225,17 +207,19 @@ function Dashboard() {
                           WebkitBoxOrient: "vertical",
                         }}
                       >
-                        {objective.description || "No description"}
+                        {orientation.description || "No description"}
                       </Typography>
                       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                         <Typography variant="body2" color="text.secondary">
-                          {completedTasks}/{totalTasks} tasks
+                          {totalTraits} traits
                         </Typography>
-                        <Chip
-                          label={`${percentComplete}%`}
-                          size="small"
-                          color={percentComplete === 100 ? "success" : "default"}
-                        />
+                        {totalTraits > 0 && (
+                          <Chip
+                            label={`${averageValue}% avg`}
+                            size="small"
+                            color={averageValue >= 70 ? "success" : "default"}
+                          />
+                        )}
                       </Box>
                     </CardContent>
                   </Card>
@@ -255,9 +239,9 @@ function Dashboard() {
               variant="outlined"
               fullWidth
               sx={{ py: 2 }}
-              onClick={() => navigate({ to: "/tasks" })}
+              onClick={() => navigate({ to: "/orientations" })}
             >
-              View Objectives
+              View Orientations
             </Button>
             <Button
               variant="outlined"
@@ -279,9 +263,9 @@ function Dashboard() {
               variant="contained"
               fullWidth
               sx={{ py: 2 }}
-              onClick={() => navigate({ to: "/tasks" })}
+              onClick={() => navigate({ to: "/orientations" })}
             >
-              Create Objective
+              Create Orientation
             </Button>
           </Stack>
         </Paper>
