@@ -26,15 +26,15 @@ const OrientationDetail = ({ orientation }: OrientationDetailProps) => {
 
   // Calculate metrics
   const metrics = useMemo(() => {
-    const totalTraits = orientation.traits.length
+    const totalTraits = orientation.traits?.length || 0
     const averageValue =
       totalTraits > 0
         ? Math.round(
-            orientation.traits.reduce((sum, trait) => sum + trait.value, 0) / totalTraits
+            (orientation.traits?.reduce((sum, trait) => sum + trait.value, 0) || 0) / totalTraits
           )
         : 0
 
-    const sortedTraits = [...orientation.traits].sort((a, b) => b.value - a.value)
+    const sortedTraits = [...(orientation.traits || [])].sort((a, b) => b.value - a.value)
     const highestTrait = sortedTraits[0] || null
     const lowestTrait = sortedTraits[sortedTraits.length - 1] || null
 
@@ -49,11 +49,11 @@ const OrientationDetail = ({ orientation }: OrientationDetailProps) => {
   // Prepare radar chart data
   const chartData = useMemo(() => {
     return {
-      labels: orientation.traits.map((trait) => trait.name),
+      labels: orientation.traits?.map((trait) => trait.name) || [],
       datasets: [
         {
           label: "Current Level",
-          data: orientation.traits.map((trait) => trait.value),
+          data: orientation.traits?.map((trait) => trait.value) || [],
           backgroundColor: "rgba(25, 118, 210, 0.2)",
           borderColor: "rgba(25, 118, 210, 1)",
           borderWidth: 2,
@@ -172,7 +172,7 @@ const OrientationDetail = ({ orientation }: OrientationDetailProps) => {
         </Paper>
 
         {/* Radar Chart */}
-        {orientation.traits.length > 0 ? (
+        {(orientation.traits?.length || 0) > 0 ? (
           <Paper sx={{ p: 3, mb: 3 }}>
             <Typography variant="h6" sx={{ mb: 3 }}>
               Trait Visualization
@@ -199,13 +199,13 @@ const OrientationDetail = ({ orientation }: OrientationDetailProps) => {
         )}
 
         {/* Traits List */}
-        {orientation.traits.length > 0 && (
+        {(orientation.traits?.length || 0) > 0 && (
           <Paper sx={{ p: 2, mb: 3 }}>
             <Typography variant="h6" sx={{ mb: 2 }}>
               Traits Details
             </Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {orientation.traits.map((trait) => (
+              {orientation.traits?.map((trait) => (
                 <Box
                   key={trait.id}
                   sx={{

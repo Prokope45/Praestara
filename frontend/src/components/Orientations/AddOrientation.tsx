@@ -6,7 +6,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Alert,
   Typography,
   IconButton,
   List,
@@ -17,13 +16,20 @@ import {
 } from "@mui/material"
 import { useState } from "react"
 import { useNavigate } from "@tanstack/react-router"
-import { FiPlus, FiAlertCircle, FiEdit2, FiTrash } from "react-icons/fi"
-import type { OrientationPublic, OrientationTrait } from "../../types/orientations"
-import { saveTempOrientation } from "../../utils/tempOrientationStorage"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { FiPlus, FiEdit2, FiTrash } from "react-icons/fi"
+import type { OrientationTrait } from "../../types/orientations"
+import type { OrientationCreate } from "../../client"
+import { OrientationsService } from "../../client"
+import type { ApiError } from "../../client/core/ApiError"
+import useCustomToast from "../../hooks/useCustomToast"
+import { handleError } from "../../utils"
 import TraitModal from "./TraitModal"
 
 const AddOrientation = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { showSuccessToast } = useCustomToast()
   const [open, setOpen] = useState(false)
   const [traitModalOpen, setTraitModalOpen] = useState(false)
   const [traitModalMode, setTraitModalMode] = useState<"add" | "edit">("add")
@@ -34,6 +40,26 @@ const AddOrientation = () => {
     notes: "",
   })
   const [traits, setTraits] = useState<OrientationTrait[]>([])
+
+  const mutation = useMutation({
+    mutationFn: (data: OrientationCreate) =>
+      OrientationsService.createOrientationEndpoint({ requestBody: data }),
+    onSuccess: (newOrientation: any) => {
+      showSuccessToast("Orientation created successfully.")
+      handleClose()
+      // Navigate to view the new orientation
+      navigate({
+        to: "/orientations",
+        search: { orientationId: newOrientation.id },
+      })
+    },
+    onError: (err: ApiError) => {
+      handleError(err)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["orientations"] })
+    },
+  })
 
   const handleOpen = () => setOpen(true)
   const handleClose = () => {
@@ -80,26 +106,18 @@ const AddOrientation = () => {
   const handleSubmit = () => {
     if (!formData.title.trim()) return
 
-    const newOrientation: OrientationPublic = {
-      id: `temp-${Date.now()}`,
+    const orientationData: OrientationCreate = {
       title: formData.title,
-      description: formData.description,
-      traits: traits,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      notes: formData.notes,
+      description: formData.description || undefined,
+      notes: formData.notes || undefined,
+      traits: traits.map(trait => ({
+        name: trait.name,
+        value: trait.value,
+        description: trait.description,
+      })),
     }
 
-    // Save to temporary storage
-    saveTempOrientation(newOrientation)
-
-    // Navigate to view mode for the new orientation
-    navigate({
-      to: "/orientations",
-      search: { orientationId: newOrientation.id },
-    })
-
-    handleClose()
+    mutation.mutate(orientationData)
   }
 
   return (
@@ -116,12 +134,7 @@ const AddOrientation = () => {
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle>Create New Orientation</DialogTitle>
         <DialogContent>
-          <Alert severity="info" icon={<FiAlertCircle />} sx={{ mb: 3, mt: 1 }}>
-            <strong>Temporary Storage:</strong> This orientation will be saved in your browser's
-            localStorage only. Data will be lost if you clear browser data.
-          </Alert>
-
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3, mt: 2 }}>
             {/* Basic Information */}
             <Box>
               <Typography variant="subtitle1" sx={{ fontWeight: "bold", mb: 2 }}>
@@ -238,9 +251,15 @@ const AddOrientation = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" disabled={!formData.title.trim()}>
-            Create Orientation
+          <Button onClick={handleClose} disabled={mutation.isPending}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
+            disabled={!formData.title.trim() || mutation.isPending}
+          >
+            {mutation.isPending ? "Creating..." : "Create Orientation"}
           </Button>
         </DialogActions>
       </Dialog>

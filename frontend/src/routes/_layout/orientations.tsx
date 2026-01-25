@@ -34,8 +34,8 @@ import {
   PaginationPrevTrigger,
   PaginationRoot,
 } from "../../components/ui/pagination"
-import { sampleOrientations } from "../../data/sampleOrientations"
-import { getTempOrientations } from "../../utils/tempOrientationStorage"
+import { OrientationsService } from "../../client"
+import type { OrientationPublic as ApiOrientationPublic } from "../../client"
 
 const orientationsSearchSchema = z.object({
   page: z.number().catch(1),
@@ -47,17 +47,16 @@ const PER_PAGE = 5
 
 function getOrientationsQueryOptions({ page }: { page: number }) {
   return {
-    queryFn: () => {
-      // Merge sample orientations with temp orientations from localStorage
-      const tempOrientations = getTempOrientations()
-      const allOrientations = [...tempOrientations, ...sampleOrientations]
-
-      return Promise.resolve({
-        data: allOrientations,
-        count: allOrientations.length,
-      })
-    },
+    queryFn: () =>
+      OrientationsService.readOrientations({ skip: (page - 1) * PER_PAGE, limit: PER_PAGE }),
     queryKey: ["orientations", { page }],
+  }
+}
+
+function getOrientationQueryOptions({ orientationId }: { orientationId: string }) {
+  return {
+    queryFn: () => OrientationsService.readOrientation({ id: orientationId }),
+    queryKey: ["orientations", orientationId],
   }
 }
 
@@ -75,7 +74,10 @@ function OrientationsView({ viewMode }: OrientationsViewProps) {
   const queryClient = useQueryClient()
   const { page } = Route.useSearch()
 
-  const { data, isLoading, isPlaceholderData } = useQuery({
+  const { data, isLoading, isPlaceholderData } = useQuery<{
+    data: ApiOrientationPublic[]
+    count: number
+  }>({
     ...getOrientationsQueryOptions({ page }),
     placeholderData: (prevData) => prevData,
   })
@@ -137,11 +139,11 @@ function OrientationsView({ viewMode }: OrientationsViewProps) {
           }}
         >
           {orientations.map((orientation) => {
-            const totalTraits = orientation.traits.length
+            const totalTraits = orientation.traits?.length || 0
             const averageValue =
               totalTraits > 0
                 ? Math.round(
-                    orientation.traits.reduce((sum, trait) => sum + trait.value, 0) /
+                    (orientation.traits?.reduce((sum, trait) => sum + trait.value, 0) || 0) /
                       totalTraits
                   )
                 : 0
@@ -225,11 +227,11 @@ function OrientationsView({ viewMode }: OrientationsViewProps) {
             </TableHead>
             <TableBody>
               {orientations.map((orientation) => {
-                const totalTraits = orientation.traits.length
+                const totalTraits = orientation.traits?.length || 0
                 const averageValue =
                   totalTraits > 0
                     ? Math.round(
-                        orientation.traits.reduce((sum, trait) => sum + trait.value, 0) /
+                        (orientation.traits?.reduce((sum, trait) => sum + trait.value, 0) || 0) /
                           totalTraits
                       )
                     : 0
@@ -315,11 +317,16 @@ function Orientations() {
   const { orientationId, editMode } = Route.useSearch()
   const [viewMode, setViewMode] = useState<ViewMode>("card")
 
+  // Fetch single orientation if orientationId is provided
+  const { data: orientation, isLoading: isLoadingOrientation } = useQuery<ApiOrientationPublic>({
+    ...getOrientationQueryOptions({ orientationId: orientationId || "" }),
+    enabled: !!orientationId,
+  })
+
   if (orientationId) {
-    // Find the orientation by ID - check temp orientations first, then sample orientations
-    const tempOrientations = getTempOrientations()
-    const allOrientations = [...tempOrientations, ...sampleOrientations]
-    const orientation = allOrientations.find((o) => o.id === orientationId)
+    if (isLoadingOrientation) {
+      return <PendingItems />
+    }
 
     if (orientation) {
       if (editMode === "true") {

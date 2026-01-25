@@ -1,11 +1,11 @@
 import { Box, Container, Typography, Paper, Card, CardContent, Chip, Button, Stack } from "@mui/material"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useMemo } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { FiCompass, FiTrendingUp, FiArrowRight, FiTarget } from "react-icons/fi"
 
 import useAuth from "@/hooks/useAuth"
-import { sampleOrientations } from "@/data/sampleOrientations"
-import { getTempOrientations } from "@/utils/tempOrientationStorage"
+import { OrientationsService } from "@/client"
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
@@ -15,21 +15,25 @@ function Dashboard() {
   const { user: currentUser } = useAuth()
   const navigate = useNavigate()
 
-  // Combine sample and temp orientations
+  // Fetch orientations from API
+  const { data: orientationsData } = useQuery({
+    queryKey: ["orientations"],
+    queryFn: () => OrientationsService.readOrientations({ limit: 100 }),
+  })
+
   const allOrientations = useMemo(() => {
-    const tempOrientations = getTempOrientations()
-    return [...tempOrientations, ...sampleOrientations]
-  }, [])
+    return orientationsData?.data || []
+  }, [orientationsData])
 
   // Calculate overall metrics
   const metrics = useMemo(() => {
     const totalOrientations = allOrientations.length
-    const totalTraits = allOrientations.reduce((sum, ori) => sum + ori.traits.length, 0)
+    const totalTraits = allOrientations.reduce((sum, ori) => sum + (ori.traits?.length || 0), 0)
     const averageTraitValue =
       totalTraits > 0
         ? Math.round(
             allOrientations.reduce(
-              (sum, ori) => sum + ori.traits.reduce((s, t) => s + t.value, 0),
+              (sum, ori) => sum + (ori.traits?.reduce((s, t) => s + t.value, 0) || 0),
               0
             ) / totalTraits
           )
@@ -42,11 +46,9 @@ function Dashboard() {
     }
   }, [allOrientations])
 
-  // Get recent orientations (top 3)
+  // Get recent orientations (top 3) - just take the first 3 since API returns them sorted
   const recentOrientations = useMemo(() => {
-    return allOrientations
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-      .slice(0, 3)
+    return allOrientations.slice(0, 3)
   }, [allOrientations])
 
   return (
@@ -159,11 +161,11 @@ function Dashboard() {
           ) : (
             <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
               {recentOrientations.map((orientation) => {
-                const totalTraits = orientation.traits.length
+                const totalTraits = orientation.traits?.length || 0
                 const averageValue =
                   totalTraits > 0
                     ? Math.round(
-                        orientation.traits.reduce((sum, trait) => sum + trait.value, 0) /
+                        (orientation.traits?.reduce((sum, trait) => sum + trait.value, 0) || 0) /
                           totalTraits
                       )
                     : 0
@@ -192,10 +194,6 @@ function Dashboard() {
                         <Typography variant="h6" sx={{ fontWeight: "bold" }}>
                           {orientation.title}
                         </Typography>
-                        {/* FIXME: uses hard-coded temp value; create generic chip component. */}
-                        {orientation.id.startsWith("temp-") && (
-                          <Chip label="Temp" size="small" color="warning" />
-                        )}
                       </Box>
                       <Typography
                         variant="body2"

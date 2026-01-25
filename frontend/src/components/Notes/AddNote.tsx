@@ -6,7 +6,7 @@ import 'react-quill/dist/quill.snow.css'
 import { useState } from "react"
 import { FaPlus } from "react-icons/fa"
 
-import { type NoteCreate, ItemsService } from "../../client"
+import { type ItemCreate, ItemsService } from "../../client"
 import type { ApiError } from "../../client/core/ApiError"
 import useCustomToast from "../../hooks/useCustomToast"
 import { handleError } from "../../utils"
@@ -28,7 +28,7 @@ const AddNote = () => {
     reset,
     control,
     formState: { errors, isValid, isSubmitting },
-  } = useForm<NoteCreate>({
+  } = useForm<ItemCreate>({
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
@@ -38,7 +38,7 @@ const AddNote = () => {
   })
 
   const mutation = useMutation({
-    mutationFn: (data: NoteCreate) =>
+    mutationFn: (data: ItemCreate) =>
       ItemsService.createItem({ requestBody: data }),
     onSuccess: () => {
       showSuccessToast("Note created successfully.")
@@ -53,7 +53,7 @@ const AddNote = () => {
     },
   })
 
-  const onSubmit: SubmitHandler<NoteCreate> = (data) => {
+  const onSubmit: SubmitHandler<ItemCreate> = (data) => {
     mutation.mutate(data)
   }
 

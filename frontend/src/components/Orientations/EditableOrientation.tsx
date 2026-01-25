@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Paper,
-  Alert,
   TextField,
   IconButton,
   List,
@@ -14,7 +13,8 @@ import {
 } from "@mui/material"
 import { useNavigate } from "@tanstack/react-router"
 import { useCallback, useState } from "react"
-import { FiSave, FiPlus, FiEdit2, FiTrash, FiAlertCircle } from "react-icons/fi"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { FiSave, FiPlus, FiEdit2, FiTrash } from "react-icons/fi"
 import { Radar } from "react-chartjs-2"
 import {
   Chart as ChartJS,
@@ -26,8 +26,12 @@ import {
   Legend,
 } from "chart.js"
 import type { OrientationPublic, OrientationTrait } from "../../types/orientations"
+import type { OrientationUpdate } from "../../client"
+import { OrientationsService } from "../../client"
+import type { ApiError } from "../../client/core/ApiError"
+import useCustomToast from "../../hooks/useCustomToast"
+import { handleError } from "../../utils"
 import TraitModal from "./TraitModal"
-import { saveTempOrientation } from "../../utils/tempOrientationStorage"
 
 // Register Chart.js components
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
@@ -38,14 +42,36 @@ interface EditableOrientationProps {
 
 const EditableOrientation = ({ orientation }: EditableOrientationProps) => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const { showSuccessToast } = useCustomToast()
   const [modalOpen, setModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<"add" | "edit">("add")
   const [selectedTrait, setSelectedTrait] = useState<OrientationTrait | null>(null)
-  const [traits, setTraits] = useState<OrientationTrait[]>(orientation.traits)
+  const [traits, setTraits] = useState<OrientationTrait[]>(orientation.traits || [])
   const [formData, setFormData] = useState({
     title: orientation.title,
     description: orientation.description || "",
     notes: orientation.notes || "",
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: (data: OrientationUpdate) =>
+      OrientationsService.updateOrientationEndpoint({ id: orientation.id, requestBody: data }),
+    onSuccess: () => {
+      showSuccessToast("Orientation updated successfully.")
+      // Navigate back to view mode
+      navigate({
+        to: "/orientations",
+        search: { orientationId: orientation.id },
+      })
+    },
+    onError: (err: ApiError) => {
+      handleError(err)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["orientations"] })
+      queryClient.invalidateQueries({ queryKey: ["orientation", orientation.id] })
+    },
   })
 
   const handleAddTrait = () => {
@@ -89,26 +115,19 @@ const EditableOrientation = ({ orientation }: EditableOrientationProps) => {
   )
 
   const handleSave = useCallback(() => {
-    const updatedOrientation: OrientationPublic = {
-      ...orientation,
+    const orientationData: OrientationUpdate = {
       title: formData.title,
-      description: formData.description,
-      notes: formData.notes,
-      traits: traits,
-      updatedAt: new Date().toISOString(),
+      description: formData.description || undefined,
+      notes: formData.notes || undefined,
+      traits: traits.map(trait => ({
+        name: trait.name,
+        value: trait.value,
+        description: trait.description,
+      })),
     }
 
-    // Save to temporary storage
-    saveTempOrientation(updatedOrientation)
-
-    console.log("Saved orientation to temporary storage", updatedOrientation)
-
-    // Navigate back to view mode
-    navigate({
-      to: "/orientations",
-      search: { orientationId: orientation.id },
-    })
-  }, [navigate, orientation, formData, traits])
+    updateMutation.mutate(orientationData)
+  }, [formData, traits, updateMutation])
 
   const handleCancel = useCallback(() => {
     navigate({
@@ -170,22 +189,20 @@ const EditableOrientation = ({ orientation }: EditableOrientationProps) => {
             Edit Orientation
           </Typography>
           <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="outlined" onClick={handleCancel}>
+            <Button variant="outlined" onClick={handleCancel} disabled={updateMutation.isPending}>
               Cancel
             </Button>
-            <Button variant="contained" startIcon={<FiSave />} onClick={handleSave}>
-              Save
+            <Button
+              variant="contained"
+              startIcon={<FiSave />}
+              onClick={handleSave}
+              disabled={updateMutation.isPending}
+            >
+              {updateMutation.isPending ? "Saving..." : "Save"}
             </Button>
           </Box>
         </Box>
 
-        {/* Temporary Storage Warning */}
-        {orientation.id.startsWith("temp-") && (
-          <Alert severity="warning" icon={<FiAlertCircle />} sx={{ mb: 3 }}>
-            <strong>Temporary Storage:</strong> This orientation is stored in your browser's
-            localStorage only. Changes will be lost if you clear browser data.
-          </Alert>
-        )}
 
         {/* Basic Information */}
         <Paper sx={{ p: 3, mb: 3 }}>
