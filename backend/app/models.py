@@ -2,6 +2,7 @@ import uuid
 from typing import Optional
 
 from pydantic import EmailStr
+import sqlalchemy as sa
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -11,6 +12,7 @@ class UserBase(SQLModel):
     is_active: bool = True
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
+    profile_image: str | None = Field(default=None, sa_type=sa.Text)
 
 
 # Properties to receive via API on creation

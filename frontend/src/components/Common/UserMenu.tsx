@@ -1,6 +1,6 @@
-import { Box, Button, Menu, MenuItem, Typography } from "@mui/material"
+import { Avatar, Box, Button, Menu, MenuItem, Typography } from "@mui/material"
 import { Link } from "@tanstack/react-router"
-import { FaUserAstronaut } from "react-icons/fa"
+import { FaUserCircle } from "react-icons/fa"
 import { FiLogOut, FiUser } from "react-icons/fi"
 import { useState } from "react"
 
@@ -24,14 +24,24 @@ const UserMenu = () => {
     logout()
   }
 
+  const profileImage = user?.profile_image || "/assets/images/default-avatar.svg"
+
   return (
     <Box>
       <Button
         data-testid="user-menu"
         variant="contained"
         onClick={handleClick}
-        startIcon={<FaUserAstronaut />}
-        sx={{ maxWidth: 150, textTransform: 'none' }}
+        startIcon={
+          <Avatar 
+            src={profileImage} 
+            alt={user?.full_name || "User"}
+            sx={{ width: 32, height: 32 }}
+          >
+            <FaUserCircle />
+          </Avatar>
+        }
+        sx={{ maxWidth: 200, textTransform: 'none', pl: 1 }}
       >
         <Typography noWrap>{user?.full_name || "User"}</Typography>
       </Button>
