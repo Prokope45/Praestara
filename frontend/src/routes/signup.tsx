@@ -69,20 +69,25 @@ function SignUp() {
         sx={{
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'stretch',
+          alignItems: 'center',
           justifyContent: 'center',
           gap: 2,
           py: 4,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 3 }}>
-          <img src={Logo} alt="Logo" style={{ width: '100px', maxWidth: '100%', padding: '8px', marginTop: '4px' }} />
-          <Typography sx={{ fontWeight: 'bold', fontSize: 35, px: 1, mt: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+          <Box
+            component="img"
+            src={Logo}
+            alt="Logo"
+            sx={{ width: 125, maxWidth: 'md' }}
+          />
+          <Typography variant="h3" fontWeight="bold">
             Praestara
           </Typography>
         </Box>
 
-        <Stack spacing={2}>
+        <Stack spacing={2} sx={{ width: '100%' }}>
           <InputGroup startElement={<FiUser />}>
             <TextField
               id="full_name"
