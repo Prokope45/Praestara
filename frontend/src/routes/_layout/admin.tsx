@@ -10,13 +10,17 @@ import {
   TableRow,
   Paper,
   Chip,
+  Tabs,
+  Tab,
 } from "@mui/material"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { z } from "zod"
+import * as React from "react"
 
 import { type UserPublic, UsersService } from "@/client"
 import AddUser from "@/components/Admin/AddUser"
+import AdminQuestionnaires from "@/components/Admin/AdminQuestionnaires"
 import { UserActionsMenu } from "@/components/Common/UserActionsMenu"
 import PendingUsers from "@/components/Pending/PendingUsers"
 import {
@@ -134,15 +138,55 @@ function UsersTable() {
   )
 }
 
+interface TabPanelProps {
+  children?: React.ReactNode
+  index: number
+  value: number
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`admin-tabpanel-${index}`}
+      aria-labelledby={`admin-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  )
+}
+
 function Admin() {
+  const [value, setValue] = React.useState(0)
+
+  const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setValue(newValue)
+  }
+
   return (
     <Container maxWidth={false}>
-      <Typography variant="h4" component="h1" sx={{ pt: 6 }}>
-        Users Management
+      <Typography variant="h4" component="h1" sx={{ pt: 6, mb: 3 }}>
+        Admin Panel
       </Typography>
 
-      <AddUser />
-      <UsersTable />
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs value={value} onChange={handleChange} aria-label="admin tabs">
+          <Tab label="Users" id="admin-tab-0" />
+          <Tab label="Questionnaires" id="admin-tab-1" />
+        </Tabs>
+      </Box>
+
+      <TabPanel value={value} index={0}>
+        <AddUser />
+        <UsersTable />
+      </TabPanel>
+      <TabPanel value={value} index={1}>
+        <AdminQuestionnaires />
+      </TabPanel>
     </Container>
   )
 }

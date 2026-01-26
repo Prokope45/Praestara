@@ -19,7 +19,7 @@ import { useState } from "react"
 
 import { ItemsService } from "../../client"
 import type { ItemPublic } from "../../client"
-import { ItemActionsMenu } from "../../components/Common/NoteActionsMenu"
+import { ItemActionsMenu } from "../../components/Notes/NoteActionsMenu"
 import AddNote from "../../components/Notes/AddNote"
 import NoteCard from "../../components/Notes/NoteCard"
 import NoteDetail from "../../components/Notes/NoteDetail"

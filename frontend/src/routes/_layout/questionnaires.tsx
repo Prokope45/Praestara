@@ -33,7 +33,7 @@ function Questionnaires() {
     (a: QuestionnaireAssignmentPublic) => a.status === "COMPLETED"
   )
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | undefined) => {
     switch (status) {
       case "PENDING":
         return "warning"
@@ -46,7 +46,7 @@ function Questionnaires() {
     }
   }
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: string | undefined) => {
     switch (status) {
       case "PENDING":
         return <FiClock />

@@ -1,11 +1,14 @@
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from pydantic import EmailStr
 import sqlalchemy as sa
 from sqlmodel import Field, Relationship, SQLModel
+
+if TYPE_CHECKING:
+    from typing import List
 
 
 # Enums for questionnaire system
@@ -209,48 +212,7 @@ class OrientationsPublic(SQLModel):
     count: int
 
 
-# Questionnaire Template models
-class QuestionnaireTemplateBase(SQLModel):
-    title: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=1000)
-    is_active: bool = True
-
-
-class QuestionnaireTemplateCreate(QuestionnaireTemplateBase):
-    questions: list["QuestionCreate"] = []
-
-
-class QuestionnaireTemplateUpdate(QuestionnaireTemplateBase):
-    title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
-    questions: list["QuestionCreate"] | None = None
-
-
-class QuestionnaireTemplate(QuestionnaireTemplateBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    created_by_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
-    )
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-    created_by: Optional["User"] = Relationship(back_populates="created_questionnaires")
-    questions: list["Question"] = Relationship(back_populates="questionnaire", cascade_delete=True)
-    assignments: list["QuestionnaireAssignment"] = Relationship(back_populates="questionnaire", cascade_delete=True)
-
-
-class QuestionnaireTemplatePublic(QuestionnaireTemplateBase):
-    id: uuid.UUID
-    created_by_id: uuid.UUID
-    created_at: datetime
-    updated_at: datetime
-    questions: list["QuestionPublic"] = []
-
-
-class QuestionnaireTemplatesPublic(SQLModel):
-    data: list[QuestionnaireTemplatePublic]
-    count: int
-
-
-# Question models
+# Question models (defined before QuestionnaireTemplate to avoid forward reference issues)
 class QuestionBase(SQLModel):
     question_text: str = Field(max_length=1000)
     order: int = Field(ge=0)
@@ -279,6 +241,47 @@ class Question(QuestionBase, table=True):
 class QuestionPublic(QuestionBase):
     id: uuid.UUID
     questionnaire_id: uuid.UUID
+
+
+# Questionnaire Template models
+class QuestionnaireTemplateBase(SQLModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=1000)
+    is_active: bool = True
+
+
+class QuestionnaireTemplateCreate(QuestionnaireTemplateBase):
+    questions: list[QuestionCreate] = []
+
+
+class QuestionnaireTemplateUpdate(QuestionnaireTemplateBase):
+    title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
+    questions: list[QuestionCreate] | None = None
+
+
+class QuestionnaireTemplate(QuestionnaireTemplateBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_by_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: Optional["User"] = Relationship(back_populates="created_questionnaires")
+    questions: list["Question"] = Relationship(back_populates="questionnaire", cascade_delete=True)
+    assignments: list["QuestionnaireAssignment"] = Relationship(back_populates="questionnaire", cascade_delete=True)
+
+
+class QuestionnaireTemplatePublic(QuestionnaireTemplateBase):
+    id: uuid.UUID
+    created_by_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    questions: list[QuestionPublic] = []
+
+
+class QuestionnaireTemplatesPublic(SQLModel):
+    data: list[QuestionnaireTemplatePublic]
+    count: int
 
 
 # Appointment models
