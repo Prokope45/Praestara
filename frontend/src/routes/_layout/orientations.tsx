@@ -12,9 +12,6 @@ import {
   Paper,
   Stack,
   Chip,
-  Card,
-  CardContent,
-  CardActions,
 } from "@mui/material"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
@@ -26,6 +23,7 @@ import AddOrientation from "../../components/Orientations/AddOrientation"
 import EditableOrientation from "../../components/Orientations/EditableOrientation"
 import OrientationDetail from "../../components/Orientations/OrientationDetail"
 import OrientationActionsMenu from "../../components/Orientations/OrientationActionsMenu"
+import OrientationCard from "../../components/Orientations/OrientationCard"
 import PendingItems from "../../components/Pending/PendingItems"
 import ViewSwitcher, { ViewMode } from "../../components/Common/ViewSwitcher"
 import {
@@ -138,78 +136,14 @@ function OrientationsView({ viewMode }: OrientationsViewProps) {
             mb: 2,
           }}
         >
-          {orientations.map((orientation) => {
-            const totalTraits = orientation.traits?.length || 0
-            const averageValue =
-              totalTraits > 0
-                ? Math.round(
-                    (orientation.traits?.reduce((sum, trait) => sum + trait.value, 0) || 0) /
-                      totalTraits
-                  )
-                : 0
-
-            return (
-              <Card
-                key={orientation.id}
-                sx={{
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  opacity: isPlaceholderData ? 0.5 : 1,
-                  transition: "transform 0.2s, box-shadow 0.2s",
-                  cursor: "pointer",
-                  "&:hover": {
-                    transform: "translateY(-4px)",
-                    boxShadow: 4,
-                  },
-                }}
-                onClick={() =>
-                  navigate({
-                    search: (prev: Record<string, unknown>) => ({
-                      ...prev,
-                      orientationId: orientation.id,
-                    }),
-                  })
-                }
-              >
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
-                    {orientation.title}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{
-                      mb: 2,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                    }}
-                  >
-                    {orientation.description || "No description"}
-                  </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                    <Chip label={`${totalTraits} traits`} size="small" variant="outlined" />
-                    {totalTraits > 0 && (
-                      <Chip
-                        label={`${averageValue}% avg`}
-                        size="small"
-                        color={averageValue >= 70 ? "success" : "default"}
-                      />
-                    )}
-                  </Box>
-                </CardContent>
-                <CardActions
-                  sx={{ justifyContent: "flex-end", pt: 0 }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <OrientationActionsMenu orientation={orientation} onDelete={handleDelete} />
-                </CardActions>
-              </Card>
-            )
-          })}
+          {orientations.map((orientation) => (
+            <OrientationCard
+              key={orientation.id}
+              orientation={orientation}
+              isPlaceholderData={isPlaceholderData}
+              onDelete={handleDelete}
+            />
+          ))}
         </Box>
       )}
 

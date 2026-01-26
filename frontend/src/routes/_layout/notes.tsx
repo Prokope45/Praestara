@@ -10,9 +10,6 @@ import {
   TableRow,
   Paper,
   Stack,
-  Card,
-  CardContent,
-  CardActions,
 } from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
@@ -21,8 +18,12 @@ import { z } from "zod"
 import { useState } from "react"
 
 import { ItemsService } from "../../client"
-import { ItemActionsMenu } from "../../components/Common/ItemActionsMenu"
+import type { ItemPublic } from "../../client"
+import { ItemActionsMenu } from "../../components/Common/NoteActionsMenu"
 import AddNote from "../../components/Notes/AddNote"
+import NoteCard from "../../components/Notes/NoteCard"
+import NoteDetail from "../../components/Notes/NoteDetail"
+import EditableNote from "../../components/Notes/EditableNote"
 import PendingItems from "../../components/Pending/PendingItems"
 import ViewSwitcher, { ViewMode } from "../../components/Common/ViewSwitcher"
 import {
@@ -34,6 +35,8 @@ import {
 
 const notesSearchSchema = z.object({
   page: z.number().catch(1),
+  noteId: z.string().optional(),
+  editMode: z.string().optional(),
 })
 
 const PER_PAGE = 5
@@ -43,6 +46,13 @@ function getNotesQueryOptions({ page }: { page: number }) {
     queryFn: () =>
       ItemsService.readItems({ skip: (page - 1) * PER_PAGE, limit: PER_PAGE }),
     queryKey: ["notes", { page }],
+  }
+}
+
+function getNoteQueryOptions({ noteId }: { noteId: string }) {
+  return {
+    queryFn: () => ItemsService.readItem({ id: noteId }),
+    queryKey: ["note", noteId],
   }
 }
 
@@ -105,53 +115,14 @@ function NotesView({ viewMode }: NotesViewProps) {
       {viewMode === "card" && (
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(3, 1fr)",
-            },
+            display: "flex",
+            flexDirection: "column",
             gap: 2,
             mb: 2,
           }}
         >
           {notes.map((note) => (
-            <Card
-              key={note.id}
-              sx={{
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                opacity: isPlaceholderData ? 0.5 : 1,
-                transition: "transform 0.2s, box-shadow 0.2s",
-                "&:hover": {
-                  transform: "translateY(-4px)",
-                  boxShadow: 4,
-                },
-              }}
-            >
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
-                  {note.title}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 3,
-                    WebkitBoxOrient: "vertical",
-                  }}
-                >
-                  {note.description || "No description"}
-                </Typography>
-              </CardContent>
-              <CardActions sx={{ justifyContent: "flex-end", pt: 0 }}>
-                <ItemActionsMenu note={note} />
-              </CardActions>
-            </Card>
+            <NoteCard key={note.id} note={note} isPlaceholderData={isPlaceholderData} />
           ))}
         </Box>
       )}
@@ -221,7 +192,28 @@ function NotesView({ viewMode }: NotesViewProps) {
 }
 
 function Notes() {
+  const { noteId, editMode } = Route.useSearch()
   const [viewMode, setViewMode] = useState<ViewMode>("card")
+
+  // Fetch single note if noteId is provided
+  const { data: note, isLoading: isLoadingNote } = useQuery<ItemPublic>({
+    ...getNoteQueryOptions({ noteId: noteId || "" }),
+    enabled: !!noteId,
+  })
+
+  if (noteId) {
+    if (isLoadingNote) {
+      return <PendingItems />
+    }
+
+    if (note) {
+      if (editMode === "true") {
+        return <EditableNote note={note} />
+      }
+
+      return <NoteDetail note={note} />
+    }
+  }
 
   return (
     <Container maxWidth={false}>

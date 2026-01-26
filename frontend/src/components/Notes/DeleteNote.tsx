@@ -1,8 +1,7 @@
-import { Typography, MenuItem } from '@mui/material'
+import { Typography } from '@mui/material'
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
-import { FiTrash2 } from "react-icons/fi"
 
 import { ItemsService } from "../../client"
 import {
@@ -14,8 +13,18 @@ import {
 import { Button } from "../ui/button"
 import useCustomToast from "../../hooks/useCustomToast"
 
-const DeleteNote = ({ id }: { id: string }) => {
-  const [isOpen, setIsOpen] = useState(false)
+interface DeleteNoteProps {
+  id: string
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+}
+
+const DeleteNote = ({ id, open: controlledOpen, onOpenChange }: DeleteNoteProps) => {
+  const [internalOpen, setInternalOpen] = useState(false)
+  
+  // Use controlled state if provided, otherwise use internal state
+  const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen
+  const setIsOpen = onOpenChange || setInternalOpen
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const {
@@ -47,11 +56,6 @@ const DeleteNote = ({ id }: { id: string }) => {
 
   return (
     <>
-      <MenuItem onClick={() => setIsOpen(true)} sx={{ color: 'error.main' }}>
-        <FiTrash2 style={{ marginRight: 8 }} />
-        Delete Note
-      </MenuItem>
-
       <DialogRoot
         open={isOpen}
         onOpenChange={(open) => setIsOpen(open)}
