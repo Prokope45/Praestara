@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, OrientationsReadOrientationsData, OrientationsReadOrientationsResponse, OrientationsCreateOrientationEndpointData, OrientationsCreateOrientationEndpointResponse, OrientationsReadOrientationData, OrientationsReadOrientationResponse, OrientationsUpdateOrientationEndpointData, OrientationsUpdateOrientationEndpointResponse, OrientationsDeleteOrientationData, OrientationsDeleteOrientationResponse, PrivateCreateUserData, PrivateCreateUserResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersUploadProfileImageData, UsersUploadProfileImageResponse, UsersDeleteProfileImageResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, OrientationsReadOrientationsData, OrientationsReadOrientationsResponse, OrientationsCreateOrientationEndpointData, OrientationsCreateOrientationEndpointResponse, OrientationsReadOrientationData, OrientationsReadOrientationResponse, OrientationsUpdateOrientationEndpointData, OrientationsUpdateOrientationEndpointResponse, OrientationsDeleteOrientationData, OrientationsDeleteOrientationResponse, PrivateCreateUserData, PrivateCreateUserResponse, QuestionnairesReadQuestionnaireTemplatesData, QuestionnairesReadQuestionnaireTemplatesResponse, QuestionnairesCreateQuestionnaireTemplateData, QuestionnairesCreateQuestionnaireTemplateResponse, QuestionnairesReadQuestionnaireTemplateData, QuestionnairesReadQuestionnaireTemplateResponse, QuestionnairesUpdateQuestionnaireTemplateData, QuestionnairesUpdateQuestionnaireTemplateResponse, QuestionnairesDeleteQuestionnaireTemplateData, QuestionnairesDeleteQuestionnaireTemplateResponse, QuestionnairesCreateAssignmentData, QuestionnairesCreateAssignmentResponse, QuestionnairesReadMyAssignmentsData, QuestionnairesReadMyAssignmentsResponse, QuestionnairesReadAssignmentData, QuestionnairesReadAssignmentResponse, QuestionnairesCreateResponseData, QuestionnairesCreateResponseResponse, QuestionnairesReadMyResponsesData, QuestionnairesReadMyResponsesResponse, QuestionnairesReadResponseData, QuestionnairesReadResponseResponse, QuestionnairesUpdateResponseScoreData, QuestionnairesUpdateResponseScoreResponse, QuestionnairesReadAppointmentsData, QuestionnairesReadAppointmentsResponse, QuestionnairesCreateAppointmentData, QuestionnairesCreateAppointmentResponse, QuestionnairesReadAppointmentData, QuestionnairesReadAppointmentResponse, QuestionnairesUpdateAppointmentData, QuestionnairesUpdateAppointmentResponse, QuestionnairesDeleteAppointmentData, QuestionnairesDeleteAppointmentResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersUploadProfileImageData, UsersUploadProfileImageResponse, UsersDeleteProfileImageResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class ItemsService {
     /**
@@ -342,6 +342,379 @@ export class PrivateService {
             url: '/api/v1/private/users/',
             body: data.requestBody,
             mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+}
+
+export class QuestionnairesService {
+    /**
+     * Read Questionnaire Templates
+     * Retrieve questionnaire templates (Admin only).
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns QuestionnaireTemplatesPublic Successful Response
+     * @throws ApiError
+     */
+    public static readQuestionnaireTemplates(data: QuestionnairesReadQuestionnaireTemplatesData = {}): CancelablePromise<QuestionnairesReadQuestionnaireTemplatesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/questionnaires/templates',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Questionnaire Template
+     * Create new questionnaire template (Admin only).
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns QuestionnaireTemplatePublic Successful Response
+     * @throws ApiError
+     */
+    public static createQuestionnaireTemplate(data: QuestionnairesCreateQuestionnaireTemplateData): CancelablePromise<QuestionnairesCreateQuestionnaireTemplateResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/questionnaires/templates',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Questionnaire Template
+     * Get questionnaire template by ID (Admin only).
+     * @param data The data for the request.
+     * @param data.templateId
+     * @returns QuestionnaireTemplatePublic Successful Response
+     * @throws ApiError
+     */
+    public static readQuestionnaireTemplate(data: QuestionnairesReadQuestionnaireTemplateData): CancelablePromise<QuestionnairesReadQuestionnaireTemplateResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/questionnaires/templates/{template_id}',
+            path: {
+                template_id: data.templateId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Questionnaire Template
+     * Update questionnaire template (Admin only).
+     * @param data The data for the request.
+     * @param data.templateId
+     * @param data.requestBody
+     * @returns QuestionnaireTemplatePublic Successful Response
+     * @throws ApiError
+     */
+    public static updateQuestionnaireTemplate(data: QuestionnairesUpdateQuestionnaireTemplateData): CancelablePromise<QuestionnairesUpdateQuestionnaireTemplateResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/questionnaires/templates/{template_id}',
+            path: {
+                template_id: data.templateId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Questionnaire Template
+     * Delete questionnaire template (Admin only).
+     * @param data The data for the request.
+     * @param data.templateId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteQuestionnaireTemplate(data: QuestionnairesDeleteQuestionnaireTemplateData): CancelablePromise<QuestionnairesDeleteQuestionnaireTemplateResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/questionnaires/templates/{template_id}',
+            path: {
+                template_id: data.templateId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Assignment
+     * Assign questionnaire to user (Admin only).
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns QuestionnaireAssignmentPublic Successful Response
+     * @throws ApiError
+     */
+    public static createAssignment(data: QuestionnairesCreateAssignmentData): CancelablePromise<QuestionnairesCreateAssignmentResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/questionnaires/assignments',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read My Assignments
+     * Get current user's questionnaire assignments.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns QuestionnaireAssignmentsPublic Successful Response
+     * @throws ApiError
+     */
+    public static readMyAssignments(data: QuestionnairesReadMyAssignmentsData = {}): CancelablePromise<QuestionnairesReadMyAssignmentsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/questionnaires/assignments/me',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Assignment
+     * Get specific assignment with questions.
+     * @param data The data for the request.
+     * @param data.assignmentId
+     * @returns QuestionnaireAssignmentPublic Successful Response
+     * @throws ApiError
+     */
+    public static readAssignment(data: QuestionnairesReadAssignmentData): CancelablePromise<QuestionnairesReadAssignmentResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/questionnaires/assignments/{assignment_id}',
+            path: {
+                assignment_id: data.assignmentId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Response
+     * Submit questionnaire response.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns QuestionnaireResponsePublic Successful Response
+     * @throws ApiError
+     */
+    public static createResponse(data: QuestionnairesCreateResponseData): CancelablePromise<QuestionnairesCreateResponseResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/questionnaires/responses',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read My Responses
+     * Get current user's questionnaire responses.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns QuestionnaireResponsesPublic Successful Response
+     * @throws ApiError
+     */
+    public static readMyResponses(data: QuestionnairesReadMyResponsesData = {}): CancelablePromise<QuestionnairesReadMyResponsesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/questionnaires/responses/me',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Response
+     * Get specific response.
+     * @param data The data for the request.
+     * @param data.responseId
+     * @returns QuestionnaireResponsePublic Successful Response
+     * @throws ApiError
+     */
+    public static readResponse(data: QuestionnairesReadResponseData): CancelablePromise<QuestionnairesReadResponseResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/questionnaires/responses/{response_id}',
+            path: {
+                response_id: data.responseId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Response Score
+     * Update response manual score override (Admin only).
+     * @param data The data for the request.
+     * @param data.responseId
+     * @param data.requestBody
+     * @returns QuestionnaireResponsePublic Successful Response
+     * @throws ApiError
+     */
+    public static updateResponseScore(data: QuestionnairesUpdateResponseScoreData): CancelablePromise<QuestionnairesUpdateResponseScoreResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/questionnaires/responses/{response_id}',
+            path: {
+                response_id: data.responseId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Appointments
+     * Retrieve appointments. Users see their own, admins see all.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns AppointmentsPublic Successful Response
+     * @throws ApiError
+     */
+    public static readAppointments(data: QuestionnairesReadAppointmentsData = {}): CancelablePromise<QuestionnairesReadAppointmentsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/questionnaires/appointments',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Appointment
+     * Create new appointment (Admin only).
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns AppointmentPublic Successful Response
+     * @throws ApiError
+     */
+    public static createAppointment(data: QuestionnairesCreateAppointmentData): CancelablePromise<QuestionnairesCreateAppointmentResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/questionnaires/appointments',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Appointment
+     * Get appointment by ID.
+     * @param data The data for the request.
+     * @param data.appointmentId
+     * @returns AppointmentPublic Successful Response
+     * @throws ApiError
+     */
+    public static readAppointment(data: QuestionnairesReadAppointmentData): CancelablePromise<QuestionnairesReadAppointmentResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/questionnaires/appointments/{appointment_id}',
+            path: {
+                appointment_id: data.appointmentId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Update Appointment
+     * Update appointment (Admin only).
+     * @param data The data for the request.
+     * @param data.appointmentId
+     * @param data.requestBody
+     * @returns AppointmentPublic Successful Response
+     * @throws ApiError
+     */
+    public static updateAppointment(data: QuestionnairesUpdateAppointmentData): CancelablePromise<QuestionnairesUpdateAppointmentResponse> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/v1/questionnaires/appointments/{appointment_id}',
+            path: {
+                appointment_id: data.appointmentId
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Appointment
+     * Delete appointment (Admin only).
+     * @param data The data for the request.
+     * @param data.appointmentId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteAppointment(data: QuestionnairesDeleteAppointmentData): CancelablePromise<QuestionnairesDeleteAppointmentResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/questionnaires/appointments/{appointment_id}',
+            path: {
+                appointment_id: data.appointmentId
+            },
             errors: {
                 422: 'Validation Error'
             }
