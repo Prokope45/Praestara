@@ -24,6 +24,8 @@ from app.models import (
     UsersPublic,
     UserUpdate,
     UserUpdateMe,
+    QuestionnaireTemplate,
+    QuestionnaireAssignmentCreate,
 )
 from app.utils import generate_new_account_email, send_email
 
@@ -196,6 +198,24 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
         )
     user_create = UserCreate.model_validate(user_in)
     user = crud.create_user(session=session, user_create=user_create)
+    
+    # Auto-assign "Initial Assessment" questionnaire if it exists
+    initial_questionnaire = session.exec(
+        select(QuestionnaireTemplate).where(
+            QuestionnaireTemplate.title == "Initial Assessment",
+            QuestionnaireTemplate.is_active == True
+        )
+    ).first()
+    
+    if initial_questionnaire:
+        from datetime import datetime, timedelta
+        assignment_data = QuestionnaireAssignmentCreate(
+            questionnaire_id=initial_questionnaire.id,
+            user_id=user.id,
+            due_date=datetime.utcnow() + timedelta(days=7)  # 7 days to complete
+        )
+        crud.create_questionnaire_assignment(session=session, assignment_in=assignment_data)
+    
     return user
 
 

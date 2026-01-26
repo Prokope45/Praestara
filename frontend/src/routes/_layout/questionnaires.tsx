@@ -10,7 +10,7 @@ import {
   LinearProgress,
 } from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi"
 
 import { QuestionnairesService, type QuestionnaireAssignmentPublic } from "../../client"
@@ -21,6 +21,7 @@ export const Route = createFileRoute("/_layout/questionnaires")({
 })
 
 function Questionnaires() {
+  const navigate = useNavigate()
   const { data: assignments, isLoading } = useQuery({
     queryKey: ["questionnaire-assignments"],
     queryFn: () => QuestionnairesService.readMyAssignments({ skip: 0, limit: 100 }),
@@ -137,11 +138,16 @@ function Questionnaires() {
                   </Stack>
                 </CardContent>
                 <CardActions>
-                  <Link to={`/questionnaires/${assignment.id}/take`}>
-                    <Button variant="contained" size="small">
-                      Take Questionnaire
-                    </Button>
-                  </Link>
+                  <Button 
+                    variant="contained" 
+                    size="small"
+                    onClick={() => navigate({ 
+                      to: "/questionnaires/$assignmentId/take",
+                      params: { assignmentId: assignment.id }
+                    })}
+                  >
+                    Take Questionnaire
+                  </Button>
                 </CardActions>
               </Card>
             ))}

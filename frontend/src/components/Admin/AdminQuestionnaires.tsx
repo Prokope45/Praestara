@@ -9,18 +9,20 @@ import {
   Typography,
 } from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
-import { FiEdit, FiTrash2, FiPlus } from "react-icons/fi"
+import { FiEdit, FiTrash2, FiPlus, FiUserPlus } from "react-icons/fi"
 import { useState } from "react"
 
 import { QuestionnairesService, type QuestionnaireTemplatePublic } from "../../client"
 import { Button } from "../../components/ui/button"
 import { AddQuestionnaire } from "../../components/Questionnaires/AddQuestionnaire"
 import { DeleteQuestionnaire } from "../../components/Questionnaires/DeleteQuestionnaire"
+import { AssignQuestionnaire } from "../../components/Questionnaires/AssignQuestionnaire"
 
 export default function AdminQuestionnaires() {
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [editingQuestionnaire, setEditingQuestionnaire] = useState<QuestionnaireTemplatePublic | null>(null)
   const [deletingQuestionnaire, setDeletingQuestionnaire] = useState<QuestionnaireTemplatePublic | null>(null)
+  const [assigningQuestionnaire, setAssigningQuestionnaire] = useState<QuestionnaireTemplatePublic | null>(null)
 
   const { data: questionnaires, isLoading } = useQuery({
     queryKey: ["questionnaire-templates"],
@@ -84,6 +86,14 @@ export default function AdminQuestionnaires() {
                     </Stack>
                   </Box>
                   <Stack direction="row" spacing={1}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<FiUserPlus />}
+                      onClick={() => setAssigningQuestionnaire(questionnaire)}
+                    >
+                      Assign
+                    </Button>
                     <IconButton
                       size="small"
                       onClick={() => setEditingQuestionnaire(questionnaire)}
@@ -134,6 +144,14 @@ export default function AdminQuestionnaires() {
           open={!!deletingQuestionnaire}
           onClose={() => setDeletingQuestionnaire(null)}
           questionnaire={deletingQuestionnaire}
+        />
+      )}
+
+      {assigningQuestionnaire && (
+        <AssignQuestionnaire
+          open={!!assigningQuestionnaire}
+          onClose={() => setAssigningQuestionnaire(null)}
+          questionnaire={assigningQuestionnaire}
         />
       )}
     </Box>
