@@ -1,4 +1,4 @@
-import { Box, Radio, RadioGroup, Stack, Typography } from "@mui/material"
+import { Box, Radio, RadioGroup, Typography } from "@mui/material"
 import { Field } from "../ui/field"
 
 interface LikertScaleQuestionProps {
@@ -54,21 +54,20 @@ export function LikertScaleQuestion({
   }
 
   const labels = getLabels()
+  const isYesNo = scaleType === "YES_NO"
 
   return (
     <Box
       sx={{
-        p: 3,
+        py: 3,
         mb: 3,
-        border: "1px solid",
-        borderColor: error ? "error.main" : "divider",
-        borderRadius: 2,
-        backgroundColor: "background.paper",
+        borderBottom: "1px solid",
+        borderColor: "divider",
       }}
     >
       <Field
         label={
-          <Typography variant="h6" component="div">
+          <Typography variant="h6" component="div" sx={{ mb: 2 }}>
             {questionNumber}. {questionText}
             {isRequired && (
               <Typography component="span" color="error.main" sx={{ ml: 1 }}>
@@ -84,19 +83,21 @@ export function LikertScaleQuestion({
           value={value?.toString() || ""}
           onChange={(e) => onChange(parseInt(e.target.value))}
         >
-          <Stack
-            direction={{ base: "column", md: "row" }}
-            spacing={2}
-            mt={3}
-            justifyContent="space-between"
-            flexWrap="wrap"
+          <Box
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 2,
+              mt: 2,
+              justifyContent: "center",
+            }}
           >
             {labels.map((label, index) => (
               <Box
                 key={index}
                 sx={{
-                  flex: { base: "1 1 100%", md: `1 1 ${100 / labels.length}%` },
-                  minWidth: { base: "100%", md: "120px" },
+                  flex: "0 0 auto",
+                  width: "130px",
                 }}
               >
                 <Box
@@ -104,7 +105,9 @@ export function LikertScaleQuestion({
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
+                    justifyContent: "center",
                     p: 2,
+                    height: "120px",
                     border: "1px solid",
                     borderColor: value === index + 1 ? "primary.main" : "divider",
                     borderRadius: 1,
@@ -118,21 +121,30 @@ export function LikertScaleQuestion({
                   }}
                   onClick={() => onChange(index + 1)}
                 >
-                  <Radio value={(index + 1).toString()} />
+                  <Radio value={(index + 1).toString()} sx={{ mb: 1 }} />
                   <Typography
                     variant="body2"
                     textAlign="center"
-                    sx={{ mt: 1, fontWeight: value === index + 1 ? 600 : 400 }}
+                    sx={{ 
+                      fontWeight: value === index + 1 ? 600 : 400,
+                      wordBreak: "break-word",
+                      flex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      px: 1,
+                    }}
                   >
                     {label}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                    {index + 1}
-                  </Typography>
+                  {!isYesNo && (
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                      {index + 1}
+                    </Typography>
+                  )}
                 </Box>
               </Box>
             ))}
-          </Stack>
+          </Box>
         </RadioGroup>
       </Field>
     </Box>

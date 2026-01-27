@@ -375,6 +375,16 @@ class QuestionnaireAssignmentsPublic(SQLModel):
     count: int
 
 
+# Answer models (depended on by response base)
+class AnswerBase(SQLModel):
+    likert_value: int | None = Field(default=None, ge=0, le=7)
+    text_response: str | None = Field(default=None, max_length=1000)
+
+
+class AnswerCreate(AnswerBase):
+    question_id: uuid.UUID
+
+
 # Questionnaire Response models
 class QuestionnaireResponseBase(SQLModel):
     total_score: int | None = None
@@ -383,7 +393,7 @@ class QuestionnaireResponseBase(SQLModel):
 
 class QuestionnaireResponseCreate(SQLModel):
     assignment_id: uuid.UUID
-    answers: list["AnswerCreate"]
+    answers: list[AnswerCreate]
 
 
 class QuestionnaireResponseUpdate(SQLModel):
@@ -418,15 +428,6 @@ class QuestionnaireResponsesPublic(SQLModel):
 
 
 # Answer models
-class AnswerBase(SQLModel):
-    likert_value: int | None = Field(default=None, ge=0, le=7)
-    text_response: str | None = Field(default=None, max_length=1000)
-
-
-class AnswerCreate(AnswerBase):
-    question_id: uuid.UUID
-
-
 class Answer(AnswerBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     response_id: uuid.UUID = Field(

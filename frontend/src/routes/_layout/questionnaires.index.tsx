@@ -16,7 +16,7 @@ import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi"
 import { QuestionnairesService, type QuestionnaireAssignmentPublic } from "../../client"
 import { Button } from "../../components/ui/button"
 
-export const Route = createFileRoute("/_layout/questionnaires")({
+export const Route = createFileRoute("/_layout/questionnaires/")({
   component: Questionnaires,
 })
 
@@ -141,10 +141,12 @@ function Questionnaires() {
                   <Button 
                     variant="contained" 
                     size="small"
-                    onClick={() => navigate({ 
-                      to: "/questionnaires/$assignmentId/take",
-                      params: { assignmentId: assignment.id }
-                    })}
+                    onClick={() => {
+                      navigate({
+                        to: "/questionnaires/$assignmentId/take",
+                        params: { assignmentId: assignment.id }
+                      })
+                    }}
                   >
                     Take Questionnaire
                   </Button>
