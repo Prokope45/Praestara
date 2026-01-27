@@ -343,6 +343,13 @@ class QuestionnaireAssignmentCreate(SQLModel):
     due_date: datetime | None = None
 
 
+class QuestionnaireAssignmentBulkCreate(SQLModel):
+    questionnaire_id: uuid.UUID
+    user_ids: list[uuid.UUID]
+    appointment_id: uuid.UUID | None = None
+    due_date: datetime | None = None
+
+
 class QuestionnaireAssignmentUpdate(SQLModel):
     status: AssignmentStatus | None = None
     reminder_sent: bool | None = None
@@ -382,7 +389,7 @@ class QuestionnaireAssignmentsPublic(SQLModel):
 
 # Answer models (depended on by response base)
 class AnswerBase(SQLModel):
-    likert_value: int | None = Field(default=None, ge=0, le=7)
+    likert_value: int | None = Field(default=None, ge=0)
     text_response: str | None = Field(default=None, max_length=1000)
 
 

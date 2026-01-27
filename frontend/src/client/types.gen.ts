@@ -157,6 +157,13 @@ export type QuestionCreate = {
     custom_unit_label?: (string | null);
 };
 
+export type QuestionnaireAssignmentBulkCreate = {
+    questionnaire_id: string;
+    user_ids: Array<(string)>;
+    appointment_id?: (string | null);
+    due_date?: (string | null);
+};
+
 export type QuestionnaireAssignmentCreate = {
     questionnaire_id: string;
     user_id: string;
@@ -442,6 +449,20 @@ export type QuestionnairesCreateAssignmentData = {
 
 export type QuestionnairesCreateAssignmentResponse = (QuestionnaireAssignmentPublic);
 
+export type QuestionnairesReadAllAssignmentsData = {
+    limit?: number;
+    questionnaireId?: (string | null);
+    skip?: number;
+};
+
+export type QuestionnairesReadAllAssignmentsResponse = (QuestionnaireAssignmentsPublic);
+
+export type QuestionnairesCreateBulkAssignmentsData = {
+    requestBody: QuestionnaireAssignmentBulkCreate;
+};
+
+export type QuestionnairesCreateBulkAssignmentsResponse = (unknown);
+
 export type QuestionnairesReadMyAssignmentsData = {
     limit?: number;
     skip?: number;
@@ -454,6 +475,12 @@ export type QuestionnairesReadAssignmentData = {
 };
 
 export type QuestionnairesReadAssignmentResponse = (QuestionnaireAssignmentPublic);
+
+export type QuestionnairesDeleteAssignmentData = {
+    assignmentId: string;
+};
+
+export type QuestionnairesDeleteAssignmentResponse = (Message);
 
 export type QuestionnairesCreateResponseData = {
     requestBody: QuestionnaireResponseCreate;

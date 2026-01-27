@@ -16,6 +16,7 @@ from app.models import (
     QuestionnaireTemplateUpdate,
     QuestionnaireAssignment,
     QuestionnaireAssignmentCreate,
+    QuestionnaireAssignmentBulkCreate,
     QuestionnaireAssignmentPublic,
     QuestionnaireAssignmentsPublic,
     QuestionnaireResponse,
@@ -168,6 +169,78 @@ def create_assignment(
     return assignment
 
 
+@router.post(
+    "/assignments/bulk",
+    dependencies=[Depends(get_current_active_superuser)],
+)
+def create_bulk_assignments(
+    *, session: SessionDep, assignment_in: QuestionnaireAssignmentBulkCreate
+) -> Any:
+    """
+    Assign questionnaire to multiple users at once (Admin only).
+    """
+    # Verify questionnaire exists
+    template = session.get(QuestionnaireTemplate, assignment_in.questionnaire_id)
+    if not template:
+        raise HTTPException(status_code=404, detail="Questionnaire template not found")
+    
+    # Verify all users exist
+    for user_id in assignment_in.user_ids:
+        user = session.get(User, user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail=f"User {user_id} not found")
+    
+    # If appointment_id provided, verify it exists
+    if assignment_in.appointment_id:
+        appointment = session.get(Appointment, assignment_in.appointment_id)
+        if not appointment:
+            raise HTTPException(status_code=404, detail="Appointment not found")
+    
+    assignments = crud.create_bulk_questionnaire_assignments(
+        session=session, assignment_in=assignment_in
+    )
+    
+    return {
+        "message": f"Questionnaire assigned to {len(assignments)} user(s) successfully",
+        "count": len(assignments)
+    }
+
+
+@router.get(
+    "/assignments",
+    dependencies=[Depends(get_current_active_superuser)],
+    response_model=QuestionnaireAssignmentsPublic,
+)
+def read_all_assignments(
+    session: SessionDep, skip: int = 0, limit: int = 100, questionnaire_id: uuid.UUID | None = None
+) -> Any:
+    """
+    Get all questionnaire assignments (Admin only). Optionally filter by questionnaire_id.
+    """
+    if questionnaire_id:
+        count_statement = (
+            select(func.count())
+            .select_from(QuestionnaireAssignment)
+            .where(QuestionnaireAssignment.questionnaire_id == questionnaire_id)
+        )
+        count = session.exec(count_statement).one()
+        
+        statement = (
+            select(QuestionnaireAssignment)
+            .where(QuestionnaireAssignment.questionnaire_id == questionnaire_id)
+            .offset(skip)
+            .limit(limit)
+        )
+    else:
+        count_statement = select(func.count()).select_from(QuestionnaireAssignment)
+        count = session.exec(count_statement).one()
+        
+        statement = select(QuestionnaireAssignment).offset(skip).limit(limit)
+    
+    assignments = session.exec(statement).all()
+    return QuestionnaireAssignmentsPublic(data=assignments, count=count)
+
+
 @router.get(
     "/assignments/me",
     response_model=QuestionnaireAssignmentsPublic,
@@ -215,6 +288,25 @@ def read_assignment(
         raise HTTPException(status_code=403, detail="Not enough permissions")
     
     return assignment
+
+
+@router.delete(
+    "/assignments/{assignment_id}",
+    dependencies=[Depends(get_current_active_superuser)],
+)
+def delete_assignment(
+    assignment_id: uuid.UUID, session: SessionDep
+) -> Message:
+    """
+    Delete/remove a questionnaire assignment (Admin only).
+    """
+    assignment = session.get(QuestionnaireAssignment, assignment_id)
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    
+    session.delete(assignment)
+    session.commit()
+    return Message(message="Assignment removed successfully")
 
 
 # Response endpoints

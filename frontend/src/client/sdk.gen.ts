@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, OrientationsReadOrientationsData, OrientationsReadOrientationsResponse, OrientationsCreateOrientationEndpointData, OrientationsCreateOrientationEndpointResponse, OrientationsReadOrientationData, OrientationsReadOrientationResponse, OrientationsUpdateOrientationEndpointData, OrientationsUpdateOrientationEndpointResponse, OrientationsDeleteOrientationData, OrientationsDeleteOrientationResponse, PrivateCreateUserData, PrivateCreateUserResponse, QuestionnairesReadQuestionnaireTemplatesData, QuestionnairesReadQuestionnaireTemplatesResponse, QuestionnairesCreateQuestionnaireTemplateData, QuestionnairesCreateQuestionnaireTemplateResponse, QuestionnairesReadQuestionnaireTemplateData, QuestionnairesReadQuestionnaireTemplateResponse, QuestionnairesUpdateQuestionnaireTemplateData, QuestionnairesUpdateQuestionnaireTemplateResponse, QuestionnairesDeleteQuestionnaireTemplateData, QuestionnairesDeleteQuestionnaireTemplateResponse, QuestionnairesCreateAssignmentData, QuestionnairesCreateAssignmentResponse, QuestionnairesReadMyAssignmentsData, QuestionnairesReadMyAssignmentsResponse, QuestionnairesReadAssignmentData, QuestionnairesReadAssignmentResponse, QuestionnairesCreateResponseData, QuestionnairesCreateResponseResponse, QuestionnairesReadMyResponsesData, QuestionnairesReadMyResponsesResponse, QuestionnairesReadResponseData, QuestionnairesReadResponseResponse, QuestionnairesUpdateResponseScoreData, QuestionnairesUpdateResponseScoreResponse, QuestionnairesReadAppointmentsData, QuestionnairesReadAppointmentsResponse, QuestionnairesCreateAppointmentData, QuestionnairesCreateAppointmentResponse, QuestionnairesReadAppointmentData, QuestionnairesReadAppointmentResponse, QuestionnairesUpdateAppointmentData, QuestionnairesUpdateAppointmentResponse, QuestionnairesDeleteAppointmentData, QuestionnairesDeleteAppointmentResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersUploadProfileImageData, UsersUploadProfileImageResponse, UsersDeleteProfileImageResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, OrientationsReadOrientationsData, OrientationsReadOrientationsResponse, OrientationsCreateOrientationEndpointData, OrientationsCreateOrientationEndpointResponse, OrientationsReadOrientationData, OrientationsReadOrientationResponse, OrientationsUpdateOrientationEndpointData, OrientationsUpdateOrientationEndpointResponse, OrientationsDeleteOrientationData, OrientationsDeleteOrientationResponse, PrivateCreateUserData, PrivateCreateUserResponse, QuestionnairesReadQuestionnaireTemplatesData, QuestionnairesReadQuestionnaireTemplatesResponse, QuestionnairesCreateQuestionnaireTemplateData, QuestionnairesCreateQuestionnaireTemplateResponse, QuestionnairesReadQuestionnaireTemplateData, QuestionnairesReadQuestionnaireTemplateResponse, QuestionnairesUpdateQuestionnaireTemplateData, QuestionnairesUpdateQuestionnaireTemplateResponse, QuestionnairesDeleteQuestionnaireTemplateData, QuestionnairesDeleteQuestionnaireTemplateResponse, QuestionnairesCreateAssignmentData, QuestionnairesCreateAssignmentResponse, QuestionnairesReadAllAssignmentsData, QuestionnairesReadAllAssignmentsResponse, QuestionnairesCreateBulkAssignmentsData, QuestionnairesCreateBulkAssignmentsResponse, QuestionnairesReadMyAssignmentsData, QuestionnairesReadMyAssignmentsResponse, QuestionnairesReadAssignmentData, QuestionnairesReadAssignmentResponse, QuestionnairesDeleteAssignmentData, QuestionnairesDeleteAssignmentResponse, QuestionnairesCreateResponseData, QuestionnairesCreateResponseResponse, QuestionnairesReadMyResponsesData, QuestionnairesReadMyResponsesResponse, QuestionnairesReadResponseData, QuestionnairesReadResponseResponse, QuestionnairesUpdateResponseScoreData, QuestionnairesUpdateResponseScoreResponse, QuestionnairesReadAppointmentsData, QuestionnairesReadAppointmentsResponse, QuestionnairesCreateAppointmentData, QuestionnairesCreateAppointmentResponse, QuestionnairesReadAppointmentData, QuestionnairesReadAppointmentResponse, QuestionnairesUpdateAppointmentData, QuestionnairesUpdateAppointmentResponse, QuestionnairesDeleteAppointmentData, QuestionnairesDeleteAppointmentResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersUploadProfileImageData, UsersUploadProfileImageResponse, UsersDeleteProfileImageResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
 
 export class ItemsService {
     /**
@@ -481,6 +481,51 @@ export class QuestionnairesService {
     }
     
     /**
+     * Read All Assignments
+     * Get all questionnaire assignments (Admin only). Optionally filter by questionnaire_id.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @param data.questionnaireId
+     * @returns QuestionnaireAssignmentsPublic Successful Response
+     * @throws ApiError
+     */
+    public static readAllAssignments(data: QuestionnairesReadAllAssignmentsData = {}): CancelablePromise<QuestionnairesReadAllAssignmentsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/questionnaires/assignments',
+            query: {
+                skip: data.skip,
+                limit: data.limit,
+                questionnaire_id: data.questionnaireId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Create Bulk Assignments
+     * Assign questionnaire to multiple users at once (Admin only).
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static createBulkAssignments(data: QuestionnairesCreateBulkAssignmentsData): CancelablePromise<QuestionnairesCreateBulkAssignmentsResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/questionnaires/assignments/bulk',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
      * Read My Assignments
      * Get current user's questionnaire assignments.
      * @param data The data for the request.
@@ -514,6 +559,27 @@ export class QuestionnairesService {
     public static readAssignment(data: QuestionnairesReadAssignmentData): CancelablePromise<QuestionnairesReadAssignmentResponse> {
         return __request(OpenAPI, {
             method: 'GET',
+            url: '/api/v1/questionnaires/assignments/{assignment_id}',
+            path: {
+                assignment_id: data.assignmentId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Delete Assignment
+     * Delete/remove a questionnaire assignment (Admin only).
+     * @param data The data for the request.
+     * @param data.assignmentId
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteAssignment(data: QuestionnairesDeleteAssignmentData): CancelablePromise<QuestionnairesDeleteAssignmentResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
             url: '/api/v1/questionnaires/assignments/{assignment_id}',
             path: {
                 assignment_id: data.assignmentId

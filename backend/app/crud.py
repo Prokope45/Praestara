@@ -23,6 +23,7 @@ from app.models import (
     AppointmentCreate,
     QuestionnaireAssignment,
     QuestionnaireAssignmentCreate,
+    QuestionnaireAssignmentBulkCreate,
     QuestionnaireResponse,
     QuestionnaireResponseCreate,
     Answer,
@@ -212,6 +213,31 @@ def create_questionnaire_assignment(
     session.commit()
     session.refresh(db_assignment)
     return db_assignment
+
+
+def create_bulk_questionnaire_assignments(
+    *, session: Session, assignment_in: QuestionnaireAssignmentBulkCreate
+) -> list[QuestionnaireAssignment]:
+    """Create multiple questionnaire assignments at once"""
+    assignments = []
+    
+    for user_id in assignment_in.user_ids:
+        db_assignment = QuestionnaireAssignment(
+            questionnaire_id=assignment_in.questionnaire_id,
+            user_id=user_id,
+            appointment_id=assignment_in.appointment_id,
+            due_date=assignment_in.due_date,
+        )
+        session.add(db_assignment)
+        assignments.append(db_assignment)
+    
+    session.commit()
+    
+    # Refresh all assignments
+    for assignment in assignments:
+        session.refresh(assignment)
+    
+    return assignments
 
 
 # Questionnaire Response CRUD

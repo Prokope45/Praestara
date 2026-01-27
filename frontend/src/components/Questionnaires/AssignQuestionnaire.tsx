@@ -12,6 +12,7 @@ import {
   Stack,
   Typography,
   Chip,
+  Checkbox,
 } from "@mui/material"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
@@ -31,7 +32,7 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
-  const [selectedUserId, setSelectedUserId] = useState("")
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const [dueDate, setDueDate] = useState("")
 
   // Fetch all users
@@ -41,11 +42,34 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
     enabled: open,
   })
 
+  // Fetch existing assignments for this questionnaire to show which users are already assigned
+  const { data: existingAssignments } = useQuery({
+    queryKey: ["all-assignments", questionnaire.id],
+    queryFn: async () => {
+      const response = await QuestionnairesService.readAllAssignments({ 
+        questionnaireId: questionnaire.id,
+        skip: 0, 
+        limit: 1000 
+      })
+      return response.data.filter((a: any) => a.status === "PENDING")
+    },
+    enabled: open,
+  })
+
+  // Create a Set of user IDs who already have pending assignments
+  const assignedUserIds = new Set(
+    existingAssignments?.map((assignment: any) => assignment.user_id) || []
+  )
+
+  // Check if a user is already assigned
+  const isUserAssigned = (userId: string) => assignedUserIds.has(userId)
+
   const assignMutation = useMutation({
     mutationFn: (data: any) =>
-      QuestionnairesService.createAssignment({ requestBody: data }),
-    onSuccess: () => {
-      showSuccessToast("Questionnaire assigned successfully")
+      QuestionnairesService.createBulkAssignments({ requestBody: data }),
+    onSuccess: (data: any) => {
+      const count = data.count || selectedUserIds.length
+      showSuccessToast(`Questionnaire assigned to ${count} user(s) successfully`)
       queryClient.invalidateQueries({ queryKey: ["questionnaire-assignments"] })
       handleClose()
     },
@@ -55,22 +79,32 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
   })
 
   const handleClose = () => {
-    setSelectedUserId("")
+    setSelectedUserIds([])
     setDueDate("")
     onClose()
   }
 
   const handleSubmit = () => {
-    if (!selectedUserId) {
-      showErrorToast("Please select a user")
+    if (selectedUserIds.length === 0) {
+      showErrorToast("Please select at least one user")
       return
     }
 
     assignMutation.mutate({
       questionnaire_id: questionnaire.id,
-      user_id: selectedUserId,
+      user_ids: selectedUserIds,
       due_date: dueDate || null,
     })
+  }
+
+  const handleSelectAll = () => {
+    if (usersData?.data) {
+      setSelectedUserIds(usersData.data.map((user) => user.id))
+    }
+  }
+
+  const handleClearAll = () => {
+    setSelectedUserIds([])
   }
 
   // Get minimum date (today)
@@ -112,28 +146,96 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
             </Box>
           </Box>
 
-          <FormControl fullWidth required>
-            <InputLabel>Select User</InputLabel>
-            <Select
-              value={selectedUserId}
-              label="Select User"
-              onChange={(e) => setSelectedUserId(e.target.value)}
-              startAdornment={<FiUser style={{ marginRight: 8, color: "#666" }} />}
-            >
-              {usersData?.data?.map((user) => (
-                <MenuItem key={user.id} value={user.id}>
-                  <Box>
-                    <Typography variant="body2">
-                      {user.full_name || "No name"}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {user.email}
-                    </Typography>
+          <Box>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" color="text.secondary">
+                Select Users *
+              </Typography>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={handleSelectAll}
+                  disabled={!usersData?.data || usersData.data.length === 0}
+                >
+                  Select All
+                </Button>
+                <Button
+                  size="small"
+                  variant="text"
+                  onClick={handleClearAll}
+                  disabled={selectedUserIds.length === 0}
+                >
+                  Clear
+                </Button>
+              </Stack>
+            </Stack>
+            
+            <FormControl fullWidth required>
+              <InputLabel>Select Users</InputLabel>
+              <Select
+                multiple
+                value={selectedUserIds}
+                label="Select Users"
+                onChange={(e) => setSelectedUserIds(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                startAdornment={<FiUser style={{ marginRight: 8, color: "#666" }} />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((value) => {
+                      const user = usersData?.data?.find((u) => u.id === value)
+                      return (
+                        <Chip
+                          key={value}
+                          label={user?.full_name || user?.email || value}
+                          size="small"
+                        />
+                      )
+                    })}
                   </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+                )}
+              >
+                {usersData?.data?.map((user) => {
+                  const alreadyAssigned = isUserAssigned(user.id)
+                  return (
+                    <MenuItem key={user.id} value={user.id}>
+                      <Checkbox checked={selectedUserIds.indexOf(user.id) > -1} />
+                      <Box sx={{ ml: 1, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Box>
+                          <Typography variant="body2">
+                            {user.full_name || "No name"}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {user.email}
+                          </Typography>
+                        </Box>
+                        {alreadyAssigned && (
+                          <Chip
+                            label="Already Assigned"
+                            size="small"
+                            color="warning"
+                            sx={{ ml: 1 }}
+                          />
+                        )}
+                      </Box>
+                    </MenuItem>
+                  )
+                })}
+              </Select>
+            </FormControl>
+            
+            {selectedUserIds.length > 0 && (
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                  {selectedUserIds.length} user(s) selected
+                </Typography>
+                {selectedUserIds.some(id => isUserAssigned(id)) && (
+                  <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
+                    ⚠️ Warning: {selectedUserIds.filter(id => isUserAssigned(id)).length} selected user(s) already have pending assignments
+                  </Typography>
+                )}
+              </Box>
+            )}
+          </Box>
 
           <TextField
             label="Due Date (Optional)"
@@ -177,9 +279,9 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
           onClick={handleSubmit}
           variant="contained"
           loading={assignMutation.isPending}
-          disabled={assignMutation.isPending || !selectedUserId}
+          disabled={assignMutation.isPending || selectedUserIds.length === 0}
         >
-          Assign
+          Assign to {selectedUserIds.length} User{selectedUserIds.length !== 1 ? 's' : ''}
         </Button>
       </DialogActions>
     </Dialog>
