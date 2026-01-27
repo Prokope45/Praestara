@@ -175,11 +175,14 @@ function TakeQuestionnaire() {
               key={question.id}
               questionText={question.question_text}
               questionNumber={index + 1}
-              scaleType={question.scale_type as "LIKERT_5" | "LIKERT_7" | "YES_NO"}
+              scaleType={question.scale_type as "LIKERT_5" | "LIKERT_7" | "YES_NO" | "CUSTOM_NUMERIC"}
               isRequired={question.is_required || false}
               value={answers[question.id] || null}
               onChange={(value) => handleAnswerChange(question.id, value)}
               error={errors[question.id]}
+              customMinValue={question.custom_min_value}
+              customMaxValue={question.custom_max_value}
+              customUnitLabel={question.custom_unit_label}
             />
           ))}
 

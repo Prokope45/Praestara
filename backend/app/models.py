@@ -16,6 +16,7 @@ class ScaleType(str, Enum):
     LIKERT_5 = "LIKERT_5"
     LIKERT_7 = "LIKERT_7"
     YES_NO = "YES_NO"
+    CUSTOM_NUMERIC = "CUSTOM_NUMERIC"
 
 
 class AppointmentStatus(str, Enum):
@@ -218,6 +219,10 @@ class QuestionBase(SQLModel):
     order: int = Field(ge=0)
     is_required: bool = True
     scale_type: ScaleType = Field(default=ScaleType.LIKERT_5)
+    # Custom numeric scale fields
+    custom_min_value: int | None = Field(default=None)
+    custom_max_value: int | None = Field(default=None)
+    custom_unit_label: str | None = Field(default=None, max_length=50)
 
 
 class QuestionCreate(QuestionBase):

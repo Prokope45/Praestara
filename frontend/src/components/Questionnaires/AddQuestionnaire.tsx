@@ -93,6 +93,9 @@ export function AddQuestionnaire({ open, onClose, questionnaire }: AddQuestionna
         order: questions.length,
         is_required: true,
         scale_type: "LIKERT_5",
+        custom_min_value: null,
+        custom_max_value: null,
+        custom_unit_label: null,
         tempId: `new-${Date.now()}`,
       },
     ])
@@ -127,11 +130,28 @@ export function AddQuestionnaire({ open, onClose, questionnaire }: AddQuestionna
       return
     }
 
+    // Validate custom numeric questions
+    const customQuestions = questions.filter((q) => q.scale_type === "CUSTOM_NUMERIC")
+    for (const q of customQuestions) {
+      if (q.custom_min_value === null || q.custom_min_value === undefined || 
+          q.custom_max_value === null || q.custom_max_value === undefined) {
+        showErrorToast("Custom numeric questions must have min and max values")
+        return
+      }
+      if (q.custom_min_value >= q.custom_max_value) {
+        showErrorToast("Min value must be less than max value")
+        return
+      }
+    }
+
     const questionsData = questions.map((q, index) => ({
       question_text: q.question_text,
       order: index,
       is_required: q.is_required,
       scale_type: q.scale_type,
+      custom_min_value: q.scale_type === "CUSTOM_NUMERIC" ? q.custom_min_value : null,
+      custom_max_value: q.scale_type === "CUSTOM_NUMERIC" ? q.custom_max_value : null,
+      custom_unit_label: q.scale_type === "CUSTOM_NUMERIC" ? q.custom_unit_label : null,
     }))
 
     createMutation.mutate({
@@ -213,7 +233,7 @@ export function AddQuestionnaire({ open, onClose, questionnaire }: AddQuestionna
                         size="small"
                         sx={{ mb: 2 }}
                       />
-                      <Stack direction="row" spacing={2}>
+                      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
                         <FormControl size="small" sx={{ minWidth: 150 }}>
                           <InputLabel>Scale Type</InputLabel>
                           <Select
@@ -226,6 +246,7 @@ export function AddQuestionnaire({ open, onClose, questionnaire }: AddQuestionna
                             <MenuItem value="LIKERT_5">Likert 5-Point</MenuItem>
                             <MenuItem value="LIKERT_7">Likert 7-Point</MenuItem>
                             <MenuItem value="YES_NO">Yes/No</MenuItem>
+                            <MenuItem value="CUSTOM_NUMERIC">Custom Numeric</MenuItem>
                           </Select>
                         </FormControl>
                         <FormControlLabel
@@ -241,6 +262,64 @@ export function AddQuestionnaire({ open, onClose, questionnaire }: AddQuestionna
                           label="Required"
                         />
                       </Stack>
+                      
+                      {question.scale_type === "CUSTOM_NUMERIC" && (
+                        <Box
+                          sx={{
+                            p: 2,
+                            bgcolor: "background.paper",
+                            border: "1px solid",
+                            borderColor: "divider",
+                            borderRadius: 1,
+                          }}
+                        >
+                          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block" }}>
+                            Custom Scale Configuration
+                          </Typography>
+                          <Stack direction="row" spacing={2}>
+                            <TextField
+                              label="Min Value"
+                              type="number"
+                              value={question.custom_min_value ?? ""}
+                              onChange={(e) =>
+                                updateQuestion(
+                                  question.tempId,
+                                  "custom_min_value",
+                                  e.target.value ? parseInt(e.target.value) : null
+                                )
+                              }
+                              size="small"
+                              required
+                              sx={{ width: 120 }}
+                            />
+                            <TextField
+                              label="Max Value"
+                              type="number"
+                              value={question.custom_max_value ?? ""}
+                              onChange={(e) =>
+                                updateQuestion(
+                                  question.tempId,
+                                  "custom_max_value",
+                                  e.target.value ? parseInt(e.target.value) : null
+                                )
+                              }
+                              size="small"
+                              required
+                              sx={{ width: 120 }}
+                            />
+                            <TextField
+                              label="Unit Label (optional)"
+                              value={question.custom_unit_label ?? ""}
+                              onChange={(e) =>
+                                updateQuestion(question.tempId, "custom_unit_label", e.target.value || null)
+                              }
+                              size="small"
+                              placeholder="e.g., hours, times, walks"
+                              sx={{ flex: 1 }}
+                            />
+                          </Stack>
+                        </Box>
+                      )}
                     </Box>
                     <IconButton
                       size="small"

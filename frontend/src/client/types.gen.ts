@@ -152,6 +152,9 @@ export type QuestionCreate = {
     order: number;
     is_required?: boolean;
     scale_type?: ScaleType;
+    custom_min_value?: (number | null);
+    custom_max_value?: (number | null);
+    custom_unit_label?: (string | null);
 };
 
 export type QuestionnaireAssignmentCreate = {
@@ -237,11 +240,14 @@ export type QuestionPublic = {
     order: number;
     is_required?: boolean;
     scale_type?: ScaleType;
+    custom_min_value?: (number | null);
+    custom_max_value?: (number | null);
+    custom_unit_label?: (string | null);
     id: string;
     questionnaire_id: string;
 };
 
-export type ScaleType = 'LIKERT_5' | 'LIKERT_7' | 'YES_NO';
+export type ScaleType = 'LIKERT_5' | 'LIKERT_7' | 'YES_NO' | 'CUSTOM_NUMERIC';
 
 export type Token = {
     access_token: string;
