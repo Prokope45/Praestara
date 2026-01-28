@@ -1,9 +1,34 @@
 import uuid
-from typing import Optional
+from datetime import datetime
+from enum import Enum
+from typing import Optional, TYPE_CHECKING
 
 from pydantic import EmailStr
 import sqlalchemy as sa
 from sqlmodel import Field, Relationship, SQLModel
+
+if TYPE_CHECKING:
+    from typing import List
+
+
+# Enums for questionnaire system
+class ScaleType(str, Enum):
+    LIKERT_5 = "LIKERT_5"
+    LIKERT_7 = "LIKERT_7"
+    YES_NO = "YES_NO"
+    CUSTOM_NUMERIC = "CUSTOM_NUMERIC"
+
+
+class AppointmentStatus(str, Enum):
+    SCHEDULED = "SCHEDULED"
+    COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
+
+
+class AssignmentStatus(str, Enum):
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    OVERDUE = "OVERDUE"
 
 
 # Shared properties
@@ -48,6 +73,10 @@ class User(UserBase, table=True):
     hashed_password: str
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
     orientations: list["Orientation"] = Relationship(back_populates="owner", cascade_delete=True)
+    created_questionnaires: list["QuestionnaireTemplate"] = Relationship(back_populates="created_by", cascade_delete=True)
+    appointments: list["Appointment"] = Relationship(back_populates="user", cascade_delete=True)
+    questionnaire_assignments: list["QuestionnaireAssignment"] = Relationship(back_populates="user", cascade_delete=True)
+    questionnaire_responses: list["QuestionnaireResponse"] = Relationship(back_populates="user", cascade_delete=True)
 
 
 # Properties to return via API, id is always required
@@ -182,3 +211,248 @@ class OrientationPublic(OrientationBase):
 class OrientationsPublic(SQLModel):
     data: list[OrientationPublic]
     count: int
+
+
+# Question models (defined before QuestionnaireTemplate to avoid forward reference issues)
+class QuestionBase(SQLModel):
+    question_text: str = Field(max_length=1000)
+    order: int = Field(ge=0)
+    is_required: bool = True
+    scale_type: ScaleType = Field(default=ScaleType.LIKERT_5)
+    # Custom numeric scale fields
+    custom_min_value: int | None = Field(default=None)
+    custom_max_value: int | None = Field(default=None)
+    custom_unit_label: str | None = Field(default=None, max_length=50)
+
+
+class QuestionCreate(QuestionBase):
+    pass
+
+
+class QuestionUpdate(QuestionBase):
+    question_text: str | None = Field(default=None, max_length=1000)  # type: ignore
+    order: int | None = Field(default=None, ge=0)  # type: ignore
+
+
+class Question(QuestionBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    questionnaire_id: uuid.UUID = Field(
+        foreign_key="questionnairetemplate.id", nullable=False, ondelete="CASCADE"
+    )
+    questionnaire: Optional["QuestionnaireTemplate"] = Relationship(back_populates="questions")
+    answers: list["Answer"] = Relationship(back_populates="question", cascade_delete=True)
+
+
+class QuestionPublic(QuestionBase):
+    id: uuid.UUID
+    questionnaire_id: uuid.UUID
+
+
+# Questionnaire Template models
+class QuestionnaireTemplateBase(SQLModel):
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=1000)
+    is_active: bool = True
+
+
+class QuestionnaireTemplateCreate(QuestionnaireTemplateBase):
+    questions: list[QuestionCreate] = []
+
+
+class QuestionnaireTemplateUpdate(QuestionnaireTemplateBase):
+    title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
+    questions: list[QuestionCreate] | None = None
+
+
+class QuestionnaireTemplate(QuestionnaireTemplateBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_by_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_by: Optional["User"] = Relationship(back_populates="created_questionnaires")
+    questions: list["Question"] = Relationship(back_populates="questionnaire", cascade_delete=True)
+    assignments: list["QuestionnaireAssignment"] = Relationship(back_populates="questionnaire", cascade_delete=True)
+
+
+class QuestionnaireTemplatePublic(QuestionnaireTemplateBase):
+    id: uuid.UUID
+    created_by_id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+    questions: list[QuestionPublic] = []
+
+
+class QuestionnaireTemplatesPublic(SQLModel):
+    data: list[QuestionnaireTemplatePublic]
+    count: int
+
+
+# Appointment models
+class AppointmentBase(SQLModel):
+    appointment_datetime: datetime
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=1000)
+    external_calendar_id: str | None = Field(default=None, max_length=255)
+    status: AppointmentStatus = Field(default=AppointmentStatus.SCHEDULED)
+
+
+class AppointmentCreate(AppointmentBase):
+    user_id: uuid.UUID
+
+
+class AppointmentUpdate(AppointmentBase):
+    appointment_datetime: datetime | None = None  # type: ignore
+    title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
+    status: AppointmentStatus | None = None  # type: ignore
+
+
+class Appointment(AppointmentBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    user: Optional["User"] = Relationship(back_populates="appointments")
+    questionnaire_assignments: list["QuestionnaireAssignment"] = Relationship(back_populates="appointment", cascade_delete=True)
+
+
+class AppointmentPublic(AppointmentBase):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    created_at: datetime
+
+
+class AppointmentsPublic(SQLModel):
+    data: list[AppointmentPublic]
+    count: int
+
+
+# Questionnaire Assignment models
+class QuestionnaireAssignmentBase(SQLModel):
+    due_date: datetime | None = None
+    status: AssignmentStatus = Field(default=AssignmentStatus.PENDING)
+    reminder_sent: bool = False
+
+
+class QuestionnaireAssignmentCreate(SQLModel):
+    questionnaire_id: uuid.UUID
+    user_id: uuid.UUID
+    appointment_id: uuid.UUID | None = None
+    due_date: datetime | None = None
+
+
+class QuestionnaireAssignmentBulkCreate(SQLModel):
+    questionnaire_id: uuid.UUID
+    user_ids: list[uuid.UUID]
+    appointment_id: uuid.UUID | None = None
+    due_date: datetime | None = None
+
+
+class QuestionnaireAssignmentUpdate(SQLModel):
+    status: AssignmentStatus | None = None
+    reminder_sent: bool | None = None
+
+
+class QuestionnaireAssignment(QuestionnaireAssignmentBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    questionnaire_id: uuid.UUID = Field(
+        foreign_key="questionnairetemplate.id", nullable=False, ondelete="CASCADE"
+    )
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    appointment_id: uuid.UUID | None = Field(
+        default=None, foreign_key="appointment.id", ondelete="CASCADE"
+    )
+    assigned_at: datetime = Field(default_factory=datetime.utcnow)
+    questionnaire: Optional["QuestionnaireTemplate"] = Relationship(back_populates="assignments")
+    user: Optional["User"] = Relationship(back_populates="questionnaire_assignments")
+    appointment: Optional["Appointment"] = Relationship(back_populates="questionnaire_assignments")
+    response: Optional["QuestionnaireResponse"] = Relationship(back_populates="assignment", cascade_delete=True)
+
+
+class QuestionnaireAssignmentPublic(QuestionnaireAssignmentBase):
+    id: uuid.UUID
+    questionnaire_id: uuid.UUID
+    user_id: uuid.UUID
+    appointment_id: uuid.UUID | None
+    assigned_at: datetime
+    questionnaire: QuestionnaireTemplatePublic
+
+
+class QuestionnaireAssignmentsPublic(SQLModel):
+    data: list[QuestionnaireAssignmentPublic]
+    count: int
+
+
+# Answer models (depended on by response base)
+class AnswerBase(SQLModel):
+    likert_value: int | None = Field(default=None, ge=0)
+    text_response: str | None = Field(default=None, max_length=1000)
+
+
+class AnswerCreate(AnswerBase):
+    question_id: uuid.UUID
+
+
+# Questionnaire Response models
+class QuestionnaireResponseBase(SQLModel):
+    total_score: int | None = None
+    manual_score_override: int | None = None
+
+
+class QuestionnaireResponseCreate(SQLModel):
+    assignment_id: uuid.UUID
+    answers: list[AnswerCreate]
+
+
+class QuestionnaireResponseUpdate(SQLModel):
+    manual_score_override: int | None = None
+
+
+class QuestionnaireResponse(QuestionnaireResponseBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    assignment_id: uuid.UUID = Field(
+        foreign_key="questionnaireassignment.id", nullable=False, ondelete="CASCADE", unique=True
+    )
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    completed_at: datetime = Field(default_factory=datetime.utcnow)
+    assignment: Optional["QuestionnaireAssignment"] = Relationship(back_populates="response")
+    user: Optional["User"] = Relationship(back_populates="questionnaire_responses")
+    answers: list["Answer"] = Relationship(back_populates="response", cascade_delete=True)
+
+
+class QuestionnaireResponsePublic(QuestionnaireResponseBase):
+    id: uuid.UUID
+    assignment_id: uuid.UUID
+    user_id: uuid.UUID
+    completed_at: datetime
+    answers: list["AnswerPublic"] = []
+
+
+class QuestionnaireResponsesPublic(SQLModel):
+    data: list[QuestionnaireResponsePublic]
+    count: int
+
+
+# Answer models
+class Answer(AnswerBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    response_id: uuid.UUID = Field(
+        foreign_key="questionnaireresponse.id", nullable=False, ondelete="CASCADE"
+    )
+    question_id: uuid.UUID = Field(
+        foreign_key="question.id", nullable=False, ondelete="CASCADE"
+    )
+    response: Optional["QuestionnaireResponse"] = Relationship(back_populates="answers")
+    question: Optional["Question"] = Relationship(back_populates="answers")
+
+
+class AnswerPublic(AnswerBase):
+    id: uuid.UUID
+    question_id: uuid.UUID
+    question: QuestionPublic

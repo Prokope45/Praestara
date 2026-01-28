@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from typing import Any
 
 from sqlmodel import Session, select
@@ -14,6 +15,19 @@ from app.models import (
     OrientationCreate,
     OrientationUpdate,
     OrientationTrait,
+    QuestionnaireTemplate,
+    QuestionnaireTemplateCreate,
+    QuestionnaireTemplateUpdate,
+    Question,
+    Appointment,
+    AppointmentCreate,
+    QuestionnaireAssignment,
+    QuestionnaireAssignmentCreate,
+    QuestionnaireAssignmentBulkCreate,
+    QuestionnaireResponse,
+    QuestionnaireResponseCreate,
+    Answer,
+    AssignmentStatus,
 )
 
 
@@ -119,3 +133,144 @@ def update_orientation(
     session.commit()
     session.refresh(db_orientation)
     return db_orientation
+
+
+# Questionnaire Template CRUD
+def create_questionnaire_template(
+    *, session: Session, questionnaire_in: QuestionnaireTemplateCreate, created_by_id: uuid.UUID
+) -> QuestionnaireTemplate:
+    # Create the questionnaire template without questions first
+    questionnaire_data = questionnaire_in.model_dump(exclude={"questions"})
+    db_questionnaire = QuestionnaireTemplate.model_validate(
+        questionnaire_data, update={"created_by_id": created_by_id}
+    )
+    session.add(db_questionnaire)
+    session.flush()  # Flush to get the questionnaire ID
+
+    # Create the questions
+    for question_data in questionnaire_in.questions:
+        db_question = Question.model_validate(
+            question_data, update={"questionnaire_id": db_questionnaire.id}
+        )
+        session.add(db_question)
+
+    session.commit()
+    session.refresh(db_questionnaire)
+    return db_questionnaire
+
+
+def update_questionnaire_template(
+    *, session: Session, db_questionnaire: QuestionnaireTemplate, questionnaire_in: QuestionnaireTemplateUpdate
+) -> QuestionnaireTemplate:
+    questionnaire_data = questionnaire_in.model_dump(exclude_unset=True, exclude={"questions"})
+    questionnaire_data["updated_at"] = datetime.utcnow()
+    db_questionnaire.sqlmodel_update(questionnaire_data)
+
+    # If questions are provided, replace all existing questions
+    if questionnaire_in.questions is not None:
+        # Delete existing questions
+        existing_questions = list(db_questionnaire.questions)
+        for question in existing_questions:
+            session.delete(question)
+        
+        db_questionnaire.questions = []
+        session.flush()
+
+        # Create new questions
+        new_questions = []
+        for question_data in questionnaire_in.questions:
+            db_question = Question.model_validate(
+                question_data, update={"questionnaire_id": db_questionnaire.id}
+            )
+            new_questions.append(db_question)
+            session.add(db_question)
+        
+        db_questionnaire.questions = new_questions
+
+    session.add(db_questionnaire)
+    session.commit()
+    session.refresh(db_questionnaire)
+    return db_questionnaire
+
+
+# Appointment CRUD
+def create_appointment(
+    *, session: Session, appointment_in: AppointmentCreate
+) -> Appointment:
+    db_appointment = Appointment.model_validate(appointment_in)
+    session.add(db_appointment)
+    session.commit()
+    session.refresh(db_appointment)
+    return db_appointment
+
+
+# Questionnaire Assignment CRUD
+def create_questionnaire_assignment(
+    *, session: Session, assignment_in: QuestionnaireAssignmentCreate
+) -> QuestionnaireAssignment:
+    db_assignment = QuestionnaireAssignment.model_validate(assignment_in)
+    session.add(db_assignment)
+    session.commit()
+    session.refresh(db_assignment)
+    return db_assignment
+
+
+def create_bulk_questionnaire_assignments(
+    *, session: Session, assignment_in: QuestionnaireAssignmentBulkCreate
+) -> list[QuestionnaireAssignment]:
+    """Create multiple questionnaire assignments at once"""
+    assignments = []
+    
+    for user_id in assignment_in.user_ids:
+        db_assignment = QuestionnaireAssignment(
+            questionnaire_id=assignment_in.questionnaire_id,
+            user_id=user_id,
+            appointment_id=assignment_in.appointment_id,
+            due_date=assignment_in.due_date,
+        )
+        session.add(db_assignment)
+        assignments.append(db_assignment)
+    
+    session.commit()
+    
+    # Refresh all assignments
+    for assignment in assignments:
+        session.refresh(assignment)
+    
+    return assignments
+
+
+# Questionnaire Response CRUD
+def create_questionnaire_response(
+    *, session: Session, response_in: QuestionnaireResponseCreate, user_id: uuid.UUID
+) -> QuestionnaireResponse:
+    # Calculate total score from answers
+    total_score = sum(
+        answer.likert_value for answer in response_in.answers if answer.likert_value is not None
+    )
+    
+    # Create the response
+    db_response = QuestionnaireResponse(
+        assignment_id=response_in.assignment_id,
+        user_id=user_id,
+        total_score=total_score
+    )
+    session.add(db_response)
+    session.flush()  # Flush to get the response ID
+
+    # Create the answers
+    for answer_data in response_in.answers:
+        db_answer = Answer.model_validate(
+            answer_data, update={"response_id": db_response.id}
+        )
+        session.add(db_answer)
+
+    # Update the assignment status to COMPLETED
+    assignment = session.get(QuestionnaireAssignment, response_in.assignment_id)
+    if assignment:
+        assignment.status = AssignmentStatus.COMPLETED
+        session.add(assignment)
+
+    session.commit()
+    session.refresh(db_response)
+    return db_response
