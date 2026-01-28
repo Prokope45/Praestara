@@ -1,6 +1,7 @@
 *.venv
 .vscode
 .env
+*backup*.sql
 node_modules/
 /test-results/
 /playwright-report/

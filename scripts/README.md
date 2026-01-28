@@ -77,7 +77,39 @@ Creates a database backup and saves it to the `backups/` directory.
 
 ---
 
+### 4. update-db-password.sh
+Updates the PostgreSQL password in the database to match the password in your `.env` file, while preserving all data.
+
+**Usage:**
+```bash
+./scripts/update-db-password.sh
+```
+
+**What it does:**
+- Reads the `POSTGRES_PASSWORD` from your `.env` file
+- Checks if the database container is running (starts it if needed)
+- Waits for the database to be healthy
+- Updates the PostgreSQL user password using `ALTER USER`
+- Preserves all existing data in the database
+
+**Requirements:**
+- `.env` file must exist with `POSTGRES_PASSWORD` set
+- Docker and Docker Compose must be installed
+- Database container must be accessible
+
+**Use Cases:**
+- When you clone a project with an existing database volume but different `.env` credentials
+- After changing the password in your `.env` file
+- When you get "password authentication failed" errors
+- To sync database credentials with your environment configuration
+
+**Note:** This script is particularly useful when you have an existing database with data that you want to keep, but need to update the password to match your current `.env` file.
+
+---
+
 ## Quick Start
+
+### New Project Setup
 
 1. **Initial Setup:**
    ```bash
@@ -97,6 +129,20 @@ Creates a database backup and saves it to the `backups/` directory.
 4. **Restore from a backup:**
    ```bash
    ./scripts/restore-db.sh backups/backup_2026-01-27_210355.sql
+   ```
+
+### Fixing Password Authentication Issues
+
+If you encounter "password authentication failed" errors after cloning or with an existing database:
+
+1. **Update the database password to match your .env:**
+   ```bash
+   ./scripts/update-db-password.sh
+   ```
+
+2. **Restart your services:**
+   ```bash
+   docker compose restart
    ```
 
 ---
