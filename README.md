@@ -25,6 +25,14 @@ A Kansas State University neuroscience project involving a web application guidi
 - 🚢 Deployment instructions using Docker Compose, including how to set up a frontend Traefik proxy to handle automatic HTTPS certificates.
 - 🏭 CI (continuous integration) and CD (continuous deployment) based on GitHub Actions.
 
+## First Local Setup
+
+First run `./scripts/setup-env.sh`, which creates a copy of the `.env.example` as `.env` and automatically creates new keys for the secret and database password (must occur on fresh setup; if DB exists there will be password issues with `postgres` user).
+
+Then in `.env` set `FIRST_SUPERUSER` with your email and enter a password for `FIRST_SUPERUSER_PASSWORD`. Then run `docker compose build` to build the images, then `docker compose up -d db` to make sure the database container is running. Restore the database using the dump file: `./scripts/restore-db.sh <<PATH TO DB DUMP FILE>>` such as `./scripts/restore-db.sh data-dump.sql`.
+
+Finally, run `docker compose watch` to run the rest of the containers.
+
 <!-- ### Dashboard Login
 
 [![API docs](img/login.png)](https://github.com/fastapi/full-stack-fastapi-template)
