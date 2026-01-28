@@ -1,13 +1,14 @@
 import { Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material"
 import { useQueryClient } from "@tanstack/react-query"
 import { Link as RouterLink } from "@tanstack/react-router"
-import { FiFileText, FiHome, FiSettings, FiUsers, FiCompass } from "react-icons/fi"
+import { FiFileText, FiHome, FiSettings, FiUsers, FiCompass, FiClipboard } from "react-icons/fi"
 import type { IconType } from "react-icons/lib"
 
 import type { UserPublic } from "@/client"
 
 const items = [
   { icon: FiHome, title: "Dashboard", path: "/" },
+  { icon: FiClipboard, title: "Questionnaires", path: "/questionnaires" },
   { icon: FiFileText, title: "Notes", path: "/notes" },
   { icon: FiCompass, title: "Orientations", path: "/orientations" },
   { icon: FiSettings, title: "User Settings", path: "/settings" },
