@@ -1,3 +1,15 @@
+<<<<<<< HEAD
+from datetime import datetime, timezone
+import uuid
+from typing import Any
+
+from fastapi import APIRouter, HTTPException
+from sqlmodel import func, select
+
+from app.api.deps import CurrentUser, SessionDep
+from app.models import (
+    Message,
+=======
 import uuid
 from datetime import datetime, timedelta
 from typing import Any
@@ -19,10 +31,94 @@ from app.models import (
     QuestionnaireAssignmentBulkCreate,
     QuestionnaireAssignmentPublic,
     QuestionnaireAssignmentsPublic,
+>>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
     QuestionnaireResponse,
     QuestionnaireResponseCreate,
     QuestionnaireResponsePublic,
     QuestionnaireResponsesPublic,
+<<<<<<< HEAD
+)
+
+router = APIRouter(prefix="/questionnaires", tags=["questionnaires"])
+
+
+@router.get("/", response_model=QuestionnaireResponsesPublic)
+def read_questionnaire_responses(
+    session: SessionDep,
+    current_user: CurrentUser,
+    skip: int = 0,
+    limit: int = 100,
+    kind: str | None = None,
+) -> Any:
+    """
+    Retrieve questionnaire responses.
+    """
+
+    if current_user.is_superuser:
+        count_statement = select(func.count()).select_from(QuestionnaireResponse)
+        statement = select(QuestionnaireResponse)
+        if kind:
+            count_statement = count_statement.where(QuestionnaireResponse.kind == kind)
+            statement = statement.where(QuestionnaireResponse.kind == kind)
+    else:
+        count_statement = (
+            select(func.count())
+            .select_from(QuestionnaireResponse)
+            .where(QuestionnaireResponse.owner_id == current_user.id)
+        )
+        statement = select(QuestionnaireResponse).where(
+            QuestionnaireResponse.owner_id == current_user.id
+        )
+        if kind:
+            count_statement = count_statement.where(QuestionnaireResponse.kind == kind)
+            statement = statement.where(QuestionnaireResponse.kind == kind)
+
+    count = session.exec(count_statement).one()
+    responses = session.exec(statement.offset(skip).limit(limit)).all()
+    return QuestionnaireResponsesPublic(data=responses, count=count)
+
+
+@router.post("/", response_model=QuestionnaireResponsePublic)
+def create_questionnaire_response(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    response_in: QuestionnaireResponseCreate,
+) -> Any:
+    """
+    Create a questionnaire response.
+    """
+    response = QuestionnaireResponse.model_validate(
+        response_in, update={"owner_id": current_user.id}
+    )
+    session.add(response)
+
+    if response_in.kind == "onboarding":
+        current_user.onboarding_completed_at = datetime.now(timezone.utc)
+        session.add(current_user)
+
+    session.commit()
+    session.refresh(response)
+    return response
+
+
+@router.delete("/{id}", response_model=Message)
+def delete_questionnaire_response(
+    session: SessionDep, current_user: CurrentUser, id: uuid.UUID
+) -> Message:
+    """
+    Delete a questionnaire response.
+    """
+    response = session.get(QuestionnaireResponse, id)
+    if not response:
+        raise HTTPException(status_code=404, detail="Questionnaire response not found")
+    if not current_user.is_superuser and response.owner_id != current_user.id:
+        raise HTTPException(status_code=400, detail="Not enough permissions")
+
+    session.delete(response)
+    session.commit()
+    return Message(message="Questionnaire response deleted successfully")
+=======
     QuestionnaireResponseUpdate,
     Appointment,
     AppointmentCreate,
@@ -542,3 +638,4 @@ def delete_appointment(
     session.delete(appointment)
     session.commit()
     return Message(message="Appointment deleted successfully")
+>>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
