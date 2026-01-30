@@ -3,7 +3,144 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
+<<<<<<< HEAD
+import type { AiChatWithAiData, AiChatWithAiResponse, CheckinsCreateCheckinData, CheckinsCreateCheckinResponse, Engine89ExportForEngine89Data, Engine89ExportForEngine89Response, Engine89ImportEngine89ResultsData, Engine89ImportEngine89ResultsResponse, Engine89RunEngine89Data, Engine89RunEngine89Response, Engine89ReadEngine89ResultsData, Engine89ReadEngine89ResultsResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, OrientationsReadOrientationsData, OrientationsReadOrientationsResponse, OrientationsCreateOrientationEndpointData, OrientationsCreateOrientationEndpointResponse, OrientationsReadOrientationData, OrientationsReadOrientationResponse, OrientationsUpdateOrientationEndpointData, OrientationsUpdateOrientationEndpointResponse, OrientationsDeleteOrientationData, OrientationsDeleteOrientationResponse, PrivateCreateUserData, PrivateCreateUserResponse, QuestionnairesReadQuestionnaireResponsesData, QuestionnairesReadQuestionnaireResponsesResponse, QuestionnairesCreateQuestionnaireResponseData, QuestionnairesCreateQuestionnaireResponseResponse, QuestionnairesDeleteQuestionnaireResponseData, QuestionnairesDeleteQuestionnaireResponseResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersUploadProfileImageData, UsersUploadProfileImageResponse, UsersDeleteProfileImageResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+
+export class AiService {
+    /**
+     * Chat With Ai
+     * Send a message to the configured LLM endpoint and return the reply.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static chatWithAi(data: AiChatWithAiData): CancelablePromise<AiChatWithAiResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/ai/chat',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+}
+
+export class CheckinsService {
+    /**
+     * Create Checkin
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns CheckinResponse Successful Response
+     * @throws ApiError
+     */
+    public static createCheckin(data: CheckinsCreateCheckinData): CancelablePromise<CheckinsCreateCheckinResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/checkins/',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+}
+
+export class Engine89Service {
+    /**
+     * Export For Engine89
+     * Export de-identified questionnaire payloads for Engine89.
+     * @param data The data for the request.
+     * @param data.kind
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static exportForEngine89(data: Engine89ExportForEngine89Data = {}): CancelablePromise<Engine89ExportForEngine89Response> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/engine89/export',
+            query: {
+                kind: data.kind
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Import Engine89 Results
+     * Import Engine89 results by subject_hash. Superusers only.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static importEngine89Results(data: Engine89ImportEngine89ResultsData): CancelablePromise<Engine89ImportEngine89ResultsResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/engine89/import',
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Run Engine89
+     * Export data to Project89 and store returned Engine89 results.
+     * @param data The data for the request.
+     * @param data.kind
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static runEngine89(data: Engine89RunEngine89Data = {}): CancelablePromise<Engine89RunEngine89Response> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/engine89/run',
+            query: {
+                kind: data.kind
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Read Engine89 Results
+     * Retrieve Engine89 results.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @returns Engine89ResultsPublic Successful Response
+     * @throws ApiError
+     */
+    public static readEngine89Results(data: Engine89ReadEngine89ResultsData = {}): CancelablePromise<Engine89ReadEngine89ResultsResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/engine89/results',
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+}
+=======
 import type { ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, OrientationsReadOrientationsData, OrientationsReadOrientationsResponse, OrientationsCreateOrientationEndpointData, OrientationsCreateOrientationEndpointResponse, OrientationsReadOrientationData, OrientationsReadOrientationResponse, OrientationsUpdateOrientationEndpointData, OrientationsUpdateOrientationEndpointResponse, OrientationsDeleteOrientationData, OrientationsDeleteOrientationResponse, PrivateCreateUserData, PrivateCreateUserResponse, QuestionnairesReadQuestionnaireTemplatesData, QuestionnairesReadQuestionnaireTemplatesResponse, QuestionnairesCreateQuestionnaireTemplateData, QuestionnairesCreateQuestionnaireTemplateResponse, QuestionnairesReadQuestionnaireTemplateData, QuestionnairesReadQuestionnaireTemplateResponse, QuestionnairesUpdateQuestionnaireTemplateData, QuestionnairesUpdateQuestionnaireTemplateResponse, QuestionnairesDeleteQuestionnaireTemplateData, QuestionnairesDeleteQuestionnaireTemplateResponse, QuestionnairesCreateAssignmentData, QuestionnairesCreateAssignmentResponse, QuestionnairesReadAllAssignmentsData, QuestionnairesReadAllAssignmentsResponse, QuestionnairesCreateBulkAssignmentsData, QuestionnairesCreateBulkAssignmentsResponse, QuestionnairesReadMyAssignmentsData, QuestionnairesReadMyAssignmentsResponse, QuestionnairesReadAssignmentData, QuestionnairesReadAssignmentResponse, QuestionnairesDeleteAssignmentData, QuestionnairesDeleteAssignmentResponse, QuestionnairesCreateResponseData, QuestionnairesCreateResponseResponse, QuestionnairesReadMyResponsesData, QuestionnairesReadMyResponsesResponse, QuestionnairesReadResponseData, QuestionnairesReadResponseResponse, QuestionnairesUpdateResponseScoreData, QuestionnairesUpdateResponseScoreResponse, QuestionnairesReadAppointmentsData, QuestionnairesReadAppointmentsResponse, QuestionnairesCreateAppointmentData, QuestionnairesCreateAppointmentResponse, QuestionnairesReadAppointmentData, QuestionnairesReadAppointmentResponse, QuestionnairesUpdateAppointmentData, QuestionnairesUpdateAppointmentResponse, QuestionnairesDeleteAppointmentData, QuestionnairesDeleteAppointmentResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersUploadProfileImageData, UsersUploadProfileImageResponse, UsersDeleteProfileImageResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+>>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
 
 export class ItemsService {
     /**
@@ -352,6 +489,25 @@ export class PrivateService {
 
 export class QuestionnairesService {
     /**
+<<<<<<< HEAD
+     * Read Questionnaire Responses
+     * Retrieve questionnaire responses.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @param data.kind
+     * @returns QuestionnaireResponsesPublic Successful Response
+     * @throws ApiError
+     */
+    public static readQuestionnaireResponses(data: QuestionnairesReadQuestionnaireResponsesData = {}): CancelablePromise<QuestionnairesReadQuestionnaireResponsesResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/questionnaires/',
+            query: {
+                skip: data.skip,
+                limit: data.limit,
+                kind: data.kind
+=======
      * Read Questionnaire Templates
      * Retrieve questionnaire templates (Admin only).
      * @param data The data for the request.
@@ -367,6 +523,7 @@ export class QuestionnairesService {
             query: {
                 skip: data.skip,
                 limit: data.limit
+>>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
             },
             errors: {
                 422: 'Validation Error'
@@ -375,6 +532,19 @@ export class QuestionnairesService {
     }
     
     /**
+<<<<<<< HEAD
+     * Create Questionnaire Response
+     * Create a questionnaire response.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns QuestionnaireResponsePublic Successful Response
+     * @throws ApiError
+     */
+    public static createQuestionnaireResponse(data: QuestionnairesCreateQuestionnaireResponseData): CancelablePromise<QuestionnairesCreateQuestionnaireResponseResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/questionnaires/',
+=======
      * Create Questionnaire Template
      * Create new questionnaire template (Admin only).
      * @param data The data for the request.
@@ -386,6 +556,7 @@ export class QuestionnairesService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/questionnaires/templates',
+>>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
             body: data.requestBody,
             mediaType: 'application/json',
             errors: {
@@ -395,6 +566,21 @@ export class QuestionnairesService {
     }
     
     /**
+<<<<<<< HEAD
+     * Delete Questionnaire Response
+     * Delete a questionnaire response.
+     * @param data The data for the request.
+     * @param data.id
+     * @returns Message Successful Response
+     * @throws ApiError
+     */
+    public static deleteQuestionnaireResponse(data: QuestionnairesDeleteQuestionnaireResponseData): CancelablePromise<QuestionnairesDeleteQuestionnaireResponseResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/questionnaires/{id}',
+            path: {
+                id: data.id
+=======
      * Read Questionnaire Template
      * Get questionnaire template by ID (Admin only).
      * @param data The data for the request.
@@ -780,6 +966,7 @@ export class QuestionnairesService {
             url: '/api/v1/questionnaires/appointments/{appointment_id}',
             path: {
                 appointment_id: data.appointmentId
+>>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
             },
             errors: {
                 422: 'Validation Error'

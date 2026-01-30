@@ -1,12 +1,19 @@
 import uuid
+<<<<<<< HEAD
+from datetime import datetime, timezone
+from typing import Any, Optional
+=======
 from datetime import datetime
 from enum import Enum
 from typing import Optional, TYPE_CHECKING
+>>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
 
 from pydantic import EmailStr
 import sqlalchemy as sa
 from sqlmodel import Field, Relationship, SQLModel
 
+<<<<<<< HEAD
+=======
 if TYPE_CHECKING:
     from typing import List
 
@@ -30,6 +37,7 @@ class AssignmentStatus(str, Enum):
     COMPLETED = "COMPLETED"
     OVERDUE = "OVERDUE"
 
+>>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
 
 # Shared properties
 class UserBase(SQLModel):
@@ -38,6 +46,12 @@ class UserBase(SQLModel):
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
     profile_image: str | None = Field(default=None, sa_type=sa.Text)
+<<<<<<< HEAD
+    onboarding_completed_at: datetime | None = Field(
+        default=None, sa_type=sa.DateTime(timezone=True)
+    )
+=======
+>>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
 
 
 # Properties to receive via API on creation
@@ -73,10 +87,19 @@ class User(UserBase, table=True):
     hashed_password: str
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
     orientations: list["Orientation"] = Relationship(back_populates="owner", cascade_delete=True)
+<<<<<<< HEAD
+    questionnaire_responses: list["QuestionnaireResponse"] = Relationship(
+        back_populates="owner", cascade_delete=True
+    )
+    engine89_results: list["Engine89Result"] = Relationship(
+        back_populates="owner", cascade_delete=True
+    )
+=======
     created_questionnaires: list["QuestionnaireTemplate"] = Relationship(back_populates="created_by", cascade_delete=True)
     appointments: list["Appointment"] = Relationship(back_populates="user", cascade_delete=True)
     questionnaire_assignments: list["QuestionnaireAssignment"] = Relationship(back_populates="user", cascade_delete=True)
     questionnaire_responses: list["QuestionnaireResponse"] = Relationship(back_populates="user", cascade_delete=True)
+>>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
 
 
 # Properties to return via API, id is always required
@@ -213,6 +236,29 @@ class OrientationsPublic(SQLModel):
     count: int
 
 
+<<<<<<< HEAD
+# Questionnaire response models
+class QuestionnaireResponseBase(SQLModel):
+    kind: str = Field(max_length=50)
+    schema_version: str = Field(default="v1", max_length=20)
+    payload: dict[str, Any] = Field(sa_type=sa.JSON)
+
+
+class QuestionnaireResponseCreate(QuestionnaireResponseBase):
+    pass
+
+
+class QuestionnaireResponse(QuestionnaireResponseBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    owner: Optional["User"] = Relationship(back_populates="questionnaire_responses")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_type=sa.DateTime(timezone=True),
+    )
+=======
 # Question models (defined before QuestionnaireTemplate to avoid forward reference issues)
 class QuestionBase(SQLModel):
     question_text: str = Field(max_length=1000)
@@ -424,14 +470,20 @@ class QuestionnaireResponse(QuestionnaireResponseBase, table=True):
     assignment: Optional["QuestionnaireAssignment"] = Relationship(back_populates="response")
     user: Optional["User"] = Relationship(back_populates="questionnaire_responses")
     answers: list["Answer"] = Relationship(back_populates="response", cascade_delete=True)
+>>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
 
 
 class QuestionnaireResponsePublic(QuestionnaireResponseBase):
     id: uuid.UUID
+<<<<<<< HEAD
+    owner_id: uuid.UUID
+    created_at: datetime
+=======
     assignment_id: uuid.UUID
     user_id: uuid.UUID
     completed_at: datetime
     answers: list["AnswerPublic"] = []
+>>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
 
 
 class QuestionnaireResponsesPublic(SQLModel):
@@ -439,6 +491,39 @@ class QuestionnaireResponsesPublic(SQLModel):
     count: int
 
 
+<<<<<<< HEAD
+class Engine89ResultBase(SQLModel):
+    kind: str = Field(max_length=50)
+    schema_version: str = Field(default="v1", max_length=20)
+    payload: dict[str, Any] = Field(sa_type=sa.JSON)
+
+
+class Engine89ResultCreate(Engine89ResultBase):
+    subject_hash: str | None = Field(default=None, max_length=128)
+
+
+class Engine89Result(Engine89ResultBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    owner: Optional["User"] = Relationship(back_populates="engine89_results")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_type=sa.DateTime(timezone=True),
+    )
+
+
+class Engine89ResultPublic(Engine89ResultBase):
+    id: uuid.UUID
+    owner_id: uuid.UUID
+    created_at: datetime
+
+
+class Engine89ResultsPublic(SQLModel):
+    data: list[Engine89ResultPublic]
+    count: int
+=======
 # Answer models
 class Answer(AnswerBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -456,3 +541,4 @@ class AnswerPublic(AnswerBase):
     id: uuid.UUID
     question_id: uuid.UUID
     question: QuestionPublic
+>>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
