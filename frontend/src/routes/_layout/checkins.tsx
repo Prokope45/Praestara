@@ -41,7 +41,7 @@ function Checkins() {
   const { data: morningHistory } = useQuery({
     queryKey: ["checkins", "morning"],
     queryFn: () =>
-      QuestionnairesService.readQuestionnaireResponses({
+      QuestionnairesService.readLegacyQuestionnaireResponses({
         kind: "morning_checkin",
         limit: 10,
       }),
@@ -50,7 +50,7 @@ function Checkins() {
   const { data: eveningHistory } = useQuery({
     queryKey: ["checkins", "evening"],
     queryFn: () =>
-      QuestionnairesService.readQuestionnaireResponses({
+      QuestionnairesService.readLegacyQuestionnaireResponses({
         kind: "evening_checkin",
         limit: 10,
       }),
@@ -77,7 +77,7 @@ function Checkins() {
                     {new Date(entry.created_at).toLocaleDateString()}
                   </Typography>
                   <Stack spacing={0.5}>
-                    {splitIntoSentences(entry.payload?.text ?? "").map((sentence, idx) => (
+                    {splitIntoSentences((entry.payload as any).text ?? "").map((sentence, idx) => (
                       <Typography key={idx} variant="body2">
                         {sentence}
                       </Typography>
@@ -96,7 +96,7 @@ function Checkins() {
                     {new Date(entry.created_at).toLocaleDateString()}
                   </Typography>
                   <Stack spacing={0.5}>
-                    {splitIntoSentences(entry.payload?.text ?? "").map((sentence, idx) => (
+                    {splitIntoSentences((entry.payload as any).text ?? "").map((sentence, idx) => (
                       <Typography key={idx} variant="body2">
                         {sentence}
                       </Typography>

@@ -10,26 +10,17 @@ import {
   TableRow,
   Paper,
   Chip,
-<<<<<<< HEAD
-=======
   Tabs,
   Tab,
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
 } from "@mui/material"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { z } from "zod"
-<<<<<<< HEAD
-
-import { type UserPublic, UsersService } from "@/client"
-import AddUser from "@/components/Admin/AddUser"
-=======
 import * as React from "react"
 
 import { type UserPublic, UsersService } from "@/client"
 import AddUser from "@/components/Admin/AddUser"
 import AdminQuestionnaires from "@/components/Admin/AdminQuestionnaires"
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
 import { UserActionsMenu } from "@/components/Common/UserActionsMenu"
 import PendingUsers from "@/components/Pending/PendingUsers"
 import {
@@ -147,17 +138,6 @@ function UsersTable() {
   )
 }
 
-<<<<<<< HEAD
-function Admin() {
-  return (
-    <Container maxWidth={false}>
-      <Typography variant="h4" component="h1" sx={{ pt: 6 }}>
-        Users Management
-      </Typography>
-
-      <AddUser />
-      <UsersTable />
-=======
 interface TabPanelProps {
   children?: React.ReactNode
   index: number
@@ -207,7 +187,6 @@ function Admin() {
       <TabPanel value={value} index={1}>
         <AdminQuestionnaires />
       </TabPanel>
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
     </Container>
   )
 }

@@ -1,29 +1,18 @@
 import { Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material"
-<<<<<<< HEAD
 import { Link as RouterLink } from "@tanstack/react-router"
 import { FiHome, FiSettings, FiUsers, FiMap, FiClipboard } from "react-icons/fi"
+// import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
 import type { IconType } from "react-icons/lib"
 
 import useAuth from "@/hooks/useAuth"
 
 const items = [
   { icon: FiHome, title: "Dashboard", path: "/" },
+  { icon: FiClipboard, title: "Questionnaires", path: "/questionnaires" },
   { icon: FiMap, title: "Value Map", path: "/value-map" },
   { icon: FiClipboard, title: "Chat", path: "/chat" },
-=======
-import { useQueryClient } from "@tanstack/react-query"
-import { Link as RouterLink } from "@tanstack/react-router"
-import { FiFileText, FiHome, FiSettings, FiUsers, FiCompass, FiClipboard } from "react-icons/fi"
-import type { IconType } from "react-icons/lib"
-
-import type { UserPublic } from "@/client"
-
-const items = [
-  { icon: FiHome, title: "Dashboard", path: "/" },
-  { icon: FiClipboard, title: "Questionnaires", path: "/questionnaires" },
-  { icon: FiFileText, title: "Notes", path: "/notes" },
-  { icon: FiCompass, title: "Orientations", path: "/orientations" },
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
+  // { icon: FiFileText, title: "Notes", path: "/notes" },
+  // { icon: FiCompass, title: "Orientations", path: "/orientations" },
   { icon: FiSettings, title: "User Settings", path: "/settings" },
 ]
 
@@ -38,7 +27,6 @@ interface Item {
 }
 
 const SidebarItems = ({ onClose }: SidebarItemsProps) => {
-<<<<<<< HEAD
   const { user: currentUser } = useAuth()
 
   const onboardingItem: Item = { icon: FiClipboard, title: "Onboarding", path: "/onboarding" }
@@ -46,14 +34,6 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
   const finalItems: Item[] = currentUser?.is_superuser
     ? [...baseItems, { icon: FiUsers, title: "Admin", path: "/admin" }]
     : baseItems
-=======
-  const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
-
-  const finalItems: Item[] = currentUser?.is_superuser
-    ? [...items, { icon: FiUsers, title: "Admin", path: "/admin" }]
-    : items
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
 
   return (
     <>

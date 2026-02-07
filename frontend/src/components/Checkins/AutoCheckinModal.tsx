@@ -28,13 +28,13 @@ function AutoCheckinModal() {
   const { data: morningHistory } = useQuery({
     queryKey: ["checkins", "morning", "latest"],
     queryFn: () =>
-      QuestionnairesService.readQuestionnaireResponses({ kind: "morning_checkin", limit: 20 }),
+      QuestionnairesService.readLegacyQuestionnaireResponses({ kind: "morning_checkin", limit: 20 }),
   })
 
   const { data: eveningHistory } = useQuery({
     queryKey: ["checkins", "evening", "latest"],
     queryFn: () =>
-      QuestionnairesService.readQuestionnaireResponses({ kind: "evening_checkin", limit: 20 }),
+      QuestionnairesService.readLegacyQuestionnaireResponses({ kind: "evening_checkin", limit: 20 }),
   })
 
   const morningDone = useMemo(() => {

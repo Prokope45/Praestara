@@ -4,10 +4,7 @@ import { Outlet, createFileRoute, redirect } from "@tanstack/react-router"
 import Sidebar from "@/components/Common/Sidebar"
 import { isLoggedIn } from "@/hooks/useAuth"
 import Navbar from "../components/Common/Navbar"
-<<<<<<< HEAD
 import AutoCheckinModal from "@/components/Checkins/AutoCheckinModal"
-=======
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
 
 export const Route = createFileRoute("/_layout")({
   beforeLoad: async () => {
@@ -37,10 +34,7 @@ function Layout() {
           <Outlet />
         </Box>
       </Box>
-<<<<<<< HEAD
       <AutoCheckinModal />
-=======
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
     </Box>
   )
 }

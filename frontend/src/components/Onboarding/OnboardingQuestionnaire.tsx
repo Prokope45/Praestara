@@ -18,8 +18,8 @@ import { useNavigate } from "@tanstack/react-router"
 import { useMemo, useState } from "react"
 
 import {
+  LegacyQuestionnaireResponseCreate,
   QuestionnairesService,
-  type QuestionnaireResponseCreate,
 } from "@/client"
 import {
   frequencyOptions,
@@ -277,8 +277,8 @@ const OnboardingQuestionnaire = () => {
   const navigate = useNavigate()
 
   const mutation = useMutation({
-    mutationFn: (payload: QuestionnaireResponseCreate) =>
-      QuestionnairesService.createQuestionnaireResponse({ requestBody: payload }),
+    mutationFn: (payload: LegacyQuestionnaireResponseCreate) =>
+      QuestionnairesService.createLegacyQuestionnaireResponse({ requestBody: payload }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["currentUser"] })
       navigate({ to: "/" })

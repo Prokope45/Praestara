@@ -1,20 +1,8 @@
-<<<<<<< HEAD
-from datetime import datetime, timezone
 import uuid
+from datetime import datetime, timezone, timedelta
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
-from sqlmodel import func, select
-
-from app.api.deps import CurrentUser, SessionDep
-from app.models import (
-    Message,
-=======
-import uuid
-from datetime import datetime, timedelta
-from typing import Any
-
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import func, select, col
 
 from app import crud
@@ -31,19 +19,30 @@ from app.models import (
     QuestionnaireAssignmentBulkCreate,
     QuestionnaireAssignmentPublic,
     QuestionnaireAssignmentsPublic,
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
     QuestionnaireResponse,
     QuestionnaireResponseCreate,
     QuestionnaireResponsePublic,
     QuestionnaireResponsesPublic,
-<<<<<<< HEAD
+    QuestionnaireResponseUpdate,
+    LegacyQuestionnaireResponse,
+    LegacyQuestionnaireResponseCreate,
+    LegacyQuestionnaireResponsePublic,
+    LegacyQuestionnaireResponsesPublic,
+    Appointment,
+    AppointmentCreate,
+    AppointmentPublic,
+    AppointmentsPublic,
+    AppointmentUpdate,
+    AssignmentStatus,
+    User,
 )
 
-router = APIRouter(prefix="/questionnaires", tags=["questionnaires"])
+router = APIRouter()
 
 
-@router.get("/", response_model=QuestionnaireResponsesPublic)
-def read_questionnaire_responses(
+# Legacy Questionnaire Response endpoints (for onboarding, checkins, etc.)
+@router.get("/legacy", response_model=LegacyQuestionnaireResponsesPublic)
+def read_legacy_questionnaire_responses(
     session: SessionDep,
     current_user: CurrentUser,
     skip: int = 0,
@@ -51,44 +50,43 @@ def read_questionnaire_responses(
     kind: str | None = None,
 ) -> Any:
     """
-    Retrieve questionnaire responses.
+    Retrieve legacy questionnaire responses (onboarding, checkins, etc.).
     """
-
     if current_user.is_superuser:
-        count_statement = select(func.count()).select_from(QuestionnaireResponse)
-        statement = select(QuestionnaireResponse)
+        count_statement = select(func.count()).select_from(LegacyQuestionnaireResponse)
+        statement = select(LegacyQuestionnaireResponse)
         if kind:
-            count_statement = count_statement.where(QuestionnaireResponse.kind == kind)
-            statement = statement.where(QuestionnaireResponse.kind == kind)
+            count_statement = count_statement.where(LegacyQuestionnaireResponse.kind == kind)
+            statement = statement.where(LegacyQuestionnaireResponse.kind == kind)
     else:
         count_statement = (
             select(func.count())
-            .select_from(QuestionnaireResponse)
-            .where(QuestionnaireResponse.owner_id == current_user.id)
+            .select_from(LegacyQuestionnaireResponse)
+            .where(LegacyQuestionnaireResponse.owner_id == current_user.id)
         )
-        statement = select(QuestionnaireResponse).where(
-            QuestionnaireResponse.owner_id == current_user.id
+        statement = select(LegacyQuestionnaireResponse).where(
+            LegacyQuestionnaireResponse.owner_id == current_user.id
         )
         if kind:
-            count_statement = count_statement.where(QuestionnaireResponse.kind == kind)
-            statement = statement.where(QuestionnaireResponse.kind == kind)
+            count_statement = count_statement.where(LegacyQuestionnaireResponse.kind == kind)
+            statement = statement.where(LegacyQuestionnaireResponse.kind == kind)
 
     count = session.exec(count_statement).one()
     responses = session.exec(statement.offset(skip).limit(limit)).all()
-    return QuestionnaireResponsesPublic(data=responses, count=count)
+    return LegacyQuestionnaireResponsesPublic(data=responses, count=count)
 
 
-@router.post("/", response_model=QuestionnaireResponsePublic)
-def create_questionnaire_response(
+@router.post("/legacy", response_model=LegacyQuestionnaireResponsePublic)
+def create_legacy_questionnaire_response(
     *,
     session: SessionDep,
     current_user: CurrentUser,
-    response_in: QuestionnaireResponseCreate,
+    response_in: LegacyQuestionnaireResponseCreate,
 ) -> Any:
     """
-    Create a questionnaire response.
+    Create a legacy questionnaire response (onboarding, checkins, etc.).
     """
-    response = QuestionnaireResponse.model_validate(
+    response = LegacyQuestionnaireResponse.model_validate(
         response_in, update={"owner_id": current_user.id}
     )
     session.add(response)
@@ -102,35 +100,22 @@ def create_questionnaire_response(
     return response
 
 
-@router.delete("/{id}", response_model=Message)
-def delete_questionnaire_response(
+@router.delete("/legacy/{id}", response_model=Message)
+def delete_legacy_questionnaire_response(
     session: SessionDep, current_user: CurrentUser, id: uuid.UUID
 ) -> Message:
     """
-    Delete a questionnaire response.
+    Delete a legacy questionnaire response.
     """
-    response = session.get(QuestionnaireResponse, id)
+    response = session.get(LegacyQuestionnaireResponse, id)
     if not response:
-        raise HTTPException(status_code=404, detail="Questionnaire response not found")
+        raise HTTPException(status_code=404, detail="Legacy questionnaire response not found")
     if not current_user.is_superuser and response.owner_id != current_user.id:
         raise HTTPException(status_code=400, detail="Not enough permissions")
 
     session.delete(response)
     session.commit()
-    return Message(message="Questionnaire response deleted successfully")
-=======
-    QuestionnaireResponseUpdate,
-    Appointment,
-    AppointmentCreate,
-    AppointmentPublic,
-    AppointmentsPublic,
-    AppointmentUpdate,
-    AssignmentStatus,
-    User,
-)
-from fastapi import Depends
-
-router = APIRouter()
+    return Message(message="Legacy questionnaire response deleted successfully")
 
 
 # Questionnaire Template endpoints (Admin only)
@@ -638,4 +623,3 @@ def delete_appointment(
     session.delete(appointment)
     session.commit()
     return Message(message="Appointment deleted successfully")
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f

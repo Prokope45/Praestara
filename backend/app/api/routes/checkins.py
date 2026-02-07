@@ -9,7 +9,7 @@ from sqlmodel import desc, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
-from app.models import QuestionnaireResponse
+from app.models import LegacyQuestionnaireResponse
 
 router = APIRouter(prefix="/checkins", tags=["checkins"])
 
@@ -163,23 +163,23 @@ def create_checkin(
     *, session: SessionDep, current_user: CurrentUser, payload: CheckinRequest
 ) -> CheckinResponse:
     onboarding = session.exec(
-        select(QuestionnaireResponse)
+        select(LegacyQuestionnaireResponse)
         .where(
-            QuestionnaireResponse.owner_id == current_user.id,
-            QuestionnaireResponse.kind == "onboarding",
+            LegacyQuestionnaireResponse.owner_id == current_user.id,
+            LegacyQuestionnaireResponse.kind == "onboarding",
         )
-        .order_by(desc(QuestionnaireResponse.created_at))
+        .order_by(desc(LegacyQuestionnaireResponse.created_at))
     ).first()
 
     last_morning = None
     if payload.type == "evening":
         last_morning = session.exec(
-            select(QuestionnaireResponse)
+            select(LegacyQuestionnaireResponse)
             .where(
-                QuestionnaireResponse.owner_id == current_user.id,
-                QuestionnaireResponse.kind == "morning_checkin",
+                LegacyQuestionnaireResponse.owner_id == current_user.id,
+                LegacyQuestionnaireResponse.kind == "morning_checkin",
             )
-            .order_by(desc(QuestionnaireResponse.created_at))
+            .order_by(desc(LegacyQuestionnaireResponse.created_at))
         ).first()
 
     prompt = _build_prompt(
@@ -216,7 +216,7 @@ def create_checkin(
         "alignment_score": alignment_score,
     }
 
-    response = QuestionnaireResponse.model_validate(
+    response = LegacyQuestionnaireResponse.model_validate(
         {
             "kind": f"{payload.type}_checkin",
             "schema_version": "v1",

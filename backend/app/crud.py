@@ -1,8 +1,5 @@
 import uuid
-<<<<<<< HEAD
-=======
 from datetime import datetime
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
 from typing import Any
 
 from sqlmodel import Session, select
@@ -18,8 +15,6 @@ from app.models import (
     OrientationCreate,
     OrientationUpdate,
     OrientationTrait,
-<<<<<<< HEAD
-=======
     QuestionnaireTemplate,
     QuestionnaireTemplateCreate,
     QuestionnaireTemplateUpdate,
@@ -33,7 +28,6 @@ from app.models import (
     QuestionnaireResponseCreate,
     Answer,
     AssignmentStatus,
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
 )
 
 
@@ -139,8 +133,6 @@ def update_orientation(
     session.commit()
     session.refresh(db_orientation)
     return db_orientation
-<<<<<<< HEAD
-=======
 
 
 # Questionnaire Template CRUD
@@ -282,4 +274,3 @@ def create_questionnaire_response(
     session.commit()
     session.refresh(db_response)
     return db_response
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f

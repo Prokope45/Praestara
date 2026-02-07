@@ -17,7 +17,7 @@ from app.models import (
     Engine89ResultPublic,
     Engine89ResultsPublic,
     Message,
-    QuestionnaireResponse,
+    LegacyQuestionnaireResponse,
 )
 
 router = APIRouter(prefix="/engine89", tags=["engine89"])
@@ -41,15 +41,15 @@ def export_for_engine89(
     Export de-identified questionnaire payloads for Engine89.
     """
     if current_user.is_superuser:
-        statement = select(QuestionnaireResponse)
+        statement = select(LegacyQuestionnaireResponse)
         if kind:
-            statement = statement.where(QuestionnaireResponse.kind == kind)
+            statement = statement.where(LegacyQuestionnaireResponse.kind == kind)
     else:
-        statement = select(QuestionnaireResponse).where(
-            QuestionnaireResponse.owner_id == current_user.id
+        statement = select(LegacyQuestionnaireResponse).where(
+            LegacyQuestionnaireResponse.owner_id == current_user.id
         )
         if kind:
-            statement = statement.where(QuestionnaireResponse.kind == kind)
+            statement = statement.where(LegacyQuestionnaireResponse.kind == kind)
 
     responses = session.exec(statement).all()
     export_data = []
@@ -82,7 +82,7 @@ def import_engine89_results(
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     users = session.exec(select(Engine89Result.owner_id.distinct())).all()
-    user_ids = session.exec(select(QuestionnaireResponse.owner_id.distinct())).all()
+    user_ids = session.exec(select(LegacyQuestionnaireResponse.owner_id.distinct())).all()
     candidate_ids = set(users) | set(user_ids)
 
     hash_map = {_subject_hash(user_id): user_id for user_id in candidate_ids}

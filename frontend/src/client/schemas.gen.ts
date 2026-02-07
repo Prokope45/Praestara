@@ -69,12 +69,8 @@ export const HTTPValidationErrorSchema = {
   title: "HTTPValidationError",
 } as const
 
-<<<<<<< HEAD
 export const NoteCreateSchema = {
   // Renamed from ItemCreateSchema
-=======
-export const NoteCreateSchema = { // Renamed from ItemCreateSchema
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
   properties: {
     title: {
       type: "string",
@@ -100,12 +96,8 @@ export const NoteCreateSchema = { // Renamed from ItemCreateSchema
   title: "NoteCreate", // Renamed from ItemCreate
 } as const
 
-<<<<<<< HEAD
 export const NotePublicSchema = {
   // Renamed from ItemPublicSchema
-=======
-export const NotePublicSchema = { // Renamed from ItemPublicSchema
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
   properties: {
     title: {
       type: "string",
@@ -141,12 +133,8 @@ export const NotePublicSchema = { // Renamed from ItemPublicSchema
   title: "NotePublic", // Renamed from ItemPublic
 } as const
 
-<<<<<<< HEAD
 export const NoteUpdateSchema = {
   // Renamed from ItemUpdateSchema
-=======
-export const NoteUpdateSchema = { // Renamed from ItemUpdateSchema
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
   properties: {
     title: {
       anyOf: [
@@ -178,12 +166,8 @@ export const NoteUpdateSchema = { // Renamed from ItemUpdateSchema
   title: "NoteUpdate", // Renamed from ItemUpdate
 } as const
 
-<<<<<<< HEAD
 export const NotesPublicSchema = {
   // Renamed from ItemsPublicSchema
-=======
-export const NotesPublicSchema = { // Renamed from ItemsPublicSchema
->>>>>>> 143f201b1c0eb0505243029a56878d6568d99d9f
   properties: {
     data: {
       items: {
