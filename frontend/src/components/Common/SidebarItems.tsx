@@ -1,19 +1,24 @@
 import { Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material"
 import { Link as RouterLink } from "@tanstack/react-router"
-import { FiHome, FiSettings, FiUsers, FiMap, FiClipboard } from "react-icons/fi"
-// import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
+import {
+  QuestionAnswerOutlined, HomeOutlined, ContentPasteOutlined,
+  MapOutlined, SettingsOutlined, PeopleOutlined
+} from "@mui/icons-material"
 import type { IconType } from "react-icons/lib"
 
 import useAuth from "@/hooks/useAuth"
 
+const ClipboardIcon = ContentPasteOutlined as IconType
+const UsersIcon = PeopleOutlined as IconType
+
 const items = [
-  { icon: FiHome, title: "Dashboard", path: "/" },
-  { icon: FiClipboard, title: "Questionnaires", path: "/questionnaires" },
-  { icon: FiMap, title: "Value Map", path: "/value-map" },
-  { icon: FiClipboard, title: "Chat", path: "/chat" },
+  { icon: HomeOutlined as IconType, title: "Dashboard", path: "/" },
+  { icon: ContentPasteOutlined as IconType, title: "Questionnaires", path: "/questionnaires" },
+  { icon: MapOutlined as IconType, title: "Value Map", path: "/value-map" },
+  { icon: QuestionAnswerOutlined as IconType, title: "Chat", path: "/chat" },
   // { icon: FiFileText, title: "Notes", path: "/notes" },
   // { icon: FiCompass, title: "Orientations", path: "/orientations" },
-  { icon: FiSettings, title: "User Settings", path: "/settings" },
+  { icon: SettingsOutlined as IconType, title: "User Settings", path: "/settings" },
 ]
 
 interface SidebarItemsProps {
@@ -29,10 +34,10 @@ interface Item {
 const SidebarItems = ({ onClose }: SidebarItemsProps) => {
   const { user: currentUser } = useAuth()
 
-  const onboardingItem: Item = { icon: FiClipboard, title: "Onboarding", path: "/onboarding" }
+  const onboardingItem: Item = { icon: ClipboardIcon, title: "Onboarding", path: "/onboarding" }
   const baseItems = [items[0], onboardingItem, ...items.slice(1)]
   const finalItems: Item[] = currentUser?.is_superuser
-    ? [...baseItems, { icon: FiUsers, title: "Admin", path: "/admin" }]
+    ? [...baseItems, { icon: UsersIcon, title: "Admin", path: "/admin" }]
     : baseItems
 
   return (
