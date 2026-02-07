@@ -69,7 +69,8 @@ export const HTTPValidationErrorSchema = {
   title: "HTTPValidationError",
 } as const
 
-export const NoteCreateSchema = { // Renamed from ItemCreateSchema
+export const NoteCreateSchema = {
+  // Renamed from ItemCreateSchema
   properties: {
     title: {
       type: "string",
@@ -95,7 +96,8 @@ export const NoteCreateSchema = { // Renamed from ItemCreateSchema
   title: "NoteCreate", // Renamed from ItemCreate
 } as const
 
-export const NotePublicSchema = { // Renamed from ItemPublicSchema
+export const NotePublicSchema = {
+  // Renamed from ItemPublicSchema
   properties: {
     title: {
       type: "string",
@@ -131,7 +133,8 @@ export const NotePublicSchema = { // Renamed from ItemPublicSchema
   title: "NotePublic", // Renamed from ItemPublic
 } as const
 
-export const NoteUpdateSchema = { // Renamed from ItemUpdateSchema
+export const NoteUpdateSchema = {
+  // Renamed from ItemUpdateSchema
   properties: {
     title: {
       anyOf: [
@@ -163,7 +166,8 @@ export const NoteUpdateSchema = { // Renamed from ItemUpdateSchema
   title: "NoteUpdate", // Renamed from ItemUpdate
 } as const
 
-export const NotesPublicSchema = { // Renamed from ItemsPublicSchema
+export const NotesPublicSchema = {
+  // Renamed from ItemsPublicSchema
   properties: {
     data: {
       items: {

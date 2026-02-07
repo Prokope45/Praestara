@@ -1,17 +1,24 @@
 import { Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material"
-import { useQueryClient } from "@tanstack/react-query"
 import { Link as RouterLink } from "@tanstack/react-router"
-import { FiFileText, FiHome, FiSettings, FiUsers, FiCompass, FiClipboard } from "react-icons/fi"
+import {
+  QuestionAnswerOutlined, HomeOutlined, ContentPasteOutlined,
+  MapOutlined, SettingsOutlined, PeopleOutlined
+} from "@mui/icons-material"
 import type { IconType } from "react-icons/lib"
 
-import type { UserPublic } from "@/client"
+import useAuth from "@/hooks/useAuth"
+
+const ClipboardIcon = ContentPasteOutlined as IconType
+const UsersIcon = PeopleOutlined as IconType
 
 const items = [
-  { icon: FiHome, title: "Dashboard", path: "/" },
-  { icon: FiClipboard, title: "Questionnaires", path: "/questionnaires" },
-  { icon: FiFileText, title: "Notes", path: "/notes" },
-  { icon: FiCompass, title: "Orientations", path: "/orientations" },
-  { icon: FiSettings, title: "User Settings", path: "/settings" },
+  { icon: HomeOutlined as IconType, title: "Dashboard", path: "/" },
+  { icon: ContentPasteOutlined as IconType, title: "Questionnaires", path: "/questionnaires" },
+  { icon: MapOutlined as IconType, title: "Value Map", path: "/value-map" },
+  { icon: QuestionAnswerOutlined as IconType, title: "Chat", path: "/chat" },
+  // { icon: FiFileText, title: "Notes", path: "/notes" },
+  // { icon: FiCompass, title: "Orientations", path: "/orientations" },
+  { icon: SettingsOutlined as IconType, title: "User Settings", path: "/settings" },
 ]
 
 interface SidebarItemsProps {
@@ -25,12 +32,13 @@ interface Item {
 }
 
 const SidebarItems = ({ onClose }: SidebarItemsProps) => {
-  const queryClient = useQueryClient()
-  const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
+  const { user: currentUser } = useAuth()
 
+  const onboardingItem: Item = { icon: ClipboardIcon, title: "Onboarding", path: "/onboarding" }
+  const baseItems = [items[0], onboardingItem, ...items.slice(1)]
   const finalItems: Item[] = currentUser?.is_superuser
-    ? [...items, { icon: FiUsers, title: "Admin", path: "/admin" }]
-    : items
+    ? [...baseItems, { icon: UsersIcon, title: "Admin", path: "/admin" }]
+    : baseItems
 
   return (
     <>
