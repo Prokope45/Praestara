@@ -1,7 +1,7 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional, TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 from pydantic import EmailStr
 import sqlalchemy as sa
@@ -38,6 +38,9 @@ class UserBase(SQLModel):
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
     profile_image: str | None = Field(default=None, sa_type=sa.Text)
+    onboarding_completed_at: datetime | None = Field(
+        default=None, sa_type=sa.DateTime(timezone=True)
+    )
 
 
 # Properties to receive via API on creation
@@ -77,6 +80,12 @@ class User(UserBase, table=True):
     appointments: list["Appointment"] = Relationship(back_populates="user", cascade_delete=True)
     questionnaire_assignments: list["QuestionnaireAssignment"] = Relationship(back_populates="user", cascade_delete=True)
     questionnaire_responses: list["QuestionnaireResponse"] = Relationship(back_populates="user", cascade_delete=True)
+    legacy_questionnaire_responses: list["LegacyQuestionnaireResponse"] = Relationship(
+        back_populates="owner", cascade_delete=True
+    )
+    engine89_results: list["Engine89Result"] = Relationship(
+        back_populates="owner", cascade_delete=True
+    )
 
 
 # Properties to return via API, id is always required
@@ -456,3 +465,71 @@ class AnswerPublic(AnswerBase):
     id: uuid.UUID
     question_id: uuid.UUID
     question: QuestionPublic
+
+
+# Legacy Questionnaire response models (for checkins and engine89)
+class LegacyQuestionnaireResponseBase(SQLModel):
+    kind: str = Field(max_length=50)
+    schema_version: str = Field(default="v1", max_length=20)
+    payload: dict[str, Any] = Field(sa_type=sa.JSON)
+
+
+class LegacyQuestionnaireResponseCreate(LegacyQuestionnaireResponseBase):
+    pass
+
+
+class LegacyQuestionnaireResponse(LegacyQuestionnaireResponseBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    owner: Optional["User"] = Relationship(back_populates="legacy_questionnaire_responses")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_type=sa.DateTime(timezone=True),
+    )
+
+
+class LegacyQuestionnaireResponsePublic(LegacyQuestionnaireResponseBase):
+    id: uuid.UUID
+    owner_id: uuid.UUID
+    created_at: datetime
+
+
+class LegacyQuestionnaireResponsesPublic(SQLModel):
+    data: list[LegacyQuestionnaireResponsePublic]
+    count: int
+
+
+# Engine89 Result models
+class Engine89ResultBase(SQLModel):
+    kind: str = Field(max_length=50)
+    schema_version: str = Field(default="v1", max_length=20)
+    payload: dict[str, Any] = Field(sa_type=sa.JSON)
+
+
+class Engine89ResultCreate(Engine89ResultBase):
+    subject_hash: str | None = Field(default=None, max_length=128)
+
+
+class Engine89Result(Engine89ResultBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    owner: Optional["User"] = Relationship(back_populates="engine89_results")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_type=sa.DateTime(timezone=True),
+    )
+
+
+class Engine89ResultPublic(Engine89ResultBase):
+    id: uuid.UUID
+    owner_id: uuid.UUID
+    created_at: datetime
+
+
+class Engine89ResultsPublic(SQLModel):
+    data: list[Engine89ResultPublic]
+    count: int

@@ -17,11 +17,15 @@ import { Route as RecoverPasswordImport } from './routes/recover-password'
 import { Route as LoginImport } from './routes/login'
 import { Route as LayoutImport } from './routes/_layout'
 import { Route as LayoutIndexImport } from './routes/_layout/index'
+import { Route as LayoutValueMapImport } from './routes/_layout/value-map'
 import { Route as LayoutSettingsImport } from './routes/_layout/settings'
-import { Route as LayoutQuestionnairesImport } from './routes/_layout/questionnaires'
 import { Route as LayoutOrientationsImport } from './routes/_layout/orientations'
+import { Route as LayoutOnboardingImport } from './routes/_layout/onboarding'
 import { Route as LayoutNotesImport } from './routes/_layout/notes'
+import { Route as LayoutCheckinsImport } from './routes/_layout/checkins'
+import { Route as LayoutChatImport } from './routes/_layout/chat'
 import { Route as LayoutAdminImport } from './routes/_layout/admin'
+import { Route as LayoutQuestionnairesIndexImport } from './routes/_layout/questionnaires.index'
 import { Route as LayoutAdminQuestionnairesImport } from './routes/_layout/admin.questionnaires'
 import { Route as LayoutQuestionnairesAssignmentIdTakeImport } from './routes/_layout/questionnaires/$assignmentId.take'
 
@@ -57,13 +61,13 @@ const LayoutIndexRoute = LayoutIndexImport.update({
   getParentRoute: () => LayoutRoute,
 } as any)
 
-const LayoutSettingsRoute = LayoutSettingsImport.update({
-  path: '/settings',
+const LayoutValueMapRoute = LayoutValueMapImport.update({
+  path: '/value-map',
   getParentRoute: () => LayoutRoute,
 } as any)
 
-const LayoutQuestionnairesRoute = LayoutQuestionnairesImport.update({
-  path: '/questionnaires',
+const LayoutSettingsRoute = LayoutSettingsImport.update({
+  path: '/settings',
   getParentRoute: () => LayoutRoute,
 } as any)
 
@@ -72,13 +76,33 @@ const LayoutOrientationsRoute = LayoutOrientationsImport.update({
   getParentRoute: () => LayoutRoute,
 } as any)
 
+const LayoutOnboardingRoute = LayoutOnboardingImport.update({
+  path: '/onboarding',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
 const LayoutNotesRoute = LayoutNotesImport.update({
   path: '/notes',
   getParentRoute: () => LayoutRoute,
 } as any)
 
+const LayoutCheckinsRoute = LayoutCheckinsImport.update({
+  path: '/checkins',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutChatRoute = LayoutChatImport.update({
+  path: '/chat',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
 const LayoutAdminRoute = LayoutAdminImport.update({
   path: '/admin',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutQuestionnairesIndexRoute = LayoutQuestionnairesIndexImport.update({
+  path: '/questionnaires/',
   getParentRoute: () => LayoutRoute,
 } as any)
 
@@ -89,8 +113,8 @@ const LayoutAdminQuestionnairesRoute = LayoutAdminQuestionnairesImport.update({
 
 const LayoutQuestionnairesAssignmentIdTakeRoute =
   LayoutQuestionnairesAssignmentIdTakeImport.update({
-    path: '/$assignmentId/take',
-    getParentRoute: () => LayoutQuestionnairesRoute,
+    path: '/questionnaires/$assignmentId/take',
+    getParentRoute: () => LayoutRoute,
   } as any)
 
 // Populate the FileRoutesByPath interface
@@ -121,20 +145,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminImport
       parentRoute: typeof LayoutImport
     }
+    '/_layout/chat': {
+      preLoaderRoute: typeof LayoutChatImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/checkins': {
+      preLoaderRoute: typeof LayoutCheckinsImport
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/notes': {
       preLoaderRoute: typeof LayoutNotesImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/onboarding': {
+      preLoaderRoute: typeof LayoutOnboardingImport
       parentRoute: typeof LayoutImport
     }
     '/_layout/orientations': {
       preLoaderRoute: typeof LayoutOrientationsImport
       parentRoute: typeof LayoutImport
     }
-    '/_layout/questionnaires': {
-      preLoaderRoute: typeof LayoutQuestionnairesImport
-      parentRoute: typeof LayoutImport
-    }
     '/_layout/settings': {
       preLoaderRoute: typeof LayoutSettingsImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/value-map': {
+      preLoaderRoute: typeof LayoutValueMapImport
       parentRoute: typeof LayoutImport
     }
     '/_layout/': {
@@ -145,9 +181,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminQuestionnairesImport
       parentRoute: typeof LayoutAdminImport
     }
+    '/_layout/questionnaires/': {
+      preLoaderRoute: typeof LayoutQuestionnairesIndexImport
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/questionnaires/$assignmentId/take': {
       preLoaderRoute: typeof LayoutQuestionnairesAssignmentIdTakeImport
-      parentRoute: typeof LayoutQuestionnairesImport
+      parentRoute: typeof LayoutImport
     }
   }
 }
@@ -157,13 +197,16 @@ declare module '@tanstack/react-router' {
 export const routeTree = rootRoute.addChildren([
   LayoutRoute.addChildren([
     LayoutAdminRoute.addChildren([LayoutAdminQuestionnairesRoute]),
+    LayoutChatRoute,
+    LayoutCheckinsRoute,
     LayoutNotesRoute,
+    LayoutOnboardingRoute,
     LayoutOrientationsRoute,
-    LayoutQuestionnairesRoute.addChildren([
-      LayoutQuestionnairesAssignmentIdTakeRoute,
-    ]),
     LayoutSettingsRoute,
+    LayoutValueMapRoute,
     LayoutIndexRoute,
+    LayoutQuestionnairesIndexRoute,
+    LayoutQuestionnairesAssignmentIdTakeRoute,
   ]),
   LoginRoute,
   RecoverPasswordRoute,
