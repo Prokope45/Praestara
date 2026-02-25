@@ -94,6 +94,14 @@ class Settings(BaseSettings):
     EMAIL_TEST_USER: EmailStr = "test@example.com"
     FIRST_SUPERUSER: EmailStr
     FIRST_SUPERUSER_PASSWORD: str
+    LLM_ENDPOINT: AnyUrl | None = None
+    LLM_API_KEY: str | None = None
+    LLM_TIMEOUT_SECONDS: int = 60
+    LLM_MAX_TOKENS: int = 256
+    LLM_TEMPERATURE: float = 0.7
+    PROJECT89_ENDPOINT: AnyUrl | None = None
+    PROJECT89_API_KEY: str | None = None
+    PROJECT89_TIMEOUT_SECONDS: int = 60
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
