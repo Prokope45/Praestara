@@ -9,7 +9,9 @@ class DomainEvent(SQLModel, table=True):
     __tablename__ = "goal_scaffold_event"
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    user_id: uuid.UUID = Field(foreign_key="user.id", nullable=False)
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
     event_type: str = Field(max_length=255, index=True)
     domain: str = Field(max_length=100, index=True)
     payload: dict = Field(sa_column=Column(sa.JSON, nullable=False))

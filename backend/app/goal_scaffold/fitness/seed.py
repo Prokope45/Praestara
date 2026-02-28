@@ -1,0 +1,156 @@
+import uuid
+
+from sqlmodel import Session, select
+
+from app.goal_scaffold.enums import FitnessDomain
+from app.goal_scaffold.fitness.models import ExerciseDefinition
+
+
+def seed_minimal_library(session: Session, library_version: str = "v1.0.0") -> int:
+    existing = session.exec(
+        select(ExerciseDefinition).where(
+            ExerciseDefinition.library_version == library_version
+        )
+    ).first()
+    if existing:
+        return 0
+
+    exercises = [
+        ExerciseDefinition(
+            id=uuid.uuid4(),
+            name="Brisk Walk",
+            domain=FitnessDomain.ENDURANCE,
+            subdomain="aerobic",
+            mechanical_demand=0.2,
+            metabolic_demand=0.4,
+            recovery_cost=0.2,
+            time_requirement_min=10,
+            time_requirement_typical=20,
+            equipment_required=[],
+            space_required="outdoors",
+            skill_complexity=0.1,
+            psych_barrier=0.1,
+            impact_profile={"impact": "low"},
+            contraindications=[],
+            scalability={"duration": True, "intensity": "pace"},
+            library_version=library_version,
+        ),
+        ExerciseDefinition(
+            id=uuid.uuid4(),
+            name="Cycling (Stationary)",
+            domain=FitnessDomain.ENDURANCE,
+            subdomain="aerobic",
+            mechanical_demand=0.3,
+            metabolic_demand=0.5,
+            recovery_cost=0.3,
+            time_requirement_min=15,
+            time_requirement_typical=30,
+            equipment_required=["bike"],
+            space_required="indoors",
+            skill_complexity=0.2,
+            psych_barrier=0.2,
+            impact_profile={"impact": "low"},
+            contraindications=[],
+            scalability={"duration": True, "intensity": "resistance"},
+            library_version=library_version,
+        ),
+        ExerciseDefinition(
+            id=uuid.uuid4(),
+            name="Push-Up (Incline)",
+            domain=FitnessDomain.SKELETAL_MUSCULAR,
+            subdomain="push",
+            mechanical_demand=0.4,
+            metabolic_demand=0.3,
+            recovery_cost=0.3,
+            time_requirement_min=8,
+            time_requirement_typical=15,
+            equipment_required=[],
+            space_required=None,
+            skill_complexity=0.3,
+            psych_barrier=0.2,
+            impact_profile={"impact": "low"},
+            contraindications=["wrist"],
+            scalability={"volume": True, "complexity": "incline"},
+            library_version=library_version,
+        ),
+        ExerciseDefinition(
+            id=uuid.uuid4(),
+            name="Resistance Band Row",
+            domain=FitnessDomain.SKELETAL_MUSCULAR,
+            subdomain="pull",
+            mechanical_demand=0.4,
+            metabolic_demand=0.3,
+            recovery_cost=0.3,
+            time_requirement_min=8,
+            time_requirement_typical=15,
+            equipment_required=["band"],
+            space_required=None,
+            skill_complexity=0.3,
+            psych_barrier=0.2,
+            impact_profile={"impact": "low"},
+            contraindications=["shoulder"],
+            scalability={"volume": True, "intensity": "band"},
+            library_version=library_version,
+        ),
+        ExerciseDefinition(
+            id=uuid.uuid4(),
+            name="Bodyweight Squat",
+            domain=FitnessDomain.SKELETAL_MUSCULAR,
+            subdomain="squat",
+            mechanical_demand=0.4,
+            metabolic_demand=0.4,
+            recovery_cost=0.3,
+            time_requirement_min=8,
+            time_requirement_typical=15,
+            equipment_required=[],
+            space_required=None,
+            skill_complexity=0.3,
+            psych_barrier=0.2,
+            impact_profile={"impact": "low"},
+            contraindications=["knee"],
+            scalability={"volume": True, "depth": True},
+            library_version=library_version,
+        ),
+        ExerciseDefinition(
+            id=uuid.uuid4(),
+            name="Hip Opener Flow",
+            domain=FitnessDomain.MOBILITY,
+            subdomain="hip",
+            mechanical_demand=0.2,
+            metabolic_demand=0.2,
+            recovery_cost=0.1,
+            time_requirement_min=6,
+            time_requirement_typical=12,
+            equipment_required=[],
+            space_required=None,
+            skill_complexity=0.2,
+            psych_barrier=0.1,
+            impact_profile={"impact": "low"},
+            contraindications=[],
+            scalability={"duration": True},
+            library_version=library_version,
+        ),
+        ExerciseDefinition(
+            id=uuid.uuid4(),
+            name="Thoracic Mobility Sequence",
+            domain=FitnessDomain.MOBILITY,
+            subdomain="thoracic",
+            mechanical_demand=0.2,
+            metabolic_demand=0.2,
+            recovery_cost=0.1,
+            time_requirement_min=6,
+            time_requirement_typical=12,
+            equipment_required=[],
+            space_required=None,
+            skill_complexity=0.2,
+            psych_barrier=0.1,
+            impact_profile={"impact": "low"},
+            contraindications=[],
+            scalability={"duration": True},
+            library_version=library_version,
+        ),
+    ]
+
+    session.add_all(exercises)
+    session.flush()
+    return len(exercises)
