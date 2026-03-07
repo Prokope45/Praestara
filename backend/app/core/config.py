@@ -103,6 +103,12 @@ class Settings(BaseSettings):
     PROJECT89_API_KEY: str | None = None
     PROJECT89_TIMEOUT_SECONDS: int = 60
 
+    # AI Service (Koios RAG) Configuration
+    AI_API_URL: AnyUrl | None = None
+    AI_ENCRYPTION_KEY: str | None = None  # 64 hex characters (32 bytes) for AES-256-GCM
+    AI_TIMEOUT_SECONDS: int = 120
+    AI_ENABLE_ENCRYPTION: bool = True
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (
