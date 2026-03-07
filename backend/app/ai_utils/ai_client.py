@@ -181,7 +181,7 @@ class AIClient:
         encrypted_user_id = self._encrypt_user_id(user_id)
 
         # Get valid token
-        token = self._get_valid_token(user_id)
+        token = self._get_valid_token(encrypted_user_id)
 
         # Build request
         request_body = self._build_query_request(query, temperature)
@@ -220,6 +220,117 @@ class AIClient:
             raise ValueError("No generation in AI service response")
 
         return generation
+
+    def get_history(self, user_id: str, retry_count: int = 1) -> list[dict[str, str]]:
+        """Get the chat history for a user from the AI service.
+
+        Args:
+            user_id: The user's identifier.
+            retry_count: Number of retries on token expiration.
+
+        Returns:
+            List of chat messages with 'role' and 'content' keys.
+
+        Raises:
+            HTTPError: If the API request fails.
+            ValueError: If the response is invalid.
+        """
+        if not self.is_configured:
+            raise ValueError("AI service is not properly configured")
+
+        # Encrypt user ID for header
+        encrypted_user_id = self._encrypt_user_id(user_id)
+
+        # Get valid token
+        token = self._get_valid_token(encrypted_user_id)
+
+        # Make request
+        url = f"{self.base_url}/history"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "X-User-ID": encrypted_user_id,
+        }
+
+        try:
+            with httpx.Client(timeout=settings.AI_TIMEOUT_SECONDS) as client:
+                response = client.get(url, headers=headers)
+
+                # Handle token expiration
+                if response.status_code == 401 and retry_count > 0:
+                    logger.info("Token expired, refreshing...")
+                    self._token = None
+                    self._token_expiry = None
+                    return self.get_history(user_id, retry_count - 1)
+
+                response.raise_for_status()
+
+        except httpx.HTTPError as e:
+            logger.error("AI service history request failed: %s", e)
+            raise
+
+        # Parse and decrypt response
+        response_data = response.json()
+        decrypted_response = self._decrypt_response(response_data)
+
+        history = decrypted_response.get("history", [])
+        if not isinstance(history, list):
+            raise ValueError("Expected history to be a list")
+
+        return history
+
+    def clear_history(self, user_id: str, retry_count: int = 1) -> int:
+        """Clear the chat history for a user from the AI service.
+
+        Args:
+            user_id: The user's identifier.
+            retry_count: Number of retries on token expiration.
+
+        Returns:
+            Number of messages deleted.
+
+        Raises:
+            HTTPError: If the API request fails.
+            ValueError: If the response is invalid.
+        """
+        if not self.is_configured:
+            raise ValueError("AI service is not properly configured")
+
+        # Encrypt user ID for header
+        encrypted_user_id = self._encrypt_user_id(user_id)
+
+        # Get valid token
+        token = self._get_valid_token(encrypted_user_id)
+
+        # Make request
+        url = f"{self.base_url}/history"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "X-User-ID": encrypted_user_id,
+        }
+
+        try:
+            with httpx.Client(timeout=settings.AI_TIMEOUT_SECONDS) as client:
+                response = client.delete(url, headers=headers)
+
+                # Handle token expiration
+                if response.status_code == 401 and retry_count > 0:
+                    logger.info("Token expired, refreshing...")
+                    self._token = None
+                    self._token_expiry = None
+                    return self.clear_history(user_id, retry_count - 1)
+
+                response.raise_for_status()
+
+        except httpx.HTTPError as e:
+            logger.error("AI service clear history request failed: %s", e)
+            raise
+
+        # Parse and decrypt response
+        response_data = response.json()
+        decrypted_response = self._decrypt_response(response_data)
+
+        messages_deleted = decrypted_response.get("messages_deleted", 0)
+        return messages_deleted
 
     def clear_token(self) -> None:
         """Clear the cached token (useful for testing or forced refresh)."""
