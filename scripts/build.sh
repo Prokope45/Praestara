@@ -1,10 +1,10 @@
-#! /usr/bin/env sh
+#!/usr/bin/env sh
 
 # Exit in case of error
 set -e
 
 TAG=${TAG?Variable not set} \
 FRONTEND_ENV=${FRONTEND_ENV-production} \
-docker-compose \
--f docker-compose.yml \
+docker compose \
+-f build/docker-compose.yml \
 build
