@@ -3,7 +3,7 @@
 
 # Variables
 COMPOSE := docker-compose
-BUILD_DIR := $(CURDIR)
+BUILD_DIR := build/
 
 # ============================================================================
 # Core Commands
@@ -53,27 +53,27 @@ help:
 
 .PHONY: up
 up:
-	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml up
+	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml --env-file $(CURDIR)/.env up
 
 .PHONY: up-detached
 up-detached:
-	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml up -d
+	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml --env-file $(CURDIR)/.env up -d
 
 .PHONY: down
 down:
-	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml down
+	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml --env-file $(CURDIR)/.env down
 
 .PHONY: restart
 restart:
-	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml restart
+	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml --env-file $(CURDIR)/.env restart
 
 .PHONY: build
 build:
-	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml build
+	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml --env-file $(CURDIR)/.env build
 
 .PHONY: logs
 logs:
-	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml logs -f
+	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml --env-file $(CURDIR)/.env logs -f
 
 .PHONY: clean
 clean:
@@ -86,7 +86,7 @@ clean:
 
 .PHONY: dev-up
 dev-up:
-	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml up -d
+	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml --env-file $(CURDIR)/.env up -d
 
 .PHONY: dev-shell
 dev-shell:
