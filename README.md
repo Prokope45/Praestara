@@ -33,6 +33,49 @@ Then in `.env` set `FIRST_SUPERUSER` with your email and enter a password for `F
 
 Finally, run `docker compose watch` to run the rest of the containers and visit `localhost:5173` to see webapp.
 
+### Build System
+
+The project now uses a centralized build system in the [`build/`](build/) directory. This includes:
+
+- **Docker Compose files**: Moved to [`build/`](build/) for better organization
+- **Makefile**: Provides shortcuts for common build and deployment commands
+- **Documentation**: See [`build/build.md`](build/build.md) for detailed usage
+
+#### Quick Start with Makefile
+
+Instead of running raw `docker-compose` commands, use the Makefile shortcuts:
+
+```bash
+# Start all services (production mode)
+make -C build up
+
+# Start all services (development mode with Traefik proxy)
+make -C build dev-up
+
+# View logs
+make -C build logs
+
+# Stop all services
+make -C build down
+
+# Build images
+make -C build build
+
+# Run database migrations
+make -C build dev-migrate
+
+# Run backend tests
+make -C build dev-test
+
+# Connect to PostgreSQL
+make -C build dev-db-shell
+
+# Full cleanup (containers, images, volumes)
+make -C build clean-all
+```
+
+See [`build/build.md`](build/build.md) for a complete list of available commands.
+
 <!-- ### Dashboard Login
 
 [![API docs](img/login.png)](https://github.com/fastapi/full-stack-fastapi-template)
