@@ -3,7 +3,7 @@
 
 # Variables
 COMPOSE := docker-compose
-BUILD_DIR := build/
+BUILD_DIR := build
 
 # ============================================================================
 # Core Commands
@@ -58,6 +58,10 @@ up:
 .PHONY: up-detached
 up-detached:
 	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml --env-file $(CURDIR)/.env up -d
+
+.PHONY: watch
+watch:
+	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml -f $(BUILD_DIR)/docker-compose.override.yml --env-file $(CURDIR)/.env watch
 
 .PHONY: down
 down:

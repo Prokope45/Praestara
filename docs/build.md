@@ -68,6 +68,14 @@ make -C build clean
 
 Removes containers but keeps volumes (database data).
 
+### Watch Mode
+
+```bash
+make -C build watch
+```
+
+Starts all services in watch mode, which automatically restarts containers when changes are detected. This is useful for development when you want to see changes take effect immediately without manually restarting services.
+
 ### Full Cleanup
 
 ```bash
