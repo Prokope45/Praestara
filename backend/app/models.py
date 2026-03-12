@@ -533,3 +533,19 @@ class Engine89ResultPublic(Engine89ResultBase):
 class Engine89ResultsPublic(SQLModel):
     data: list[Engine89ResultPublic]
     count: int
+
+
+# Ensure goal_scaffold models are registered with SQLModel metadata.
+# These imports are for side effects only.
+from app.goal_scaffold import events as _gs_events  # noqa: E402,F401
+from app.goal_scaffold.goals import models as _gs_goals_models  # noqa: E402,F401
+from app.goal_scaffold.habits import models as _gs_habits_models  # noqa: E402,F401
+from app.goal_scaffold.health import models as _gs_health_models  # noqa: E402,F401
+from app.goal_scaffold.metrics import models as _gs_metrics_models  # noqa: E402,F401
+from app.goal_scaffold.nutrition import models as _gs_nutrition_models  # noqa: E402,F401
+from app.goal_scaffold.resource_profile import models as _gs_resource_models  # noqa: E402,F401
+from app.goal_scaffold.self_concept import models as _gs_self_concept_models  # noqa: E402,F401
+from app.goal_scaffold.stability import models as _gs_stability_models  # noqa: E402,F401
+from app.goal_scaffold.trajectory import models as _gs_trajectory_models  # noqa: E402,F401
+from app.goal_scaffold.weekly_cycle import models as _gs_weekly_models  # noqa: E402,F401
+from app.goal_scaffold.fitness import models as _gs_fitness_models  # noqa: E402,F401

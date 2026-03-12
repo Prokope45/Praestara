@@ -22,8 +22,10 @@ import { Route as LayoutSettingsImport } from './routes/_layout/settings'
 import { Route as LayoutOrientationsImport } from './routes/_layout/orientations'
 import { Route as LayoutOnboardingImport } from './routes/_layout/onboarding'
 import { Route as LayoutNotesImport } from './routes/_layout/notes'
+import { Route as LayoutFitnessImport } from './routes/_layout/fitness'
 import { Route as LayoutCheckinsImport } from './routes/_layout/checkins'
 import { Route as LayoutChatImport } from './routes/_layout/chat'
+import { Route as LayoutAlignmentImport } from './routes/_layout/alignment'
 import { Route as LayoutAdminImport } from './routes/_layout/admin'
 import { Route as LayoutQuestionnairesIndexImport } from './routes/_layout/questionnaires.index'
 import { Route as LayoutAdminQuestionnairesImport } from './routes/_layout/admin.questionnaires'
@@ -86,6 +88,11 @@ const LayoutNotesRoute = LayoutNotesImport.update({
   getParentRoute: () => LayoutRoute,
 } as any)
 
+const LayoutFitnessRoute = LayoutFitnessImport.update({
+  path: '/fitness',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
 const LayoutCheckinsRoute = LayoutCheckinsImport.update({
   path: '/checkins',
   getParentRoute: () => LayoutRoute,
@@ -93,6 +100,11 @@ const LayoutCheckinsRoute = LayoutCheckinsImport.update({
 
 const LayoutChatRoute = LayoutChatImport.update({
   path: '/chat',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutAlignmentRoute = LayoutAlignmentImport.update({
+  path: '/alignment',
   getParentRoute: () => LayoutRoute,
 } as any)
 
@@ -145,12 +157,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminImport
       parentRoute: typeof LayoutImport
     }
+    '/_layout/alignment': {
+      preLoaderRoute: typeof LayoutAlignmentImport
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/chat': {
       preLoaderRoute: typeof LayoutChatImport
       parentRoute: typeof LayoutImport
     }
     '/_layout/checkins': {
       preLoaderRoute: typeof LayoutCheckinsImport
+      parentRoute: typeof LayoutImport
+    }
+    '/_layout/fitness': {
+      preLoaderRoute: typeof LayoutFitnessImport
       parentRoute: typeof LayoutImport
     }
     '/_layout/notes': {
@@ -197,8 +217,10 @@ declare module '@tanstack/react-router' {
 export const routeTree = rootRoute.addChildren([
   LayoutRoute.addChildren([
     LayoutAdminRoute.addChildren([LayoutAdminQuestionnairesRoute]),
+    LayoutAlignmentRoute,
     LayoutChatRoute,
     LayoutCheckinsRoute,
+    LayoutFitnessRoute,
     LayoutNotesRoute,
     LayoutOnboardingRoute,
     LayoutOrientationsRoute,

@@ -10,6 +10,7 @@ from app.goal_scaffold.stability.routes import router as stability_router
 from app.goal_scaffold.resource_profile.routes import router as resource_profile_router
 from app.goal_scaffold.trajectory.routes import router as trajectory_router
 from app.goal_scaffold.metrics.routes import router as metrics_router
+from app.goal_scaffold.fitness.routes import router as fitness_router
 
 goal_scaffold_router = APIRouter()
 
@@ -42,4 +43,7 @@ goal_scaffold_router.include_router(
 )
 goal_scaffold_router.include_router(
     metrics_router, prefix="/metrics", tags=["goal-scaffold: metrics"]
+)
+goal_scaffold_router.include_router(
+    fitness_router, prefix="/fitness", tags=["goal-scaffold: fitness"]
 )

@@ -38,6 +38,34 @@ class PillarType(str, Enum):
     MOBILITY = "mobility"
 
 
+class FitnessDomain(str, Enum):
+    ENDURANCE = "endurance"
+    SKELETAL_MUSCULAR = "skeletal_muscular"
+    MOBILITY = "mobility"
+
+
+class FitnessAdherenceFlag(str, Enum):
+    FULL = "full"
+    PARTIAL = "partial"
+    SKIPPED = "skipped"
+
+
+class ReflectionFrictionReason(str, Enum):
+    TIME_CONSTRAINT = "time_constraint"
+    ENERGY_LOW = "energy_low"
+    RESOURCE_GAP = "resource_gap"
+    MOTIVATION_LOW = "motivation_low"
+    INJURY = "injury"
+    OTHER = "other"
+
+
+class RealignmentReason(str, Enum):
+    CONSTRAINT_CHANGE = "constraint_change"
+    ADHERENCE_ADJUSTMENT = "adherence_adjustment"
+    ENERGY_BURNOUT = "energy_burnout"
+    OTHER = "other"
+
+
 class MealType(str, Enum):
     BREAKFAST = "breakfast"
     LUNCH = "lunch"
