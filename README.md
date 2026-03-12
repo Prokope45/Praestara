@@ -1,24 +1,7 @@
-<header class="header">
-<img src="frontend/public/assets/images/praestara-logo.png" alt="Praestara Logo" class="logo">
-<h1 class="site-title">Praestara</h1>
+<header style="display: flex; align-items: center; gap: 10px;">
+<img src="frontend/public/assets/images/praestara-logo.png" alt="Praestara Logo" style="height: 50px;" class="logo">
+<h1 class="site-title" style="margin: 0; font-size: 24px;">Praestara</h1>
 </header>
-
-<style>
-.header {
-  display: flex;
-  align-items: center; /* Vertically centers items */
-  gap: 10px; /* Adds space between logo and text */
-}
-
-.logo {
-  height: 50px; /* Adjust as needed */
-}
-
-.site-title {
-  margin: 0;
-  font-size: 24px;
-}
-</style>
 
 **Praestara** is a startup initiative developed by [Kansas State University](https://www.k-state.edu/) neuroscience and computer science students. The platform supports research participants in their journey toward personal growth by helping them clarify their self-concept (identifying core values and aspirations), align daily tasks with their purpose, and achieve meaningful goals over time.
 
