@@ -1,9 +1,22 @@
-import { Box, Button, Container, Paper, Stack, TextField, Typography } from "@mui/material"
+import {
+  Box,
+  Button,
+  Container,
+  IconButton,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+  CircularProgress,
+  Tooltip,
+} from "@mui/material"
 import { createFileRoute } from "@tanstack/react-router"
-import { useMutation } from "@tanstack/react-query"
-import { useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState, useEffect, useRef } from "react"
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
 
 import { AiService } from "@/client"
+import useCustomToast from "@/hooks/useCustomToast"
 
 export const Route = createFileRoute("/_layout/chat")({
   component: Chat,
@@ -17,8 +30,36 @@ interface ChatMessage {
 function Chat() {
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const showToast = useCustomToast()
+  const queryClient = useQueryClient()
 
-  const mutation = useMutation({
+  // Fetch chat history on mount
+  const { data: historyData, isLoading: isLoadingHistory } = useQuery({
+    queryKey: ["chatHistory"],
+    queryFn: () => AiService.getChatHistory(),
+  })
+
+  // Update messages when history is loaded
+  useEffect(() => {
+    if (historyData && Array.isArray(historyData.history)) {
+      const loadedMessages: ChatMessage[] = historyData.history.map(
+        (msg: { role: string; content: string }) => ({
+          role: msg.role as "user" | "assistant",
+          content: msg.content,
+        })
+      )
+      setMessages(loadedMessages)
+    }
+  }, [historyData])
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [messages])
+
+  // Send message mutation
+  const sendMessageMutation = useMutation({
     mutationFn: (message: string) =>
       AiService.chatWithAi({
         requestBody: { message },
@@ -34,58 +75,154 @@ function Chat() {
         ...prev,
         {
           role: "assistant",
-          content: "The assistant is unavailable right now. Please try again shortly.",
+          content:
+            "The assistant is unavailable right now. Please try again shortly.",
         },
       ])
     },
   })
 
+  // Clear history mutation
+  const clearHistoryMutation = useMutation({
+    mutationFn: () => AiService.clearChatHistory(),
+    onSuccess: () => {
+      setMessages([])
+      showToast.showSuccessToast("Chat history cleared")
+      queryClient.invalidateQueries({ queryKey: ["chatHistory"] })
+    },
+    onError: () => {
+      showToast.showErrorToast("Failed to clear chat history")
+    },
+  })
+
   const sendMessage = () => {
     const trimmed = input.trim()
-    if (!trimmed || mutation.isPending) {
+    if (!trimmed || sendMessageMutation.isPending) {
       return
     }
     setMessages((prev) => [...prev, { role: "user", content: trimmed }])
     setInput("")
-    mutation.mutate(trimmed)
+    sendMessageMutation.mutate(trimmed)
+  }
+
+  const handleClearHistory = () => {
+    if (messages.length === 0) return
+    clearHistoryMutation.mutate()
   }
 
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h5" sx={{ mb: 1 }}>
-          Praestara Chat
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          The assistant responds using the configured LLM endpoint.
-        </Typography>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
+          <Box>
+            <Typography variant="h5" sx={{ mb: 1 }}>
+              Praestara Chat
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Chat with the AI assistant powered by Koios RAG. Your conversation
+              history is saved automatically.
+            </Typography>
+          </Box>
+          <Tooltip title="Clear chat history">
+            <span>
+              <IconButton
+                onClick={handleClearHistory}
+                disabled={
+                  messages.length === 0 || clearHistoryMutation.isPending
+                }
+                color="error"
+              >
+                {clearHistoryMutation.isPending ? (
+                  <CircularProgress size={24} />
+                ) : (
+                  <DeleteOutlineIcon />
+                )}
+              </IconButton>
+            </span>
+          </Tooltip>
+        </Stack>
       </Paper>
 
-      <Paper sx={{ p: 3, minHeight: 360 }}>
-        <Stack spacing={2}>
-          {messages.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              Start the conversation.
-            </Typography>
-          ) : (
-            messages.map((message, index) => (
+      <Paper
+        sx={{
+          p: 3,
+          minHeight: 360,
+          maxHeight: 500,
+          overflowY: "auto",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {isLoadingHistory ? (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              flexGrow: 1,
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        ) : messages.length === 0 ? (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ textAlign: "center", mt: 4 }}
+          >
+            Start the conversation. Your messages will be saved and restored
+            when you return.
+          </Typography>
+        ) : (
+          <Stack spacing={2} sx={{ flexGrow: 1 }}>
+            {messages.map((message, index) => (
               <Box
                 key={`${message.role}-${index}`}
                 sx={{
-                  alignSelf: message.role === "user" ? "flex-end" : "flex-start",
-                  bgcolor: message.role === "user" ? "primary.main" : "grey.100",
-                  color: message.role === "user" ? "primary.contrastText" : "text.primary",
+                  alignSelf:
+                    message.role === "user" ? "flex-end" : "flex-start",
+                  bgcolor:
+                    message.role === "user" ? "primary.main" : "grey.100",
+                  color:
+                    message.role === "user"
+                      ? "primary.contrastText"
+                      : "text.primary",
                   px: 2,
                   py: 1.5,
                   borderRadius: 2,
                   maxWidth: "80%",
+                  wordBreak: "break-word",
                 }}
               >
                 <Typography variant="body2">{message.content}</Typography>
               </Box>
-            ))
-          )}
-        </Stack>
+            ))}
+            {sendMessageMutation.isPending && (
+              <Box
+                sx={{
+                  alignSelf: "flex-start",
+                  bgcolor: "grey.100",
+                  px: 2,
+                  py: 1.5,
+                  borderRadius: 2,
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontStyle: "italic" }}
+                >
+                  Assistant is thinking...
+                </Typography>
+              </Box>
+            )}
+            <div ref={messagesEndRef} />
+          </Stack>
+        )}
       </Paper>
 
       <Paper sx={{ p: 2, mt: 3 }}>
@@ -99,14 +236,27 @@ function Chat() {
             multiline
             minRows={2}
             onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+              if (
+                event.key === "Enter" &&
+                !event.shiftKey &&
+                !event.nativeEvent.isComposing
+              ) {
                 event.preventDefault()
                 sendMessage()
               }
             }}
           />
-          <Button variant="contained" onClick={sendMessage} disabled={mutation.isPending}>
-            {mutation.isPending ? "Sending..." : "Send"}
+          <Button
+            variant="contained"
+            onClick={sendMessage}
+            disabled={sendMessageMutation.isPending || !input.trim()}
+            sx={{ minWidth: 100 }}
+          >
+            {sendMessageMutation.isPending ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              "Send"
+            )}
           </Button>
         </Stack>
       </Paper>
