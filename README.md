@@ -1,10 +1,36 @@
-# Praestara
-A Kansas State University neuroscience project involving a web application guiding study participants through their tasks to achieve their goals.
+<header class="header">
+<img src="frontend/public/assets/images/praestara-logo.png" alt="Praestara Logo" class="logo">
+<h1 class="site-title">Praestara</h1>
+</header>
 
-> **Notice**
->This project was cloned from and built using the official opensource [FastAPI Full-Stack Template](https://github.com/fastapi/full-stack-fastapi-template) repo.
+<style>
+.header {
+  display: flex;
+  align-items: center; /* Vertically centers items */
+  gap: 10px; /* Adds space between logo and text */
+}
+
+.logo {
+  height: 50px; /* Adjust as needed */
+}
+
+.site-title {
+  margin: 0;
+  font-size: 24px;
+}
+</style>
+
+**Praestara** is a startup initiative developed by [Kansas State University](https://www.k-state.edu/) neuroscience and computer science students. The platform supports research participants in their journey toward personal growth by helping them clarify their self-concept (identifying core values and aspirations), align daily tasks with their purpose, and achieve meaningful goals over time.
+
+Users begin by reflecting on areas of life they wish to improve, establishing a purpose orientation that serves as a guiding framework. Daily notes and sessions with providers then track progress toward this purpose. Through consistent engagement, users cultivate awareness of their personal values, observe how their actions align with those values, and assess the impact on their well-being. Over time, they can reflect on outcomes to see how they reinforce their values, creating a continuous cycle of value-action-outcome reflection, and in retrospect, outcome-action-value learning.
+
+> **Disclaimer**
+> This project is indended to be a lifestyle enhancer and as a tool to be used in study. As it currently stands, it is not intended to be used in clinical use.
 
 ## Technology Stack and Features
+
+> **Notice**
+> This project was cloned from and built using the official opensource [FastAPI Full-Stack Template](https://github.com/fastapi/full-stack-fastapi-template) repo.
 
 - ⚡ [**FastAPI**](https://fastapi.tiangolo.com) for the Python backend API.
     - 🧰 [SQLModel](https://sqlmodel.tiangolo.com) for the Python SQL database interactions (ORM).
@@ -29,37 +55,55 @@ A Kansas State University neuroscience project involving a web application guidi
 
 First run `./scripts/setup-env.sh`, which creates a copy of the `.env.example` as `.env` and automatically creates new keys for the secret and database password (must occur on fresh setup; if DB exists there will be password issues with `postgres` user, visit [DB documentation](scripts/README.md) for more info).
 
-Then in `.env` set `FIRST_SUPERUSER` with your email and enter a password for `FIRST_SUPERUSER_PASSWORD`. Then run `docker compose build` to build the images, then `docker compose up -d db` to make sure the database container is running. Restore the database using the dump file: `./scripts/restore-db.sh <<PATH TO DB DUMP FILE>>` such as `./scripts/restore-db.sh data-dump.sql`.
+Then in `.env` set `FIRST_SUPERUSER` with your email and enter a password for `FIRST_SUPERUSER_PASSWORD`. Then run `make build` (or `docker compose build`) to build the images, then `docker compose up -d db` to make sure the database container is running. Restore the database using the dump file: `./scripts/restore-db.sh <<PATH TO DB DUMP FILE>>` such as `./scripts/restore-db.sh data-dump.sql`.
 
 Finally, run `docker compose watch` to run the rest of the containers and visit `localhost:5173` to see webapp.
 
-<!-- ### Dashboard Login
+### Build System
 
-[![API docs](img/login.png)](https://github.com/fastapi/full-stack-fastapi-template)
+The project now uses a centralized build system in the [`build/`](build/) directory. This includes:
 
-### Dashboard - Admin
+- **Docker Compose files**: Moved to [`build/`](build/) for better organization
+- **Makefile**: Provides shortcuts for common build and deployment commands
+- **Documentation**: See [`build/build.md`](build/build.md) for detailed usage
 
-[![API docs](img/dashboard.png)](https://github.com/fastapi/full-stack-fastapi-template)
+#### Quick Start with Makefile
 
-### Dashboard - Create User
+Instead of running raw `docker-compose` commands, use the Makefile shortcuts:
 
-[![API docs](img/dashboard-create.png)](https://github.com/fastapi/full-stack-fastapi-template)
+```bash
+# Start all services (production mode)
+make up
 
-### Dashboard - Items
+# Start all services (development mode with Traefik proxy)
+make dev-up
 
-[![API docs](img/dashboard-items.png)](https://github.com/fastapi/full-stack-fastapi-template)
+# Restart containers when changes are detected.
+make watch
 
-### Dashboard - User Settings
+# View logs
+make logs
 
-[![API docs](img/dashboard-user-settings.png)](https://github.com/fastapi/full-stack-fastapi-template)
+# Stop all services
+make down
 
-### Dashboard - Dark Mode
+# Build images
+make build
 
-[![API docs](img/dashboard-dark.png)](https://github.com/fastapi/full-stack-fastapi-template)
+# Run database migrations
+make dev-migrate
 
-### Interactive API Documentation
+# Run backend tests
+make dev-test
 
-[![API docs](img/docs.png)](https://github.com/fastapi/full-stack-fastapi-template) -->
+# Connect to PostgreSQL
+make dev-db-shell
+
+# Full cleanup (containers, images, volumes)
+make clean-all
+```
+
+See [`build/build.md`](build/build.md) for a complete list of available commands.
 
 ### Configure
 
@@ -97,10 +141,10 @@ Frontend docs: [frontend/README.md](./frontend/README.md).
 
 ## Deployment
 
-Deployment docs: [deployment.md](./deployment.md).
+Deployment docs: [deployment.md](./docs/deployment.md).
 
 ## Development
 
-General development docs: [development.md](./development.md).
+General development docs: [development.md](./docs/development.md).
 
 This includes using Docker Compose, custom local domains, `.env` configurations, etc.

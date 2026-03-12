@@ -29,9 +29,9 @@ BACKUP_FILE="$BACKUP_DIR/backup_${TIMESTAMP}.sql"
 echo "Starting database backup process..."
 
 # Check if Docker Compose is running
-if ! docker compose ps db | grep -q "Up\|running"; then
+if ! docker compose --env-file .env -f build/docker-compose.yml ps db | grep -q "Up\|running"; then
     echo "ERROR: Database container is not running!"
-    echo "Please start the database with: docker compose up -d db"
+    echo "Please start the database with: docker compose --env-file .env -f build/docker-compose.yml up -d db"
     exit 1
 fi
 
@@ -41,7 +41,7 @@ MAX_RETRIES=30
 RETRY_COUNT=0
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if docker compose exec -T db pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" > /dev/null 2>&1; then
+    if docker compose --env-file .env -f build/docker-compose.yml exec -T db pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" > /dev/null 2>&1; then
         echo "Database is ready!"
         break
     fi
@@ -57,7 +57,7 @@ fi
 
 # Create database dump
 echo "Creating database dump..."
-docker compose exec -T db pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists > "$BACKUP_FILE"
+docker compose --env-file .env -f build/docker-compose.yml exec -T db pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists > "$BACKUP_FILE"
 
 # Check if dump was successful
 if [ -f "$BACKUP_FILE" ] && [ -s "$BACKUP_FILE" ]; then

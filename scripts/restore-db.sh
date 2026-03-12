@@ -35,10 +35,10 @@ echo "Starting database restore process..."
 echo "Dump file: $DUMP_FILE"
 
 # Check if Docker Compose is running
-if ! docker compose ps db | grep -q "Up\|running"; then
+if ! docker compose --env-file .env -f build/docker-compose.yml ps db | grep -q "Up\|running"; then
     echo "WARNING: Database container is not running."
     echo "Starting database container..."
-    docker compose up -d db
+    docker compose --env-file .env -f build/docker-compose.yml up -d db
     echo "Waiting for database to be ready..."
     sleep 10
 fi
@@ -49,7 +49,7 @@ MAX_RETRIES=30
 RETRY_COUNT=0
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if docker compose exec -T db pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" > /dev/null 2>&1; then
+    if docker compose --env-file .env -f build/docker-compose.yml exec -T db pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" > /dev/null 2>&1; then
         echo "Database is ready!"
         break
     fi
@@ -70,11 +70,11 @@ echo "Restoring database from dump file..."
 if file "$DUMP_FILE" | grep -q "PostgreSQL custom database dump"; then
     # Custom format - use pg_restore
     echo "Detected custom format dump, using pg_restore..."
-    docker compose exec -T db pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists < "$DUMP_FILE"
+    docker compose --env-file .env -f build/docker-compose.yml exec -T db pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists < "$DUMP_FILE"
 else
     # SQL format - use psql
     echo "Detected SQL format dump, using psql..."
-    docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < "$DUMP_FILE"
+    docker compose --env-file .env -f build/docker-compose.yml exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < "$DUMP_FILE"
 fi
 
 echo "SUCCESS: Database restored successfully from $DUMP_FILE"
