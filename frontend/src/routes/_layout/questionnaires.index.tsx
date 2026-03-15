@@ -148,7 +148,9 @@ function Questionnaires() {
                       })
                     }}
                   >
-                    Take Questionnaire
+                    {assignment.saved_progress && Object.keys(assignment.saved_progress).length > 0
+                      ? "Resume Questionnaire"
+                      : "Take Questionnaire"}
                   </Button>
                 </CardActions>
               </Card>

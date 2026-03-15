@@ -43,7 +43,16 @@ function TakeQuestionnaire() {
   // Load saved progress when assignment loads
   useEffect(() => {
     if (assignment?.saved_progress) {
-      setAnswers(assignment.saved_progress)
+      // Handle both old format (just answers) and new format (with lastPage)
+      if (assignment.saved_progress.answers && typeof assignment.saved_progress.answers === 'object') {
+        setAnswers(assignment.saved_progress.answers)
+        if (typeof assignment.saved_progress.lastPage === 'number') {
+          setCurrentPage(assignment.saved_progress.lastPage)
+        }
+      } else {
+        // Backwards compatibility: old format was just the answers object
+        setAnswers(assignment.saved_progress)
+      }
     }
   }, [assignment])
 
@@ -79,9 +88,12 @@ function TakeQuestionnaire() {
   // Autosave logic
   const saveProgress = useCallback(() => {
     if (hasUnsavedChanges && Object.keys(answers).length > 0) {
-      saveProgressMutation.mutate(answers)
+      saveProgressMutation.mutate({
+        answers,
+        lastPage: currentPage,
+      })
     }
-  }, [answers, hasUnsavedChanges, saveProgressMutation])
+  }, [answers, currentPage, hasUnsavedChanges, saveProgressMutation])
 
   // Set up autosave timer
   useEffect(() => {
@@ -160,6 +172,22 @@ function TakeQuestionnaire() {
     saveProgress() // Save when navigating
     setCurrentPage((prev) => prev - 1)
     window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  const handleSaveAndExit = async () => {
+    if (Object.keys(answers).length > 0) {
+      try {
+        await saveProgressMutation.mutateAsync({
+          answers,
+          lastPage: currentPage,
+        })
+        navigate({ to: "/questionnaires" })
+      } catch (error) {
+        // Error toast already shown by mutation
+      }
+    } else {
+      navigate({ to: "/questionnaires" })
+    }
   }
 
   const handleSubmit = () => {
@@ -330,8 +358,9 @@ function TakeQuestionnaire() {
           <Stack direction="row" spacing={2} justifyContent="space-between">
             <Button
               variant="outlined"
-              onClick={() => navigate({ to: "/questionnaires" })}
-              disabled={submitMutation.isPending}
+              onClick={handleSaveAndExit}
+              disabled={submitMutation.isPending || saveProgressMutation.isPending}
+              loading={saveProgressMutation.isPending}
             >
               Save & Exit
             </Button>
