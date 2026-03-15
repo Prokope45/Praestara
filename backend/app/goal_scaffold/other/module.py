@@ -3,6 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.goal_scaffold.growth import GrowthModule
+from app.goal_scaffold.physiology import (
+    CrossAxisInfluence,
+    GenericPhysiologyConfig,
+    GenericPhysiologyExecution,
+    GenericPhysiologyState,
+    apply_generic_progression,
+    compute_cross_axis_support,
+)
 
 
 @dataclass(frozen=True)
@@ -22,11 +30,16 @@ class OtherExecutionData:
     recovery_adequacy: float
     stress_budget: float
     modulator: float = 1.0
+    cross_axis_state: dict[str, float] | None = None
 
 
 class OtherGoalGrowthModule(GrowthModule):
-    BASE_GAIN = 0.045
-    AGE_DECAY = 0.012
+    CONFIG = GenericPhysiologyConfig(base_gain=0.045, age_decay=0.012)
+    INTERACTIONS = [
+        CrossAxisInfluence(source_axis="sleep", target_axis="other", coefficient=0.2),
+        CrossAxisInfluence(source_axis="nutrition", target_axis="other", coefficient=0.15),
+        CrossAxisInfluence(source_axis="stress", target_axis="other", coefficient=0.25, inverse=True),
+    ]
 
     def capacity_vector(self, state: OtherGoalState) -> dict:
         return {
@@ -63,25 +76,38 @@ class OtherGoalGrowthModule(GrowthModule):
         return ["reduce_complexity", "reduce_energy", "switch_subdomain", "reduce_block_minutes"]
 
     def update_state(self, state: OtherGoalState, execution_data: OtherExecutionData) -> OtherGoalState:
-        adaptation = 1.0 / (1.0 + state.training_age_weeks * self.AGE_DECAY)
-        recovery = max(0.0, min(1.0, execution_data.recovery_adequacy))
-        adherence = max(0.0, min(1.0, execution_data.adherence_ratio))
-        stress = max(0.0, min(1.0, execution_data.stress_budget))
-        modulator = max(0.0, min(1.0, execution_data.modulator))
-
-        def advance(value: float, ceiling: float) -> float:
-            remaining = max(0.0, ceiling - value)
-            delta = self.BASE_GAIN * remaining * adaptation * recovery * adherence * stress * modulator
-            return min(ceiling, value + delta)
-
+        shared_state = GenericPhysiologyState(
+            primary_score=state.consistency_score,
+            secondary_score=state.skill_depth_score,
+            tertiary_score=state.cognitive_load_tolerance,
+            primary_ceiling=state.consistency_ceiling,
+            secondary_ceiling=state.depth_ceiling,
+            tertiary_ceiling=state.load_ceiling,
+            training_age_weeks=state.training_age_weeks,
+        )
+        updated = apply_generic_progression(
+            state=shared_state,
+            execution=GenericPhysiologyExecution(
+                adherence_ratio=execution_data.adherence_ratio,
+                recovery_adequacy=execution_data.recovery_adequacy,
+                stress_budget=execution_data.stress_budget,
+                modulator=execution_data.modulator,
+                cross_axis_support=compute_cross_axis_support(
+                    target_axis="other",
+                    source_states=execution_data.cross_axis_state,
+                    influences=self.INTERACTIONS,
+                ),
+            ),
+            config=self.CONFIG,
+        )
         return OtherGoalState(
-            consistency_score=advance(state.consistency_score, state.consistency_ceiling),
-            skill_depth_score=advance(state.skill_depth_score, state.depth_ceiling),
-            cognitive_load_tolerance=advance(state.cognitive_load_tolerance, state.load_ceiling),
-            consistency_ceiling=state.consistency_ceiling,
-            depth_ceiling=state.depth_ceiling,
-            load_ceiling=state.load_ceiling,
-            training_age_weeks=state.training_age_weeks + 1,
+            consistency_score=updated.primary_score,
+            skill_depth_score=updated.secondary_score,
+            cognitive_load_tolerance=updated.tertiary_score,
+            consistency_ceiling=updated.primary_ceiling,
+            depth_ceiling=updated.secondary_ceiling,
+            load_ceiling=updated.tertiary_ceiling,
+            training_age_weeks=updated.training_age_weeks,
         )
 
     def project_trajectory(self, state: OtherGoalState, weeks: int) -> list[OtherGoalState]:

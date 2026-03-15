@@ -2,7 +2,7 @@ import { Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText 
 import { Link as RouterLink } from "@tanstack/react-router"
 import {
   QuestionAnswerOutlined, HomeOutlined, ContentPasteOutlined,
-  MapOutlined, SettingsOutlined, PeopleOutlined, FactCheckOutlined, FitnessCenterOutlined
+  MapOutlined, SettingsOutlined, PeopleOutlined, FactCheckOutlined
 } from "@mui/icons-material"
 import type { IconType } from "react-icons/lib"
 
@@ -12,8 +12,7 @@ const UsersIcon = PeopleOutlined as IconType
 
 const items = [
   { icon: HomeOutlined as IconType, title: "Dashboard", path: "/" },
-  { icon: FactCheckOutlined as IconType, title: "Alignment", path: "/alignment" },
-  { icon: FitnessCenterOutlined as IconType, title: "Fitness", path: "/fitness" },
+  { icon: FactCheckOutlined as IconType, title: "Today", path: "/alignment/today" },
   { icon: ContentPasteOutlined as IconType, title: "Questionnaires", path: "/questionnaires" },
   { icon: MapOutlined as IconType, title: "Value Map", path: "/value-map" },
   { icon: QuestionAnswerOutlined as IconType, title: "Chat", path: "/chat" },

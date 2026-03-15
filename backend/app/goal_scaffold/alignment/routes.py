@@ -12,12 +12,47 @@ from app.goal_scaffold.alignment.models import (
     AlignmentDailyResponse,
     AlignmentHistoryEntry,
     AlignmentHistoryResponse,
+    AlignmentSurfaceResponse,
+    AlignmentTodayRequest,
+    AlignmentTodayResponse,
     AlignmentWeeklyMeetingRequest,
     AlignmentWeeklyMeetingResponse,
     AlignmentWeeklySummaryResponse,
 )
+from app.application.alignment.ui_adapter import build_alignment_surface
 
 router = APIRouter()
+
+
+@router.get("/today", response_model=AlignmentSurfaceResponse)
+def get_alignment_today(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    day: date | None = Query(default=None),
+) -> AlignmentSurfaceResponse:
+    target_day = day or date.today()
+    return build_alignment_surface(session, current_user.id, target_day)
+
+
+@router.post("/today", response_model=AlignmentTodayResponse)
+def post_alignment_today(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    body: AlignmentTodayRequest,
+) -> AlignmentTodayResponse:
+    try:
+        response = service.submit_today_surface(
+            session,
+            current_user.id,
+            date.today(),
+            body,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    session.commit()
+    return response
 
 
 @router.get("/daily", response_model=AlignmentDailyResponse)

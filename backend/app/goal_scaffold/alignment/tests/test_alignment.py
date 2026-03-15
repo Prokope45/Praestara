@@ -12,6 +12,7 @@ from app.main import app
 from app.tests.utils.user import authentication_token_from_email
 from app.goal_scaffold.alignment.models import AlignmentDailyRequest, AlignmentCompletion
 from app.goal_scaffold.fitness.models import DailyProjection, DailyReflection, FitnessExposureEvent, FitnessState
+from app.goal_scaffold.self_concept.models import ConceptDimension, QualitativeObservation
 from app.goal_scaffold.enums import FitnessAdherenceFlag
 
 
@@ -251,6 +252,61 @@ def test_alignment_history_timeline(
     payload = resp.json()
     assert payload["timeline"][0]["reflection_status"] == "completed"
     assert "streak" not in str(payload).lower()
+
+
+def test_alignment_subjective_text_updates_self_concept(
+    client: TestClient,
+    db_session: Session,
+    normal_user_token_headers: dict[str, str],
+) -> None:
+    from app.models import User
+
+    user = db_session.exec(select(User).where(User.email == settings.EMAIL_TEST_USER)).first()
+    db_session.add(ConceptDimension(user_id=user.id, name="motivation", value=0.5, source="questionnaire"))
+    db_session.add(ConceptDimension(user_id=user.id, name="stress_load", value=0.4, source="questionnaire"))
+    db_session.commit()
+
+    body = AlignmentDailyRequest(
+        date=date.today(),
+        commitments_completed=[
+            AlignmentCompletion(
+                module="other",
+                commitment_id="core_practice_block",
+                completed=False,
+                context={"subjective_text": "I feel stressed and unmotivated today."},
+            )
+        ],
+    )
+    resp = client.post(
+        f"{settings.API_V1_STR}/alignment/daily",
+        headers=normal_user_token_headers,
+        json=body.model_dump(mode="json"),
+    )
+    assert resp.status_code == 200
+    assert "recorded" in resp.json()["results"][0]["status"]
+
+    observation = db_session.exec(
+        select(QualitativeObservation).where(QualitativeObservation.user_id == user.id)
+    ).first()
+    assert observation is not None
+
+
+def test_weekly_summary_uses_physiology_snapshot(
+    client: TestClient,
+    db_session: Session,
+    normal_user_token_headers: dict[str, str],
+) -> None:
+    week_start = date.today()
+    resp = client.get(
+        f"{settings.API_V1_STR}/alignment/weekly-summary",
+        headers=normal_user_token_headers,
+        params={"week_start": week_start.isoformat()},
+    )
+    assert resp.status_code == 200
+    summaries = {entry["module"]: entry for entry in resp.json()["summaries"]}
+    assert summaries["sleep"]["exposure_density"] >= 0.0
+    assert summaries["nutrition"]["adherence_rate"] >= 0.0
+    assert summaries["other"]["burnout_index"] is not None
 
 
 def test_reflection_without_exposure_does_not_mutate_exposure(

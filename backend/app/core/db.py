@@ -1,6 +1,7 @@
 from sqlmodel import Session, create_engine, select
 
 from app import crud
+from app.application.onboarding import ensure_onboarding_template
 from app.core.config import settings
 from app.models import (
     User,
@@ -37,3 +38,5 @@ def init_db(session: Session) -> None:
             is_superuser=True,
         )
         user = crud.create_user(session=session, user_create=user_in)
+
+    ensure_onboarding_template(session, created_by_id=user.id)

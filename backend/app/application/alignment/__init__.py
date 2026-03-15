@@ -1,0 +1,1 @@
+"""Alignment application adapters."""

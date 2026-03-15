@@ -21,6 +21,7 @@ depends_on = None
 def upgrade():
     # Get connection for seeding data
     conn = op.get_bind()
+    conn.execute(text("COMMIT"))
     
     # Get the first superuser to be the creator of the questionnaire
     result = conn.execute(text("SELECT id FROM \"user\" WHERE is_superuser = true LIMIT 1"))

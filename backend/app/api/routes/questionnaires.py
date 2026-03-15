@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlmodel import func, select, col
 
 from app import crud
+from app.application.onboarding.bootstrap import bootstrap_onboarding_state
 from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.models import (
     Message,
@@ -332,6 +333,9 @@ def read_my_assignments(
     """
     Get current user's questionnaire assignments.
     """
+    if current_user.onboarding_completed_at is None:
+        crud.assign_onboarding_questionnaire(session=session, user_id=current_user.id)
+
     count_statement = (
         select(func.count())
         .select_from(QuestionnaireAssignment)
@@ -459,6 +463,7 @@ def create_response(
     
     # If this is the Praestara Onboarding questionnaire, mark onboarding as completed
     if assignment.questionnaire.title == "Praestara Onboarding":
+        bootstrap_onboarding_state(session, response)
         current_user.onboarding_completed_at = datetime.now(timezone.utc)
         session.add(current_user)
         session.commit()

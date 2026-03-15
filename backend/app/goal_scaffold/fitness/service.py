@@ -44,6 +44,7 @@ from app.goal_scaffold.fitness.models import (
 )
 from app.goal_scaffold.fitness.session_builder import SessionInputs
 from app.goal_scaffold.fitness.module import FitnessGrowthModule
+from app.goal_scaffold.physiology.service import build_snapshot
 from app.goal_scaffold.resource_profile import service as resource_service
 from app.goal_scaffold.resource_profile.models import UserResourceProfileUpdate
 from app.goal_scaffold.stability.models import StabilityScore
@@ -319,15 +320,11 @@ def generate_weekly_plan(
         adherence_history=adherence_history,
     )
 
-    latest_review = _get_latest_review(session, user_id)
+    physiology_snapshot = build_snapshot(session, user_id)
     latest_stability = _get_latest_stability(session, user_id)
-    sleep_quality = 0.6
-    nutrition_quality = 0.6
-    subjective_energy = (
-        latest_review.reflection_energy_level
-        if latest_review and latest_review.reflection_energy_level is not None
-        else 0.6
-    )
+    sleep_quality = physiology_snapshot.axis_scores["sleep"]
+    nutrition_quality = physiology_snapshot.axis_scores["nutrition"]
+    subjective_energy = physiology_snapshot.subjective_energy
     stress_level = profile.stress_baseline
     burnout_index = 1.0 - (latest_stability.value if latest_stability else 0.5)
 
@@ -349,6 +346,7 @@ def generate_weekly_plan(
         "exercise_library_version": library_version,
         "energy_score": round(energy_score, 3),
         "adherence_stability": round(state.adherence_stability, 3),
+        "physiology_axes": physiology_snapshot.axis_scores,
     }
 
     plan_data = FITNESS_MODULE.project(

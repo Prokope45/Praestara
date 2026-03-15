@@ -27,6 +27,8 @@ import { Route as LayoutChatImport } from './routes/_layout/chat'
 import { Route as LayoutAlignmentImport } from './routes/_layout/alignment'
 import { Route as LayoutAdminImport } from './routes/_layout/admin'
 import { Route as LayoutQuestionnairesIndexImport } from './routes/_layout/questionnaires.index'
+import { Route as LayoutAlignmentIndexImport } from './routes/_layout/alignment.index'
+import { Route as LayoutAlignmentTodayImport } from './routes/_layout/alignment.today'
 import { Route as LayoutAdminQuestionnairesImport } from './routes/_layout/admin.questionnaires'
 import { Route as LayoutQuestionnairesAssignmentIdTakeImport } from './routes/_layout/questionnaires/$assignmentId.take'
 
@@ -112,6 +114,16 @@ const LayoutQuestionnairesIndexRoute = LayoutQuestionnairesIndexImport.update({
   getParentRoute: () => LayoutRoute,
 } as any)
 
+const LayoutAlignmentIndexRoute = LayoutAlignmentIndexImport.update({
+  path: '/',
+  getParentRoute: () => LayoutAlignmentRoute,
+} as any)
+
+const LayoutAlignmentTodayRoute = LayoutAlignmentTodayImport.update({
+  path: '/today',
+  getParentRoute: () => LayoutAlignmentRoute,
+} as any)
+
 const LayoutAdminQuestionnairesRoute = LayoutAdminQuestionnairesImport.update({
   path: '/questionnaires',
   getParentRoute: () => LayoutAdminRoute,
@@ -191,6 +203,14 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutAdminQuestionnairesImport
       parentRoute: typeof LayoutAdminImport
     }
+    '/_layout/alignment/today': {
+      preLoaderRoute: typeof LayoutAlignmentTodayImport
+      parentRoute: typeof LayoutAlignmentImport
+    }
+    '/_layout/alignment/': {
+      preLoaderRoute: typeof LayoutAlignmentIndexImport
+      parentRoute: typeof LayoutAlignmentImport
+    }
     '/_layout/questionnaires/': {
       preLoaderRoute: typeof LayoutQuestionnairesIndexImport
       parentRoute: typeof LayoutImport
@@ -207,7 +227,10 @@ declare module '@tanstack/react-router' {
 export const routeTree = rootRoute.addChildren([
   LayoutRoute.addChildren([
     LayoutAdminRoute.addChildren([LayoutAdminQuestionnairesRoute]),
-    LayoutAlignmentRoute,
+    LayoutAlignmentRoute.addChildren([
+      LayoutAlignmentTodayRoute,
+      LayoutAlignmentIndexRoute,
+    ]),
     LayoutChatRoute,
     LayoutCheckinsRoute,
     LayoutFitnessRoute,

@@ -79,6 +79,45 @@ export interface AlignmentHistoryResponse {
   timeline: AlignmentHistoryEntry[]
 }
 
+export interface AlignmentSurfaceWeekSummary {
+  goal_name: string
+  target: number
+  completed: number
+  days_remaining: number
+}
+
+export interface AlignmentSurfaceCommitment {
+  goal_name: string
+  planned_today: boolean
+  completed_today: boolean | null
+  commitment_id: string
+  module: string
+}
+
+export interface AlignmentSurfaceTextContext {
+  projection_text: string
+  reflection_text: string
+}
+
+export interface AlignmentSurfaceResponse {
+  date: string
+  week_summary: AlignmentSurfaceWeekSummary[]
+  today_commitments: AlignmentSurfaceCommitment[]
+  text_context: AlignmentSurfaceTextContext
+}
+
+export interface AlignmentTodayRequest {
+  commitments: Record<string, boolean>
+  completion?: Record<string, boolean> | null
+  note?: string | null
+}
+
+export interface AlignmentTodayResponse {
+  date: string
+  status: string
+  decoded_signal?: Record<string, unknown> | null
+}
+
 export const alignmentApi = {
   getDaily: (day?: string) =>
     request<AlignmentDailyResponse>(OpenAPI, {
@@ -110,5 +149,18 @@ export const alignmentApi = {
     request<AlignmentHistoryResponse>(OpenAPI, {
       method: "GET",
       url: "/api/v1/alignment/history",
+    }),
+  getToday: (day?: string) =>
+    request<AlignmentSurfaceResponse>(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/alignment/today",
+      query: day ? { day } : undefined,
+    }),
+  postToday: (payload: AlignmentTodayRequest) =>
+    request<AlignmentTodayResponse>(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/alignment/today",
+      body: payload,
+      mediaType: "application/json",
     }),
 }

@@ -218,6 +218,10 @@ def seed_dimensions_from_questionnaire(
 # Internal helpers
 # ---------------------------------------------------------------------------
 
+def get_current_dimensions(session: Session, user_id: uuid.UUID) -> dict[str, float]:
+    return _get_current_dimension_map(session, user_id)
+
+
 def _get_current_dimension_map(session: Session, user_id: uuid.UUID) -> dict[str, float]:
     stmt = select(ConceptDimension).where(ConceptDimension.user_id == user_id)
     dims = session.exec(stmt).all()

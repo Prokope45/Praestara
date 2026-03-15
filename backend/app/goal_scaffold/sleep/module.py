@@ -3,6 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.goal_scaffold.growth import GrowthModule
+from app.goal_scaffold.physiology import (
+    CrossAxisInfluence,
+    GenericPhysiologyConfig,
+    GenericPhysiologyExecution,
+    GenericPhysiologyState,
+    apply_generic_progression,
+    compute_cross_axis_support,
+)
 
 
 @dataclass(frozen=True)
@@ -22,11 +30,15 @@ class SleepExecutionData:
     recovery_adequacy: float
     stress_budget: float
     modulator: float = 1.0
+    cross_axis_state: dict[str, float] | None = None
 
 
 class SleepGrowthModule(GrowthModule):
-    BASE_GAIN = 0.04
-    AGE_DECAY = 0.015
+    CONFIG = GenericPhysiologyConfig(base_gain=0.04, age_decay=0.015)
+    INTERACTIONS = [
+        CrossAxisInfluence(source_axis="stress", target_axis="sleep", coefficient=0.3, inverse=True),
+        CrossAxisInfluence(source_axis="nutrition", target_axis="sleep", coefficient=0.15),
+    ]
 
     def capacity_vector(self, state: SleepState) -> dict:
         return {
@@ -63,25 +75,38 @@ class SleepGrowthModule(GrowthModule):
         return ["reduce_complexity", "reduce_energy", "switch_subdomain", "reduce_block_minutes"]
 
     def update_state(self, state: SleepState, execution_data: SleepExecutionData) -> SleepState:
-        adaptation = 1.0 / (1.0 + state.training_age_weeks * self.AGE_DECAY)
-        recovery = max(0.0, min(1.0, execution_data.recovery_adequacy))
-        adherence = max(0.0, min(1.0, execution_data.adherence_ratio))
-        stress = max(0.0, min(1.0, execution_data.stress_budget))
-        modulator = max(0.0, min(1.0, execution_data.modulator))
-
-        def advance(value: float, ceiling: float) -> float:
-            remaining = max(0.0, ceiling - value)
-            delta = self.BASE_GAIN * remaining * adaptation * recovery * adherence * stress * modulator
-            return min(ceiling, value + delta)
-
+        shared_state = GenericPhysiologyState(
+            primary_score=state.sleep_consistency_score,
+            secondary_score=state.recovery_quality_score,
+            tertiary_score=state.circadian_alignment_score,
+            primary_ceiling=state.consistency_ceiling,
+            secondary_ceiling=state.recovery_ceiling,
+            tertiary_ceiling=state.circadian_ceiling,
+            training_age_weeks=state.training_age_weeks,
+        )
+        updated = apply_generic_progression(
+            state=shared_state,
+            execution=GenericPhysiologyExecution(
+                adherence_ratio=execution_data.adherence_ratio,
+                recovery_adequacy=execution_data.recovery_adequacy,
+                stress_budget=execution_data.stress_budget,
+                modulator=execution_data.modulator,
+                cross_axis_support=compute_cross_axis_support(
+                    target_axis="sleep",
+                    source_states=execution_data.cross_axis_state,
+                    influences=self.INTERACTIONS,
+                ),
+            ),
+            config=self.CONFIG,
+        )
         return SleepState(
-            sleep_consistency_score=advance(state.sleep_consistency_score, state.consistency_ceiling),
-            recovery_quality_score=advance(state.recovery_quality_score, state.recovery_ceiling),
-            circadian_alignment_score=advance(state.circadian_alignment_score, state.circadian_ceiling),
-            consistency_ceiling=state.consistency_ceiling,
-            recovery_ceiling=state.recovery_ceiling,
-            circadian_ceiling=state.circadian_ceiling,
-            training_age_weeks=state.training_age_weeks + 1,
+            sleep_consistency_score=updated.primary_score,
+            recovery_quality_score=updated.secondary_score,
+            circadian_alignment_score=updated.tertiary_score,
+            consistency_ceiling=updated.primary_ceiling,
+            recovery_ceiling=updated.secondary_ceiling,
+            circadian_ceiling=updated.tertiary_ceiling,
+            training_age_weeks=updated.training_age_weeks,
         )
 
     def project_trajectory(self, state: SleepState, weeks: int) -> list[SleepState]:

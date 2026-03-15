@@ -4,6 +4,7 @@ from typing import Any
 
 from sqlmodel import Session, select
 
+from app.application.onboarding import ensure_onboarding_template
 from app.core.security import get_password_hash, verify_password
 from app.models import (
     Item,
@@ -282,15 +283,24 @@ def assign_onboarding_questionnaire(*, session: Session, user_id: uuid.UUID) -> 
     Returns the created assignment or None if the questionnaire doesn't exist.
     """
     # Find the active "Praestara Onboarding" questionnaire
-    onboarding_questionnaire = session.exec(
-        select(QuestionnaireTemplate).where(
-            QuestionnaireTemplate.title == "Praestara Onboarding",
-            QuestionnaireTemplate.is_active == True
-        )
-    ).first()
-    
+    onboarding_questionnaire = ensure_onboarding_template(session)
+    if onboarding_questionnaire is not None and not onboarding_questionnaire.is_active:
+        onboarding_questionnaire.is_active = True
+        session.add(onboarding_questionnaire)
+        session.commit()
+        session.refresh(onboarding_questionnaire)
+
     if not onboarding_questionnaire:
         return None
+
+    existing_assignment = session.exec(
+        select(QuestionnaireAssignment).where(
+            QuestionnaireAssignment.questionnaire_id == onboarding_questionnaire.id,
+            QuestionnaireAssignment.user_id == user_id,
+        )
+    ).first()
+    if existing_assignment:
+        return existing_assignment
     
     # Create the assignment with a 7-day due date
     assignment_data = QuestionnaireAssignmentCreate(

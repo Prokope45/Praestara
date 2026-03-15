@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 
+from sqlalchemy.dialects.postgresql import insert
 from sqlmodel import Session, select
 
 from app.goal_scaffold.resource_profile.models import (
@@ -20,9 +21,15 @@ def get_or_create_profile(
     if profile:
         return profile
 
-    profile = UserResourceProfile(user_id=user_id)
-    session.add(profile)
+    session.exec(
+        insert(UserResourceProfile)
+        .values(user_id=user_id)
+        .on_conflict_do_nothing(index_elements=[UserResourceProfile.user_id])
+    )
     session.flush()
+    profile = session.exec(stmt).first()
+    if profile is None:
+        raise ValueError(f"Unable to create resource profile for user {user_id}")
     return profile
 
 
@@ -36,9 +43,15 @@ def update_profile(
     )
     profile = session.exec(stmt).first()
     if not profile:
-        profile = UserResourceProfile(user_id=user_id)
-        session.add(profile)
+        session.exec(
+            insert(UserResourceProfile)
+            .values(user_id=user_id)
+            .on_conflict_do_nothing(index_elements=[UserResourceProfile.user_id])
+        )
         session.flush()
+        profile = session.exec(stmt).first()
+        if profile is None:
+            raise ValueError(f"Unable to create resource profile for user {user_id}")
 
     update_data = profile_in.model_dump(exclude_unset=True)
     profile.sqlmodel_update(update_data)

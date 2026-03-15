@@ -82,3 +82,42 @@ class AlignmentHistoryEntry(SQLModel):
 
 class AlignmentHistoryResponse(SQLModel):
     timeline: list[AlignmentHistoryEntry]
+
+
+class AlignmentSurfaceWeekSummary(SQLModel):
+    goal_name: str
+    target: float
+    completed: float
+    days_remaining: int
+
+
+class AlignmentSurfaceCommitment(SQLModel):
+    goal_name: str
+    planned_today: bool
+    completed_today: bool | None = None
+    commitment_id: str
+    module: str
+
+
+class AlignmentSurfaceTextContext(SQLModel):
+    projection_text: str = ""
+    reflection_text: str = ""
+
+
+class AlignmentSurfaceResponse(SQLModel):
+    date: date
+    week_summary: list[AlignmentSurfaceWeekSummary]
+    today_commitments: list[AlignmentSurfaceCommitment]
+    text_context: AlignmentSurfaceTextContext
+
+
+class AlignmentTodayRequest(SQLModel):
+    commitments: dict[str, bool]
+    completion: dict[str, bool] | None = None
+    note: str | None = None
+
+
+class AlignmentTodayResponse(SQLModel):
+    date: date
+    status: str
+    decoded_signal: dict[str, Any] | None = None
