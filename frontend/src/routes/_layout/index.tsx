@@ -61,6 +61,13 @@ function Dashboard() {
       }),
   })
 
+  // Fetch user's questionnaire assignments to find onboarding
+  const { data: assignmentsData } = useQuery({
+    queryKey: ["questionnaire-assignments", "me"],
+    queryFn: () => QuestionnairesService.readMyAssignments({ skip: 0, limit: 100 }),
+    enabled: !onboardingCompleted,
+  })
+
   const allOrientations = useMemo(() => {
     return orientationsData?.data || []
   }, [orientationsData])
@@ -276,32 +283,48 @@ function Dashboard() {
           </Stack>
         </Stack>
 
-        {!onboardingCompleted && (
-          <Paper
-            sx={{
-              p: 3,
-              mb: 4,
-              border: "1px solid",
-              borderColor: "divider",
-              background: "linear-gradient(135deg, rgba(102,126,234,0.12) 0%, rgba(118,75,162,0.12) 100%)",
-            }}
-          >
-            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="center">
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="h6" sx={{ mb: 1 }}>
-                  Get started with your baseline
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Complete the onboarding questionnaire to set your baseline. It takes about 12 to 18
-                  minutes and anchors your future check-ins.
-                </Typography>
-              </Box>
-              <Button variant="contained" onClick={() => navigate({ to: "/onboarding" })}>
-                Start onboarding
-              </Button>
-            </Stack>
-          </Paper>
-        )}
+        {!onboardingCompleted && (() => {
+          const onboardingAssignment = assignmentsData?.data?.find(
+            (assignment) => assignment.questionnaire.title === "Praestara Onboarding" && assignment.status === "PENDING"
+          )
+          
+          return (
+            <Paper
+              sx={{
+                p: 3,
+                mb: 4,
+                border: "1px solid",
+                borderColor: "divider",
+                background: "linear-gradient(135deg, rgba(102,126,234,0.12) 0%, rgba(118,75,162,0.12) 100%)",
+              }}
+            >
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="center">
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="h6" sx={{ mb: 1 }}>
+                    Get started with your baseline
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Complete the onboarding questionnaire to set your baseline. It takes about 12 to 18
+                    minutes and anchors your future check-ins.
+                  </Typography>
+                </Box>
+                <Button 
+                  variant="contained" 
+                  onClick={() => {
+                    if (onboardingAssignment) {
+                      navigate({ to: `/questionnaires/${onboardingAssignment.id}/take` })
+                    } else {
+                      navigate({ to: "/questionnaires" })
+                    }
+                  }}
+                  disabled={!onboardingAssignment}
+                >
+                  {onboardingAssignment ? "Start onboarding" : "Loading..."}
+                </Button>
+              </Stack>
+            </Paper>
+          )
+        })()}
 
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>

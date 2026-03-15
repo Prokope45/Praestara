@@ -390,6 +390,38 @@ def delete_assignment(
     return Message(message="Assignment removed successfully")
 
 
+@router.patch(
+    "/assignments/{assignment_id}/progress",
+    response_model=QuestionnaireAssignmentPublic,
+)
+def update_assignment_progress(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    assignment_id: uuid.UUID,
+    progress: dict,
+) -> Any:
+    """
+    Save questionnaire progress (partial answers).
+    """
+    assignment = session.get(QuestionnaireAssignment, assignment_id)
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    
+    if assignment.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not your assignment")
+    
+    if assignment.status == AssignmentStatus.COMPLETED:
+        raise HTTPException(status_code=400, detail="Assignment already completed")
+    
+    assignment.saved_progress = progress
+    session.add(assignment)
+    session.commit()
+    session.refresh(assignment)
+    
+    return assignment
+
+
 # Response endpoints
 @router.post(
     "/responses",
@@ -424,6 +456,14 @@ def create_response(
     response = crud.create_questionnaire_response(
         session=session, response_in=response_in, user_id=current_user.id
     )
+    
+    # If this is the Praestara Onboarding questionnaire, mark onboarding as completed
+    if assignment.questionnaire.title == "Praestara Onboarding":
+        current_user.onboarding_completed_at = datetime.now(timezone.utc)
+        session.add(current_user)
+        session.commit()
+        session.refresh(current_user)
+    
     return response
 
 
