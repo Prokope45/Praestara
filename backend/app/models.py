@@ -346,6 +346,7 @@ class QuestionnaireAssignmentBase(SQLModel):
     due_date: datetime | None = None
     status: AssignmentStatus = Field(default=AssignmentStatus.PENDING)
     reminder_sent: bool = False
+    saved_progress: dict[str, Any] | None = Field(default=None, sa_type=sa.JSON)
 
 
 class QuestionnaireAssignmentCreate(SQLModel):

@@ -20,7 +20,6 @@ import { Route as LayoutIndexImport } from './routes/_layout/index'
 import { Route as LayoutValueMapImport } from './routes/_layout/value-map'
 import { Route as LayoutSettingsImport } from './routes/_layout/settings'
 import { Route as LayoutOrientationsImport } from './routes/_layout/orientations'
-import { Route as LayoutOnboardingImport } from './routes/_layout/onboarding'
 import { Route as LayoutNotesImport } from './routes/_layout/notes'
 import { Route as LayoutFitnessImport } from './routes/_layout/fitness'
 import { Route as LayoutCheckinsImport } from './routes/_layout/checkins'
@@ -75,11 +74,6 @@ const LayoutSettingsRoute = LayoutSettingsImport.update({
 
 const LayoutOrientationsRoute = LayoutOrientationsImport.update({
   path: '/orientations',
-  getParentRoute: () => LayoutRoute,
-} as any)
-
-const LayoutOnboardingRoute = LayoutOnboardingImport.update({
-  path: '/onboarding',
   getParentRoute: () => LayoutRoute,
 } as any)
 
@@ -177,10 +171,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutNotesImport
       parentRoute: typeof LayoutImport
     }
-    '/_layout/onboarding': {
-      preLoaderRoute: typeof LayoutOnboardingImport
-      parentRoute: typeof LayoutImport
-    }
     '/_layout/orientations': {
       preLoaderRoute: typeof LayoutOrientationsImport
       parentRoute: typeof LayoutImport
@@ -222,7 +212,6 @@ export const routeTree = rootRoute.addChildren([
     LayoutCheckinsRoute,
     LayoutFitnessRoute,
     LayoutNotesRoute,
-    LayoutOnboardingRoute,
     LayoutOrientationsRoute,
     LayoutSettingsRoute,
     LayoutValueMapRoute,

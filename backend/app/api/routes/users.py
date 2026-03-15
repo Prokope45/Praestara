@@ -208,11 +208,11 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     ).first()
     
     if onboarding_questionnaire:
-        from datetime import datetime, timedelta
+        from datetime import datetime, timezone, timedelta
         assignment_data = QuestionnaireAssignmentCreate(
             questionnaire_id=onboarding_questionnaire.id,
             user_id=user.id,
-            due_date=datetime.utcnow() + timedelta(days=7)  # 7 days to complete
+            due_date=datetime.now(timezone.utc) + timedelta(days=7)  # 7 days to complete
         )
         crud.create_questionnaire_assignment(session=session, assignment_in=assignment_data)
     
