@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Any
 
 from sqlmodel import Session, select
@@ -274,3 +274,29 @@ def create_questionnaire_response(
     session.commit()
     session.refresh(db_response)
     return db_response
+
+
+def assign_onboarding_questionnaire(*, session: Session, user_id: uuid.UUID) -> QuestionnaireAssignment | None:
+    """
+    Auto-assign the "Praestara Onboarding" questionnaire to a user if it exists.
+    Returns the created assignment or None if the questionnaire doesn't exist.
+    """
+    # Find the active "Praestara Onboarding" questionnaire
+    onboarding_questionnaire = session.exec(
+        select(QuestionnaireTemplate).where(
+            QuestionnaireTemplate.title == "Praestara Onboarding",
+            QuestionnaireTemplate.is_active == True
+        )
+    ).first()
+    
+    if not onboarding_questionnaire:
+        return None
+    
+    # Create the assignment with a 7-day due date
+    assignment_data = QuestionnaireAssignmentCreate(
+        questionnaire_id=onboarding_questionnaire.id,
+        user_id=user_id,
+        due_date=datetime.now(timezone.utc) + timedelta(days=7)
+    )
+    
+    return create_questionnaire_assignment(session=session, assignment_in=assignment_data)
