@@ -49,7 +49,7 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-# Check if Docker Compose is available
+# Check if docker compose --env-file ../.env is available
 if ! command -v docker &> /dev/null; then
     echo "ERROR: Docker is not installed or not in PATH!"
     exit 1
@@ -58,9 +58,9 @@ fi
 # Check if database container is running
 echo ""
 echo "Checking if database container is running..."
-if ! docker compose ps db | grep -q "Up\|running"; then
+if ! docker compose --env-file ../.env ps build-db-1 | grep -q "Up\|running"; then
     echo "Database container is not running. Starting it..."
-    docker compose up -d db
+    docker compose --env-file ../.env up -d build-db-1
     echo "Waiting for database to start..."
     sleep 5
 fi
@@ -72,7 +72,7 @@ RETRY_COUNT=0
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     # Try to connect without password check (using trust or existing password)
-    if docker compose exec -T db pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" > /dev/null 2>&1; then
+    if docker compose --env-file ../.env exec -T build-db-1 pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" > /dev/null 2>&1; then
         echo "Database is ready!"
         break
     fi
@@ -94,11 +94,11 @@ echo "Updating password for user '$POSTGRES_USER'..."
 ESCAPED_PASSWORD=$(echo "$POSTGRES_PASSWORD" | sed "s/'/''/g")
 
 # Execute the ALTER USER command
-if docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "ALTER USER $POSTGRES_USER WITH PASSWORD '$ESCAPED_PASSWORD';" > /dev/null 2>&1; then
+if docker compose --env-file ../.env exec -T build-db-1 psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "ALTER USER $POSTGRES_USER WITH PASSWORD '$ESCAPED_PASSWORD';" > /dev/null 2>&1; then
     echo "SUCCESS: Password updated successfully!"
     echo ""
     echo "The database password has been updated to match your .env file."
-    echo "You can now restart your services with: docker compose restart"
+    echo "You can now restart your services with: docker compose --env-file ../.env restart"
 else
     echo "ERROR: Failed to update password!"
     echo ""
@@ -107,8 +107,8 @@ else
     echo "2. There are permission issues"
     echo ""
     echo "Try stopping all services and starting just the database:"
-    echo "  docker compose down"
-    echo "  docker compose up -d db"
+    echo "  docker compose --env-file ../.env down"
+    echo "  docker compose --env-file ../.env up -d build-db-1"
     echo "Then run this script again."
     exit 1
 fi
