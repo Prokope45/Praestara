@@ -26,7 +26,7 @@ function TakeQuestionnaire() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const queryClient = useQueryClient()
 
-  const [answers, setAnswers] = useState<Record<string, number>>({})
+  const [answers, setAnswers] = useState<Record<string, any>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const { data: assignment, isLoading } = useQuery({
@@ -79,12 +79,34 @@ function TakeQuestionnaire() {
       return
     }
 
+    const questions = assignment?.questionnaire?.questions || []
     const answersList: AnswerCreate[] = Object.entries(answers).map(
-      ([questionId, value]) => ({
-        question_id: questionId,
-        likert_value: value,
-        text_response: null,
-      })
+      ([questionId, value]) => {
+        const question = questions.find((q) => q.id === questionId)
+        const scaleType = question?.scale_type
+        
+        // Handle different scale types
+        if (scaleType === "TEXT") {
+          return {
+            question_id: questionId,
+            likert_value: null,
+            text_response: value,
+          }
+        } else if (scaleType === "DOMAIN_RATING") {
+          return {
+            question_id: questionId,
+            likert_value: null,
+            text_response: JSON.stringify(value),
+          }
+        } else {
+          // LIKERT_5, LIKERT_7, YES_NO, CUSTOM_NUMERIC, FREQUENCY
+          return {
+            question_id: questionId,
+            likert_value: value,
+            text_response: null,
+          }
+        }
+      }
     )
 
     submitMutation.mutate({

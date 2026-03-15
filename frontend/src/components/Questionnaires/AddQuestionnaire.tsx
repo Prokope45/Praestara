@@ -247,6 +247,9 @@ export function AddQuestionnaire({ open, onClose, questionnaire }: AddQuestionna
                             <MenuItem value="LIKERT_7">Likert 7-Point</MenuItem>
                             <MenuItem value="YES_NO">Yes/No</MenuItem>
                             <MenuItem value="CUSTOM_NUMERIC">Custom Numeric</MenuItem>
+                            <MenuItem value="TEXT">Text Response</MenuItem>
+                            <MenuItem value="FREQUENCY">Frequency (0-3)</MenuItem>
+                            <MenuItem value="DOMAIN_RATING">Domain Rating</MenuItem>
                           </Select>
                         </FormControl>
                         <FormControlLabel

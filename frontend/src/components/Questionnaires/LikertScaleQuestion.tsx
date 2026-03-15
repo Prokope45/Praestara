@@ -1,13 +1,13 @@
-import { Box, Radio, RadioGroup, Typography, TextField } from "@mui/material"
+import { Box, Radio, RadioGroup, Typography, TextField, Slider, Stack, Paper } from "@mui/material"
 import { Field } from "../ui/field"
 
 interface LikertScaleQuestionProps {
   questionText: string
   questionNumber: number
-  scaleType: "LIKERT_5" | "LIKERT_7" | "YES_NO" | "CUSTOM_NUMERIC"
+  scaleType: "LIKERT_5" | "LIKERT_7" | "YES_NO" | "CUSTOM_NUMERIC" | "TEXT" | "FREQUENCY" | "DOMAIN_RATING"
   isRequired: boolean
-  value: number | null
-  onChange: (value: number) => void
+  value: any
+  onChange: (value: any) => void
   error?: string
   customMinValue?: number | null
   customMaxValue?: number | null
@@ -33,6 +33,13 @@ const LIKERT_7_LABELS = [
 ]
 
 const YES_NO_LABELS = ["No", "Yes"]
+
+const FREQUENCY_LABELS = [
+  "Not at all",
+  "Several days",
+  "More than half the days",
+  "Nearly every day",
+]
 
 export function LikertScaleQuestion({
   questionText,
@@ -64,6 +71,229 @@ export function LikertScaleQuestion({
   const labels = getLabels()
   const isYesNo = scaleType === "YES_NO"
   const isCustomNumeric = scaleType === "CUSTOM_NUMERIC"
+  const isText = scaleType === "TEXT"
+  const isFrequency = scaleType === "FREQUENCY"
+  const isDomainRating = scaleType === "DOMAIN_RATING"
+
+  // Handle TEXT type
+  if (isText) {
+    return (
+      <Box
+        sx={{
+          py: 3,
+          mb: 3,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Field
+          label={
+            <Typography variant="h6" component="div" sx={{ mb: 2 }}>
+              {questionNumber}. {questionText}
+              {isRequired && (
+                <Typography component="span" color="error.main" sx={{ ml: 1 }}>
+                  *
+                </Typography>
+              )}
+            </Typography>
+          }
+          invalid={!!error}
+          errorText={error}
+        >
+          <TextField
+            value={value || ""}
+            onChange={(e) => onChange(e.target.value)}
+            multiline
+            minRows={3}
+            fullWidth
+            placeholder="Type your answer here..."
+            sx={{ mt: 2 }}
+          />
+        </Field>
+      </Box>
+    )
+  }
+
+  // Handle FREQUENCY type
+  if (isFrequency) {
+    return (
+      <Box
+        sx={{
+          py: 3,
+          mb: 3,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Field
+          label={
+            <Typography variant="h6" component="div" sx={{ mb: 2 }}>
+              {questionNumber}. {questionText}
+              {isRequired && (
+                <Typography component="span" color="error.main" sx={{ ml: 1 }}>
+                  *
+                </Typography>
+              )}
+            </Typography>
+          }
+          invalid={!!error}
+          errorText={error}
+        >
+          <RadioGroup
+            value={value?.toString() || ""}
+            onChange={(e) => onChange(parseInt(e.target.value))}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 2,
+                mt: 2,
+                justifyContent: "center",
+              }}
+            >
+              {FREQUENCY_LABELS.map((label, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    flex: "0 0 auto",
+                    width: "180px",
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      p: 2,
+                      height: "120px",
+                      border: "1px solid",
+                      borderColor: value === index ? "primary.main" : "divider",
+                      borderRadius: 1,
+                      backgroundColor: value === index ? "primary.50" : "transparent",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                      "&:hover": {
+                        borderColor: "primary.main",
+                        backgroundColor: "primary.50",
+                      },
+                    }}
+                    onClick={() => onChange(index)}
+                  >
+                    <Radio value={index.toString()} sx={{ mb: 1 }} />
+                    <Typography
+                      variant="body2"
+                      textAlign="center"
+                      sx={{
+                        fontWeight: value === index ? 600 : 400,
+                        wordBreak: "break-word",
+                        flex: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        px: 1,
+                      }}
+                    >
+                      {label}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                      {index}
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </RadioGroup>
+        </Field>
+      </Box>
+    )
+  }
+
+  // Handle DOMAIN_RATING type
+  if (isDomainRating) {
+    const domainValue = value || { importance: 0, consistency: 0, note: "" }
+    
+    return (
+      <Box
+        sx={{
+          py: 3,
+          mb: 3,
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Field
+          label={
+            <Typography variant="h6" component="div" sx={{ mb: 2 }}>
+              {questionNumber}. {questionText}
+              {isRequired && (
+                <Typography component="span" color="error.main" sx={{ ml: 1 }}>
+                  *
+                </Typography>
+              )}
+            </Typography>
+          }
+          invalid={!!error}
+          errorText={error}
+        >
+          <Paper variant="outlined" sx={{ p: 3, mt: 2 }}>
+            <Stack spacing={3}>
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                  Importance (0-10)
+                </Typography>
+                <Slider
+                  value={domainValue.importance}
+                  onChange={(_, newValue) =>
+                    onChange({ ...domainValue, importance: newValue as number })
+                  }
+                  min={0}
+                  max={10}
+                  step={1}
+                  marks={[
+                    { value: 0, label: "0" },
+                    { value: 5, label: "5" },
+                    { value: 10, label: "10" },
+                  ]}
+                  valueLabelDisplay="on"
+                />
+              </Box>
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                  Consistency (0-10)
+                </Typography>
+                <Slider
+                  value={domainValue.consistency}
+                  onChange={(_, newValue) =>
+                    onChange({ ...domainValue, consistency: newValue as number })
+                  }
+                  min={0}
+                  max={10}
+                  step={1}
+                  marks={[
+                    { value: 0, label: "0" },
+                    { value: 5, label: "5" },
+                    { value: 10, label: "10" },
+                  ]}
+                  valueLabelDisplay="on"
+                />
+              </Box>
+              <TextField
+                label="Optional note"
+                value={domainValue.note}
+                onChange={(e) =>
+                  onChange({ ...domainValue, note: e.target.value })
+                }
+                multiline
+                minRows={2}
+                fullWidth
+              />
+            </Stack>
+          </Paper>
+        </Field>
+      </Box>
+    )
+  }
 
   return (
     <Box

@@ -101,58 +101,144 @@ function AdminQuestionnaires() {
       </Stack>
 
       {questionnaires && questionnaires.data && questionnaires.data.length > 0 ? (
-        <Stack spacing={2}>
-          {questionnaires.data.map((questionnaire: QuestionnaireTemplatePublic) => (
-            <Card key={questionnaire.id} variant="outlined">
-              <CardContent>
-                <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                  <Box sx={{ flex: 1 }}>
-                    <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
-                      <Typography variant="h6" component="h3">
-                        {questionnaire.title}
-                      </Typography>
-                      <Chip
-                        label={questionnaire.is_active ? "Active" : "Inactive"}
-                        color={questionnaire.is_active ? "success" : "default"}
-                        size="small"
-                      />
-                    </Stack>
-                    {questionnaire.description && (
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        {questionnaire.description}
-                      </Typography>
-                    )}
-                    <Stack direction="row" spacing={3}>
-                      <Typography variant="caption" color="text.secondary">
-                        <strong>Questions:</strong> {questionnaire.questions?.length || 0}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        <strong>Created:</strong>{" "}
-                        {new Date(questionnaire.created_at).toLocaleDateString()}
-                      </Typography>
+        <>
+          {/* Separate Onboarding Questionnaire */}
+          {(() => {
+            const onboardingQuestionnaire = questionnaires.data.find(
+              (q: QuestionnaireTemplatePublic) => q.title === "Praestara Onboarding"
+            )
+            const otherQuestionnaires = questionnaires.data.filter(
+              (q: QuestionnaireTemplatePublic) => q.title !== "Praestara Onboarding"
+            )
+
+            return (
+              <>
+                {onboardingQuestionnaire && (
+                  <Box sx={{ mb: 4 }}>
+                    <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 2 }}>
+                      Default Onboarding Questionnaire
+                    </Typography>
+                    <Card 
+                      key={onboardingQuestionnaire.id} 
+                      variant="outlined"
+                      sx={{
+                        borderColor: "primary.main",
+                        borderWidth: 2,
+                        bgcolor: "primary.50",
+                      }}
+                    >
+                      <CardContent>
+                        <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                          <Box sx={{ flex: 1 }}>
+                            <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
+                              <Typography variant="h6" component="h3">
+                                {onboardingQuestionnaire.title}
+                              </Typography>
+                              <Chip
+                                label="Default"
+                                color="primary"
+                                size="small"
+                              />
+                              <Chip
+                                label={onboardingQuestionnaire.is_active ? "Active" : "Inactive"}
+                                color={onboardingQuestionnaire.is_active ? "success" : "default"}
+                                size="small"
+                              />
+                            </Stack>
+                            {onboardingQuestionnaire.description && (
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                {onboardingQuestionnaire.description}
+                              </Typography>
+                            )}
+                            <Stack direction="row" spacing={3}>
+                              <Typography variant="caption" color="text.secondary">
+                                <strong>Questions:</strong> {onboardingQuestionnaire.questions?.length || 0}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                <strong>Created:</strong>{" "}
+                                {new Date(onboardingQuestionnaire.created_at).toLocaleDateString()}
+                              </Typography>
+                            </Stack>
+                          </Box>
+                          <Stack direction="row" spacing={1}>
+                            <IconButton
+                              size="small"
+                              onClick={() => setEditingQuestionnaire(onboardingQuestionnaire)}
+                              color="primary"
+                            >
+                              <FiEdit />
+                            </IconButton>
+                          </Stack>
+                        </Stack>
+                      </CardContent>
+                    </Card>
+                  </Box>
+                )}
+
+                {/* Other Questionnaires */}
+                {otherQuestionnaires.length > 0 && (
+                  <Box>
+                    <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 2 }}>
+                      Custom Questionnaires
+                    </Typography>
+                    <Stack spacing={2}>
+                      {otherQuestionnaires.map((questionnaire: QuestionnaireTemplatePublic) => (
+                        <Card key={questionnaire.id} variant="outlined">
+                          <CardContent>
+                            <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                              <Box sx={{ flex: 1 }}>
+                                <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
+                                  <Typography variant="h6" component="h3">
+                                    {questionnaire.title}
+                                  </Typography>
+                                  <Chip
+                                    label={questionnaire.is_active ? "Active" : "Inactive"}
+                                    color={questionnaire.is_active ? "success" : "default"}
+                                    size="small"
+                                  />
+                                </Stack>
+                                {questionnaire.description && (
+                                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                    {questionnaire.description}
+                                  </Typography>
+                                )}
+                                <Stack direction="row" spacing={3}>
+                                  <Typography variant="caption" color="text.secondary">
+                                    <strong>Questions:</strong> {questionnaire.questions?.length || 0}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">
+                                    <strong>Created:</strong>{" "}
+                                    {new Date(questionnaire.created_at).toLocaleDateString()}
+                                  </Typography>
+                                </Stack>
+                              </Box>
+                              <Stack direction="row" spacing={1}>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => setEditingQuestionnaire(questionnaire)}
+                                  color="primary"
+                                >
+                                  <FiEdit />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => setDeletingQuestionnaire(questionnaire)}
+                                  color="error"
+                                >
+                                  <FiTrash2 />
+                                </IconButton>
+                              </Stack>
+                            </Stack>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </Stack>
                   </Box>
-                  <Stack direction="row" spacing={1}>
-                    <IconButton
-                      size="small"
-                      onClick={() => setEditingQuestionnaire(questionnaire)}
-                      color="primary"
-                    >
-                      <FiEdit />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => setDeletingQuestionnaire(questionnaire)}
-                      color="error"
-                    >
-                      <FiTrash2 />
-                    </IconButton>
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
-          ))}
-        </Stack>
+                )}
+              </>
+            )
+          })()}
+        </>
       ) : (
         <Card variant="outlined">
           <CardContent>
