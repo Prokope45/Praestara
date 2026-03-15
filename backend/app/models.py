@@ -17,6 +17,9 @@ class ScaleType(str, Enum):
     LIKERT_7 = "LIKERT_7"
     YES_NO = "YES_NO"
     CUSTOM_NUMERIC = "CUSTOM_NUMERIC"
+    TEXT = "TEXT"
+    FREQUENCY = "FREQUENCY"
+    DOMAIN_RATING = "DOMAIN_RATING"
 
 
 class AppointmentStatus(str, Enum):

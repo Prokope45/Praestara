@@ -199,18 +199,18 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     user_create = UserCreate.model_validate(user_in)
     user = crud.create_user(session=session, user_create=user_create)
     
-    # Auto-assign "Initial Assessment" questionnaire if it exists
-    initial_questionnaire = session.exec(
+    # Auto-assign "Praestara Onboarding" questionnaire if it exists
+    onboarding_questionnaire = session.exec(
         select(QuestionnaireTemplate).where(
-            QuestionnaireTemplate.title == "Initial Assessment",
+            QuestionnaireTemplate.title == "Praestara Onboarding",
             QuestionnaireTemplate.is_active == True
         )
     ).first()
     
-    if initial_questionnaire:
+    if onboarding_questionnaire:
         from datetime import datetime, timedelta
         assignment_data = QuestionnaireAssignmentCreate(
-            questionnaire_id=initial_questionnaire.id,
+            questionnaire_id=onboarding_questionnaire.id,
             user_id=user.id,
             due_date=datetime.utcnow() + timedelta(days=7)  # 7 days to complete
         )

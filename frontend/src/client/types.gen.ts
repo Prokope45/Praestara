@@ -662,7 +662,7 @@ export type QuestionPublic = {
     questionnaire_id: string;
 };
 
-export type ScaleType = 'LIKERT_5' | 'LIKERT_7' | 'YES_NO' | 'CUSTOM_NUMERIC';
+export type ScaleType = 'LIKERT_5' | 'LIKERT_7' | 'YES_NO' | 'CUSTOM_NUMERIC' | 'TEXT' | 'FREQUENCY' | 'DOMAIN_RATING';
 
 export type SelfConceptSnapshotPublic = {
     id: string;
