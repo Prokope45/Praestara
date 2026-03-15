@@ -14,10 +14,11 @@ import {
   CircularProgress,
 } from "@mui/material"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { FiTrash2, FiUser } from "react-icons/fi"
+import { FiTrash2, FiUsers } from "react-icons/fi"
 
 import { QuestionnairesService, UsersService, type QuestionnaireTemplatePublic } from "../../client"
 import { Button } from "../ui/button"
+import { AnimatedProgressBar } from "../Common/AnimatedProgressBar"
 import useCustomToast from "../../hooks/useCustomToast"
 
 interface ViewAssignmentsProps {
@@ -91,6 +92,25 @@ export function ViewAssignments({ open, onClose, questionnaire }: ViewAssignment
     }
   }
 
+  const getAssignmentProgress = (assignment: any) => {
+    const totalQuestions = questionnaire.questions?.length || 0
+    if (totalQuestions === 0) return { answeredCount: 0, totalQuestions: 0, progress: 0 }
+    
+    let answeredCount = 0
+    if (assignment.saved_progress?.answers) {
+      answeredCount = Object.keys(assignment.saved_progress.answers).length
+    } else if (assignment.saved_progress && !assignment.saved_progress.answers) {
+      // Backwards compatibility: old format was just the answers object
+      answeredCount = Object.keys(assignment.saved_progress).length
+    }
+    
+    return {
+      answeredCount,
+      totalQuestions,
+      progress: (answeredCount / totalQuestions) * 100
+    }
+  }
+
   const pendingAssignments = assignmentsData?.data?.filter((a: any) => a.status === "PENDING") || []
   const completedAssignments = assignmentsData?.data?.filter((a: any) => a.status === "COMPLETED") || []
 
@@ -98,7 +118,7 @@ export function ViewAssignments({ open, onClose, questionnaire }: ViewAssignment
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
         <Stack direction="row" alignItems="center" spacing={1}>
-          <FiUser />
+          <FiUsers />
           <Typography variant="h6">Assigned Users</Typography>
         </Stack>
       </DialogTitle>
@@ -145,46 +165,62 @@ export function ViewAssignments({ open, onClose, questionnaire }: ViewAssignment
                   </Typography>
                 ) : (
                   <List sx={{ bgcolor: "background.paper", borderRadius: 1, border: "1px solid", borderColor: "divider" }}>
-                    {pendingAssignments.map((assignment: any, index: number) => (
-                      <ListItem
-                        key={assignment.id}
-                        divider={index < pendingAssignments.length - 1}
-                        secondaryAction={
-                          <IconButton
-                            edge="end"
-                            aria-label="delete"
-                            onClick={() => handleRemoveAssignment(assignment.id)}
-                            disabled={deleteAssignmentMutation.isPending}
-                          >
-                            <FiTrash2 />
-                          </IconButton>
-                        }
-                      >
-                        <ListItemText
-                          primary={
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <Typography variant="body1">{getUserName(assignment.user_id)}</Typography>
-                              <Chip
-                                label={assignment.status}
-                                size="small"
-                                color={getStatusColor(assignment.status) as any}
-                              />
-                            </Stack>
-                          }
-                          secondary={
-                            <Stack spacing={0.5} sx={{ mt: 0.5 }}>
-                              <Typography variant="caption" color="text.secondary">
-                                {getUserEmail(assignment.user_id)}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                Assigned: {new Date(assignment.assigned_at).toLocaleDateString()}
-                                {assignment.due_date && ` • Due: ${new Date(assignment.due_date).toLocaleDateString()}`}
-                              </Typography>
-                            </Stack>
-                          }
-                        />
-                      </ListItem>
-                    ))}
+                    {pendingAssignments.map((assignment: any, index: number) => {
+                      const { answeredCount, totalQuestions, progress } = getAssignmentProgress(assignment)
+                      const hasProgress = answeredCount > 0
+                      
+                      return (
+                        <ListItem
+                          key={assignment.id}
+                          divider={index < pendingAssignments.length - 1}
+                          sx={{ alignItems: "flex-start", py: 2 }}
+                        >
+                          <ListItemText
+                            primary={
+                              <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+                                <Stack direction="row" alignItems="center" spacing={1}>
+                                  <Typography variant="body1">{getUserName(assignment.user_id)}</Typography>
+                                  <Chip
+                                    label={assignment.status}
+                                    size="small"
+                                    color={getStatusColor(assignment.status) as any}
+                                  />
+                                </Stack>
+                                <IconButton
+                                  size="small"
+                                  aria-label="delete"
+                                  onClick={() => handleRemoveAssignment(assignment.id)}
+                                  disabled={deleteAssignmentMutation.isPending}
+                                >
+                                  <FiTrash2 />
+                                </IconButton>
+                              </Stack>
+                            }
+                            secondary={
+                              <Stack spacing={1} sx={{ mt: 0.5 }}>
+                                <Typography variant="caption" color="text.secondary">
+                                  {getUserEmail(assignment.user_id)}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  Assigned: {new Date(assignment.assigned_at).toLocaleDateString()}
+                                  {assignment.due_date && ` • Due: ${new Date(assignment.due_date).toLocaleDateString()}`}
+                                </Typography>
+                                {hasProgress && (
+                                  <Box sx={{ mt: 1 }}>
+                                    <AnimatedProgressBar
+                                      current={answeredCount}
+                                      total={totalQuestions}
+                                      percentage={progress}
+                                      label="Progress"
+                                    />
+                                  </Box>
+                                )}
+                              </Stack>
+                            }
+                          />
+                        </ListItem>
+                      )
+                    })}
                   </List>
                 )}
               </Box>

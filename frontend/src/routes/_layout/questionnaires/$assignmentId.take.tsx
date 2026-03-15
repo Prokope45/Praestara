@@ -14,6 +14,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { QuestionnairesService, type AnswerCreate } from "../../../client"
 import { Button } from "../../../components/ui/button"
 import { LikertScaleQuestion } from "../../../components/Questionnaires/LikertScaleQuestion"
+import { AnimatedProgressBar } from "../../../components/Common/AnimatedProgressBar"
 import useCustomToast from "../../../hooks/useCustomToast"
 
 export const Route = createFileRoute("/_layout/questionnaires/$assignmentId/take")({
@@ -314,15 +315,12 @@ function TakeQuestionnaire() {
         )}
 
         <Box sx={{ mb: 4 }}>
-          <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Progress: {answeredCount} of {questions.length} questions answered
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {Math.round(progress)}%
-            </Typography>
-          </Stack>
-          <LinearProgress variant="determinate" value={progress} />
+          <AnimatedProgressBar
+            current={answeredCount}
+            total={questions.length}
+            percentage={progress}
+            label="Progress"
+          />
         </Box>
 
         <Stack direction="row" justifyContent="space-between" alignItems="center">

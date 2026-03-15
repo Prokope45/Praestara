@@ -18,6 +18,7 @@ import {
 
 import useAuth from "@/hooks/useAuth"
 import { OrientationsService, QuestionnairesService } from "@/client"
+import { PendingQuestionnaireWidget } from "@/components/Questionnaires/PendingQuestionnaireWidget"
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
@@ -37,7 +38,6 @@ ChartJS.register(
 function Dashboard() {
   const { user: currentUser } = useAuth()
   const navigate = useNavigate()
-  const onboardingCompleted = Boolean(currentUser?.onboarding_completed_at)
   const triggerCheckin = (type: "morning" | "evening") => {
     localStorage.setItem(
       "praestara_checkin_force",
@@ -61,11 +61,10 @@ function Dashboard() {
       }),
   })
 
-  // Fetch user's questionnaire assignments to find onboarding
+  // Fetch user's questionnaire assignments
   const { data: assignmentsData } = useQuery({
     queryKey: ["questionnaire-assignments", "me"],
     queryFn: () => QuestionnairesService.readMyAssignments({ skip: 0, limit: 100 }),
-    enabled: !onboardingCompleted,
   })
 
   const allOrientations = useMemo(() => {
@@ -283,47 +282,27 @@ function Dashboard() {
           </Stack>
         </Stack>
 
-        {!onboardingCompleted && (() => {
-          const onboardingAssignment = assignmentsData?.data?.find(
-            (assignment) => assignment.questionnaire.title === "Praestara Onboarding" && assignment.status === "PENDING"
+        {(() => {
+          // Find the first pending assignment (prioritize onboarding)
+          const pendingAssignments = assignmentsData?.data?.filter(
+            (assignment) => assignment.status === "PENDING"
+          ) || []
+          
+          const onboardingAssignment = pendingAssignments.find(
+            (assignment) => assignment.questionnaire.title === "Praestara Onboarding"
           )
           
-          return (
-            <Paper
-              sx={{
-                p: 3,
-                mb: 4,
-                border: "1px solid",
-                borderColor: "divider",
-                background: "linear-gradient(135deg, rgba(102,126,234,0.12) 0%, rgba(118,75,162,0.12) 100%)",
-              }}
-            >
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="center">
-                <Box sx={{ flex: 1 }}>
-                  <Typography variant="h6" sx={{ mb: 1 }}>
-                    Get started with your baseline
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Complete the onboarding questionnaire to set your baseline. It takes about 12 to 18
-                    minutes and anchors your future check-ins.
-                  </Typography>
-                </Box>
-                <Button 
-                  variant="contained" 
-                  onClick={() => {
-                    if (onboardingAssignment) {
-                      navigate({ to: `/questionnaires/${onboardingAssignment.id}/take` })
-                    } else {
-                      navigate({ to: "/questionnaires" })
-                    }
-                  }}
-                  disabled={!onboardingAssignment}
-                >
-                  {onboardingAssignment ? "Start onboarding" : "Loading..."}
-                </Button>
-              </Stack>
-            </Paper>
-          )
+          const firstPendingAssignment = onboardingAssignment || pendingAssignments[0]
+          
+          if (firstPendingAssignment) {
+            return (
+              <Box sx={{ mb: 4 }}>
+                <PendingQuestionnaireWidget assignment={firstPendingAssignment} />
+              </Box>
+            )
+          }
+          
+          return null
         })()}
 
         <Paper sx={{ p: 3, mb: 3 }}>
