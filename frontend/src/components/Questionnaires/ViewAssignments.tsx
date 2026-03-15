@@ -205,7 +205,7 @@ export function ViewAssignments({ open, onClose, questionnaire }: ViewAssignment
                                   Assigned: {new Date(assignment.assigned_at).toLocaleDateString()}
                                   {assignment.due_date && ` • Due: ${new Date(assignment.due_date).toLocaleDateString()}`}
                                 </Typography>
-                                {hasProgress && (
+                                {hasProgress ? (
                                   <Box sx={{ mt: 1 }}>
                                     <AnimatedProgressBar
                                       current={answeredCount}
@@ -214,6 +214,10 @@ export function ViewAssignments({ open, onClose, questionnaire }: ViewAssignment
                                       label="Progress"
                                     />
                                   </Box>
+                                ) : (
+                                  <Typography variant="body2" color="text.secondary">
+                                    User has not started questionnaire yet.
+                                  </Typography>
                                 )}
                               </Stack>
                             }
