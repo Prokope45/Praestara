@@ -21,7 +21,6 @@ import {
   type AlignmentTodayRequest,
 } from "@/api/alignment"
 import { appFlowApi } from "@/api/appFlow"
-import { devPresetsApi } from "@/api/devPresets"
 import { ApiError } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
@@ -42,7 +41,6 @@ function AlignmentToday() {
   const [lastResponse, setLastResponse] = useState<Record<string, unknown> | null>(null)
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const [mode, setMode] = useState<"morning" | "evening">("morning")
-  const [presetLoading, setPresetLoading] = useState(false)
 
   const todayQuery = useQuery({
     queryKey: ["alignment", "today", selectedDate],
@@ -53,44 +51,6 @@ function AlignmentToday() {
     queryKey: ["app-flow"],
     queryFn: appFlowApi.getFlow,
   })
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    if (params.get("devPreset") !== "today_ready") {
-      return
-    }
-
-    let active = true
-    setPresetLoading(true)
-    devPresetsApi.apply("today_ready")
-      .then(async () => {
-        if (!active) return
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["app-flow"] }),
-          queryClient.invalidateQueries({ queryKey: ["alignment", "today"] }),
-          queryClient.invalidateQueries({ queryKey: ["questionnaire-assignments"] }),
-          queryClient.invalidateQueries({ queryKey: ["goal-scaffold", "goals"] }),
-          queryClient.invalidateQueries({ queryKey: ["self-concept", "snapshot"] }),
-          queryClient.invalidateQueries({ queryKey: ["self-concept", "history"] }),
-          queryClient.invalidateQueries({ queryKey: ["week-setup"] }),
-        ])
-        window.history.replaceState({}, "", "/alignment/today")
-        showSuccessToast("Preset baseline loaded")
-      })
-      .catch(() => {
-        if (!active) return
-        showErrorToast("Unable to load preset baseline")
-      })
-      .finally(() => {
-        if (active) {
-          setPresetLoading(false)
-        }
-      })
-
-    return () => {
-      active = false
-    }
-  }, [queryClient, showErrorToast, showSuccessToast])
 
   useEffect(() => {
     if (!todayQuery.data) return
@@ -148,11 +108,6 @@ function AlignmentToday() {
     <Container maxWidth="sm" sx={{ py: 6 }}>
       <Paper sx={{ p: 4, borderRadius: 4 }}>
         <Stack spacing={3}>
-          {presetLoading ? (
-            <Alert severity="info">
-              Loading preset baseline for today...
-            </Alert>
-          ) : null}
           {flowQuery.data?.pending_action === "confirm_week_setup" ? (
             <Alert severity="info">
               Confirm your current week setup before relying on the daily loop.

@@ -16,6 +16,7 @@ import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi"
 
 import { QuestionnairesService, type QuestionnaireAssignmentPublic } from "../../client"
 import { appFlowApi } from "../../api/appFlow"
+import { devPresetsApi } from "../../api/devPresets"
 import { Button } from "../../components/ui/button"
 import { PendingQuestionnaireWidget } from "../../components/Questionnaires/PendingQuestionnaireWidget"
 import useCustomToast from "../../hooks/useCustomToast"
@@ -61,11 +62,22 @@ function Questionnaires() {
     ])
   }
 
-  const resetMutation = useMutation({
-    mutationFn: async () => {
-      const { devPresetsApi } = await import("../../api/devPresets")
-      return devPresetsApi.reset()
+  const presetMutation = useMutation({
+    mutationFn: (mode: "week_setup" | "today_ready") => devPresetsApi.apply(mode),
+    onSuccess: async (_, mode) => {
+      await refreshState()
+      showSuccessToast(
+        mode === "week_setup" ? "Preset loaded. Opening week setup." : "Preset loaded. Opening today.",
+      )
+      window.location.href = mode === "week_setup" ? "/week-setup" : "/alignment/today"
     },
+    onError: () => {
+      showErrorToast("Unable to load preset onboarding")
+    },
+  })
+
+  const resetMutation = useMutation({
+    mutationFn: devPresetsApi.reset,
     onSuccess: async () => {
       await refreshState()
       showSuccessToast("Local preset state cleared")
@@ -150,15 +162,15 @@ function Questionnaires() {
           <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
             <Button
               variant="contained"
-              onClick={() => (window.location.href = "/week-setup?devPreset=week_setup")}
-              disabled={resetMutation.isPending}
+              onClick={() => presetMutation.mutate("week_setup")}
+              disabled={presetMutation.isPending || resetMutation.isPending}
             >
-              Load To Week Setup
+              {presetMutation.isPending ? "Loading..." : "Load To Week Setup"}
             </Button>
             <Button
               variant="contained"
-              onClick={() => (window.location.href = "/alignment/today?devPreset=today_ready")}
-              disabled={resetMutation.isPending}
+              onClick={() => presetMutation.mutate("today_ready")}
+              disabled={presetMutation.isPending || resetMutation.isPending}
             >
               Load To Today
             </Button>
