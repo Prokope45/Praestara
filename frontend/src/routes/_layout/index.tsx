@@ -212,6 +212,24 @@ function Dashboard() {
           </Box>
         ) : null}
 
+        {flow?.pending_action === "complete_onboarding" && !onboardingAssignment ? (
+          <Paper sx={{ p: 3, mb: 3 }}>
+            <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between">
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  Complete onboarding
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Your dashboard is intentionally empty until your baseline questionnaire is completed.
+                </Typography>
+              </Box>
+              <Button variant="contained" onClick={() => navigate({ to: "/questionnaires" })}>
+                Open Onboarding
+              </Button>
+            </Stack>
+          </Paper>
+        ) : null}
+
         {flow?.pending_action === "confirm_week_setup" ? (
           <Paper sx={{ p: 3, mb: 3 }}>
             <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between">

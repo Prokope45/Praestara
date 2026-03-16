@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+import json
 import uuid
 from typing import Any
 
@@ -14,6 +15,7 @@ from app.goal_scaffold.goals import service as goal_service
 from app.goal_scaffold.goals.models import GoalUpdate
 from app.goal_scaffold.physiology import service as physiology_service
 from app.goal_scaffold.resource_profile import service as resource_service
+from app.goal_scaffold.resource_profile.models import UserResourceProfileUpdate
 from app.goal_scaffold.self_concept import service as self_concept_service
 from app.goal_scaffold.weekly_cycle import service as weekly_service
 
@@ -45,6 +47,12 @@ class WeekSetupGoalProposal(SQLModel):
     confidence_signal: float
 
 
+class WeekSetupScheduleDay(SQLModel):
+    day: str
+    available_hours: float = 0.0
+    notes: str | None = None
+
+
 class WeekSetupResponse(SQLModel):
     current_phase: str
     current_cycle_id: str
@@ -53,6 +61,7 @@ class WeekSetupResponse(SQLModel):
     stress_baseline: float
     latent_state: dict[str, float]
     physiology_state: dict[str, float]
+    schedule_days: list[WeekSetupScheduleDay]
     proposed_goals: list[WeekSetupGoalProposal]
     narrative_prompt: str
     confirmed: bool
@@ -68,6 +77,7 @@ class WeekSetupGoalUpdate(SQLModel):
 
 class WeekSetupSubmitRequest(SQLModel):
     goals: list[WeekSetupGoalUpdate]
+    schedule_days: list[WeekSetupScheduleDay] = []
     schedule_note: str | None = None
     reflection: str | None = None
 
@@ -115,6 +125,21 @@ def get_current_week_setup(
     dims = self_concept_service.get_current_dimensions(session, current_user.id)
     physiology = physiology_service.build_snapshot(session, current_user.id)
     profile = resource_service.get_or_create_profile(session, current_user.id)
+    existing_payload = app_flow.parse_week_setup_payload(
+        app_flow.get_week_setup_observation(session, current_user.id, cycle.id)
+    )
+    raw_schedule_days = existing_payload.get("schedule_days")
+    default_days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    schedule_days = [
+        WeekSetupScheduleDay(
+            day=item.get("day", default_days[index]),
+            available_hours=float(item.get("available_hours", 0.0)),
+            notes=item.get("notes") or None,
+        )
+        for index, item in enumerate(raw_schedule_days)
+    ] if isinstance(raw_schedule_days, list) and raw_schedule_days else [
+        WeekSetupScheduleDay(day=day) for day in default_days
+    ]
 
     proposed_goals: list[WeekSetupGoalProposal] = []
     for goal, goal_cycle in app_flow.get_current_cycle_goals(session, current_user.id):
@@ -155,9 +180,10 @@ def get_current_week_setup(
         stress_baseline=profile.stress_baseline,
         latent_state={key: round(value, 4) for key, value in dims.items()},
         physiology_state={key: round(value, 4) for key, value in physiology.axis_scores.items()},
+        schedule_days=schedule_days,
         proposed_goals=proposed_goals,
         narrative_prompt=(
-            "Review the proposed week-one goals. Confirm what fits, lower what feels unrealistic, "
+            "Map your real week first, then confirm the goals. Lower anything that does not fit, "
             "and note any history or constraints that matter."
         ),
         confirmed=app_flow.is_week_setup_confirmed(session, current_user.id, cycle.id),
@@ -171,6 +197,21 @@ def submit_current_week_setup(
     current_user: CurrentUser,
 ) -> WeekSetupSubmitResponse:
     cycle = weekly_service.ensure_current_cycle(session, current_user.id)
+    total_available_hours = sum(max(0.0, day.available_hours) for day in body.schedule_days)
+    if body.schedule_days:
+        average_hours = total_available_hours / len(body.schedule_days)
+        spread = max(day.available_hours for day in body.schedule_days) - min(
+            day.available_hours for day in body.schedule_days
+        )
+        variability = min(1.0, max(0.0, (spread / max(average_hours, 1.0)) / 4.0))
+        resource_service.update_profile(
+            session,
+            current_user.id,
+            UserResourceProfileUpdate(
+                weekly_available_hours=round(total_available_hours, 2),
+                time_variability=round(variability, 4),
+            ),
+        )
 
     for goal_update in body.goals:
         update_payload: dict[str, Any] = {}
@@ -190,6 +231,12 @@ def submit_current_week_setup(
         note_parts.append(f"schedule_note={body.schedule_note.strip()}")
     if body.reflection:
         note_parts.append(f"reflection={body.reflection.strip()}")
+    payload = {
+        "schedule_days": [day.model_dump() for day in body.schedule_days],
+        "schedule_note": body.schedule_note.strip() if body.schedule_note else None,
+        "reflection": body.reflection.strip() if body.reflection else None,
+    }
+    note_parts.append(f"payload_json={json.dumps(payload, separators=(',', ':'))}")
     for item in body.goals:
         if item.note:
             note_parts.append(f"{item.goal_id}:{item.note.strip()}")

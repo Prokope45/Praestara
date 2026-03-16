@@ -36,6 +36,8 @@ function TakeQuestionnaire() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null)
 
+  const hasAnswer = (questionId: string) => Object.prototype.hasOwnProperty.call(answers, questionId)
+
   const { data: assignment, isLoading } = useQuery({
     queryKey: ["questionnaire-assignment", assignmentId],
     queryFn: () => QuestionnairesService.readAssignment({ assignmentId }),
@@ -143,7 +145,7 @@ function TakeQuestionnaire() {
 
     const newErrors: Record<string, string> = {}
     pageQuestions.forEach((question) => {
-      if (question.is_required && !answers[question.id]) {
+      if (question.is_required && !hasAnswer(question.id)) {
         newErrors[question.id] = "This question is required"
       }
     })
@@ -157,7 +159,7 @@ function TakeQuestionnaire() {
     const questions = assignment?.questionnaire?.questions || []
 
     questions.forEach((question) => {
-      if (question.is_required && !answers[question.id]) {
+      if (question.is_required && !hasAnswer(question.id)) {
         newErrors[question.id] = "This question is required"
       }
     })
@@ -206,7 +208,7 @@ function TakeQuestionnaire() {
       const sortedQuestions = [...questions].sort((a, b) => a.order - b.order)
       for (let i = 0; i < sortedQuestions.length; i++) {
         const question = sortedQuestions[i]
-        if (question.is_required && !answers[question.id]) {
+        if (question.is_required && !hasAnswer(question.id)) {
           setCurrentPage(Math.floor(i / QUESTIONS_PER_PAGE))
           break
         }
@@ -350,7 +352,7 @@ function TakeQuestionnaire() {
             questionNumber={startIdx + index + 1}
             scaleType={question.scale_type as "LIKERT_5" | "LIKERT_7" | "YES_NO" | "CUSTOM_NUMERIC"}
             isRequired={question.is_required || false}
-            value={answers[question.id] || null}
+            value={hasAnswer(question.id) ? answers[question.id] : null}
             onChange={(value) => handleAnswerChange(question.id, value)}
             error={errors[question.id]}
             customMinValue={question.custom_min_value}

@@ -115,6 +115,22 @@ STRESS_FREQUENCY_ITEMS = {
     "Restlessness that makes it hard to sit still",
 }
 
+CARDIO_DOMAIN = "Cardio / aerobic movement"
+STRENGTH_DOMAIN = "Muscle / strength work"
+MOBILITY_DOMAIN = "Mobility / flexibility work"
+MEAL_STRUCTURE_DOMAIN = "Meal structure and planning"
+SLEEP_NIGHTS_QUESTION = "On how many nights each week do you get enough sleep for yourself"
+SLEEP_HOURS_QUESTION = "How many hours do you usually sleep on a typical night"
+SCREENS_OFF_QUESTION = "How many minutes before bed do you usually get off screens"
+BEDTIME_CONSISTENCY_QUESTION = "On how many nights each week is your bedtime within the same 30-minute window"
+WAKE_CONSISTENCY_QUESTION = "On how many mornings each week is your wake time within the same 30-minute window"
+DISCRETIONARY_HOURS_QUESTION = "How many hours each week feel truly discretionary after work, care, and commute"
+COOKING_REALISM_QUESTION = "My current week has enough openings to cook or prep meals on purpose"
+MEAL_PATTERN_QUESTION = "Which meal pattern is most realistic for you right now: cooking daily, meal prep, or a mix"
+SCHEDULE_DESCRIPTION_QUESTION = "Describe your average weekly schedule, including fixed commitments and open windows"
+WIND_DOWN_TIME_QUESTION = "What time would you ideally start winding down for sleep"
+WAKE_TIME_QUESTION = "What time would you ideally wake up on most days"
+
 
 def bootstrap_onboarding_state(
     session: Session,
@@ -131,23 +147,26 @@ def bootstrap_onboarding_state(
     ).all()
 
     domain_ratings = _collect_domain_ratings(answer_rows)
+    numeric_answers = _collect_numeric_answers(answer_rows)
+    text_answers = _collect_text_answers(answer_rows)
     self_efficacy = _compute_self_efficacy(answer_rows)
-    specs = _derive_goal_specs(domain_ratings, self_efficacy)
+    specs = _derive_goal_specs(domain_ratings, numeric_answers, answer_rows, self_efficacy)
 
     cycle = weekly_service.ensure_current_cycle(session, response.user_id)
     _seed_self_concept(session, response.user_id, answer_rows, cycle.id)
+    _seed_resource_profile(session, response.user_id, numeric_answers, text_answers, answer_rows)
     goal_ids: list[str] = []
     for spec in specs:
         goal = _upsert_goal(session, response.user_id, spec)
         _ensure_goal_cycle(session, goal.id, cycle.id)
         goal_ids.append(str(goal.id))
 
-    exercise_target = next(
-        (int(spec.target) for spec in specs if spec.category == GoalCategory.EXERCISE),
-        None,
+    exercise_target = sum(
+        int(spec.target) for spec in specs if spec.category == GoalCategory.EXERCISE
     )
-    if exercise_target is not None:
-        weekly_hours = max(exercise_target * 0.75, 1.5)
+    if exercise_target:
+        profile = resource_service.get_or_create_profile(session, response.user_id)
+        weekly_hours = max(profile.weekly_available_hours, exercise_target * 0.6, 1.5)
         resource_service.update_profile(
             session,
             response.user_id,
@@ -184,6 +203,26 @@ def _collect_domain_ratings(answer_rows: list[tuple[Answer, Question]]) -> dict[
             "consistency": float(payload.get("consistency", 0.0)),
         }
     return ratings
+
+
+def _collect_numeric_answers(answer_rows: list[tuple[Answer, Question]]) -> dict[str, float]:
+    values: dict[str, float] = {}
+    for answer, question in answer_rows:
+        if answer.likert_value is None:
+            continue
+        values[question.question_text] = float(answer.likert_value)
+    return values
+
+
+def _collect_text_answers(answer_rows: list[tuple[Answer, Question]]) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for answer, question in answer_rows:
+        if not answer.text_response:
+            continue
+        if question.scale_type == "DOMAIN_RATING":
+            continue
+        values[question.question_text] = answer.text_response.strip()
+    return values
 
 
 def _compute_self_efficacy(answer_rows: list[tuple[Answer, Question]]) -> float:
@@ -318,55 +357,87 @@ def _compute_inverse_frequency_dimension(
 
 def _derive_goal_specs(
     domain_ratings: dict[str, dict[str, float]],
+    numeric_answers: dict[str, float],
+    answer_rows: list[tuple[Answer, Question]],
     self_efficacy: float,
 ) -> list[BootstrapGoalSpec]:
     priorities = {
         key: _priority(value.get("importance", 0.0), value.get("consistency", 0.0))
         for key, value in domain_ratings.items()
     }
-    exercise_priority = priorities.get("Health and body care", 0.45)
+    cardio_priority = priorities.get(CARDIO_DOMAIN, priorities.get("Health and body care", 0.45))
+    strength_priority = priorities.get(STRENGTH_DOMAIN, priorities.get("Health and body care", 0.45))
+    mobility_priority = priorities.get(MOBILITY_DOMAIN, priorities.get("Health and body care", 0.45))
     sleep_priority = priorities.get("Sleep and recovery", 0.45)
     nutrition_priority = (
-        priorities.get("Health and body care", 0.45)
+        priorities.get(MEAL_STRUCTURE_DOMAIN, priorities.get("Health and body care", 0.45))
         + priorities.get("Order, responsibility, life maintenance", 0.45)
     ) / 2
-    other_priority = max(
-        priorities.get("Learning or skill building", 0.4),
-        priorities.get("Work or contribution", 0.4),
+    sleep_nights = numeric_answers.get(SLEEP_NIGHTS_QUESTION, 4.0)
+    sleep_hours = numeric_answers.get(SLEEP_HOURS_QUESTION, 7.0)
+    screens_off_minutes = numeric_answers.get(SCREENS_OFF_QUESTION, 30.0)
+    bedtime_consistency = numeric_answers.get(BEDTIME_CONSISTENCY_QUESTION, 3.0)
+    wake_consistency = numeric_answers.get(WAKE_CONSISTENCY_QUESTION, 3.0)
+    cooking_realism = _compute_likert_dimension(
+        answer_rows,
+        positive_items={COOKING_REALISM_QUESTION},
+        negative_items=set(),
+    )
+    sleep_recovery_score = (
+        min(1.0, sleep_hours / 8.0) * 0.35
+        + min(1.0, sleep_nights / 7.0) * 0.35
+        + min(1.0, screens_off_minutes / 60.0) * 0.15
+        + min(1.0, ((bedtime_consistency + wake_consistency) / 2.0) / 7.0) * 0.15
     )
 
     return [
         BootstrapGoalSpec(
-            title="Move",
+            title="Cardio",
             category=GoalCategory.EXERCISE,
             unit="sessions",
-            description="Build a stable baseline of movement this week.",
-            target=float(_bounded_round(1 + (exercise_priority * 2.2) + (self_efficacy * 1.8), 2, 5)),
+            description="Build a stable baseline of aerobic movement this week.",
+            target=float(_bounded_round(1 + (cardio_priority * 2.2) + (self_efficacy * 1.4), 2, 4)),
             intensity=_bounded_round(2 + self_efficacy * 2, 2, 4),
         ),
         BootstrapGoalSpec(
-            title="Sleep window",
+            title="Strength",
+            category=GoalCategory.EXERCISE,
+            unit="sessions",
+            description="Hold a realistic number of strength sessions this week.",
+            target=float(_bounded_round(1 + (strength_priority * 2.0) + (self_efficacy * 1.5), 2, 4)),
+            intensity=_bounded_round(2 + self_efficacy * 2, 2, 4),
+        ),
+        BootstrapGoalSpec(
+            title="Mobility",
+            category=GoalCategory.EXERCISE,
+            unit="sessions",
+            description="Use mobility work to support recovery and consistency.",
+            target=float(_bounded_round(2 + (mobility_priority * 2.3) + (self_efficacy * 1.0), 2, 6)),
+            intensity=_bounded_round(2 + mobility_priority * 2, 2, 4),
+        ),
+        BootstrapGoalSpec(
+            title="Sleep duration",
             category=GoalCategory.SLEEP,
-            unit="days",
-            description="Protect a consistent sleep window.",
-            target=float(_bounded_round(3 + (sleep_priority * 2.5) + (self_efficacy * 1.5), 4, 7)),
+            unit="nights",
+            description="Hit your intended sleep duration on target nights.",
+            target=float(_bounded_round(max(4.0, sleep_nights + 1.0 + (sleep_priority * 1.5)), 4, 7)),
             intensity=_bounded_round(2 + sleep_priority * 2, 2, 4),
+        ),
+        BootstrapGoalSpec(
+            title="Sleep hygiene",
+            category=GoalCategory.SLEEP,
+            unit="nights",
+            description="Protect screen cutoff and steadier sleep timing on target nights.",
+            target=float(_bounded_round(3 + ((1.0 - sleep_recovery_score) * 2.5) + (sleep_priority * 1.5), 3, 7)),
+            intensity=_bounded_round(2 + (1.0 - sleep_recovery_score) * 2, 2, 4),
         ),
         BootstrapGoalSpec(
             title="Meal structure",
             category=GoalCategory.NUTRITION,
             unit="days",
-            description="Hold a repeatable meal structure on target days.",
-            target=float(_bounded_round(3 + (nutrition_priority * 2.5) + (self_efficacy * 1.5), 4, 7)),
+            description="Hold a repeatable meal structure that fits your week.",
+            target=float(_bounded_round(3 + (nutrition_priority * 2.0) + (cooking_realism * 1.5), 3, 7)),
             intensity=_bounded_round(2 + nutrition_priority * 2, 2, 4),
-        ),
-        BootstrapGoalSpec(
-            title="Core practice",
-            category=GoalCategory.CUSTOM,
-            unit="blocks",
-            description="Protect one meaningful block for growth or contribution.",
-            target=float(_bounded_round(2 + (other_priority * 2.0) + (self_efficacy * 1.2), 3, 5)),
-            intensity=_bounded_round(2 + other_priority * 2, 2, 4),
         ),
     ]
 
@@ -379,6 +450,48 @@ def _priority(importance: float, consistency: float) -> float:
 
 def _bounded_round(value: float, low: int, high: int) -> int:
     return max(low, min(high, int(round(value))))
+
+
+def _seed_resource_profile(
+    session: Session,
+    user_id: uuid.UUID,
+    numeric_answers: dict[str, float],
+    text_answers: dict[str, str],
+    answer_rows: list[tuple[Answer, Question]],
+) -> None:
+    weekly_hours = numeric_answers.get(DISCRETIONARY_HOURS_QUESTION, 8.0)
+    stress_load = _compute_frequency_dimension(answer_rows, items=STRESS_FREQUENCY_ITEMS)
+    cooking_realism = _compute_likert_dimension(
+        answer_rows,
+        positive_items={COOKING_REALISM_QUESTION},
+        negative_items=set(),
+    )
+    meal_pattern = text_answers.get(MEAL_PATTERN_QUESTION, "").lower()
+    if "prep" in meal_pattern:
+        cooking_access = "meal_prep"
+    elif "mix" in meal_pattern:
+        cooking_access = "mixed"
+    elif meal_pattern:
+        cooking_access = "daily_cooking"
+    else:
+        cooking_access = "full_kitchen"
+
+    schedule_text = text_answers.get(SCHEDULE_DESCRIPTION_QUESTION, "").lower()
+    variable_markers = ("shift", "rotating", "irregular", "changes", "unpredictable")
+    time_variability = 0.7 if any(marker in schedule_text for marker in variable_markers) else 0.4
+    if weekly_hours < 6:
+        time_variability = max(time_variability, 0.65)
+
+    resource_service.update_profile(
+        session,
+        user_id,
+        UserResourceProfileUpdate(
+            weekly_available_hours=max(weekly_hours, 1.5),
+            cooking_access=cooking_access,
+            time_variability=min(1.0, max(0.0, (time_variability * 0.7) + ((1.0 - cooking_realism) * 0.3))),
+            stress_baseline=round(max(0.0, min(1.0, stress_load)), 4),
+        ),
+    )
 
 
 def _upsert_goal(session: Session, user_id: uuid.UUID, spec: BootstrapGoalSpec) -> Goal:

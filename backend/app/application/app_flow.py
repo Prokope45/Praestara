@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import uuid
 from datetime import date
 from enum import Enum
@@ -88,8 +89,14 @@ def get_pending_onboarding_assignment(
 
 
 def is_week_setup_confirmed(session: Session, user_id: uuid.UUID, cycle_id: uuid.UUID) -> bool:
+    return get_week_setup_observation(session, user_id, cycle_id) is not None
+
+
+def get_week_setup_observation(
+    session: Session, user_id: uuid.UUID, cycle_id: uuid.UUID
+) -> QualitativeObservation | None:
     marker = f"{WEEK_SETUP_MARKER}{cycle_id}"
-    observation = session.exec(
+    return session.exec(
         select(QualitativeObservation)
         .where(
             QualitativeObservation.user_id == user_id,
@@ -97,7 +104,20 @@ def is_week_setup_confirmed(session: Session, user_id: uuid.UUID, cycle_id: uuid
         )
         .limit(1)
     ).first()
-    return observation is not None
+
+
+def parse_week_setup_payload(observation: QualitativeObservation | None) -> dict[str, object]:
+    if observation is None:
+        return {}
+
+    lines = [line.strip() for line in observation.text.splitlines() if line.strip()]
+    for line in reversed(lines):
+        if line.startswith("payload_json="):
+            try:
+                return json.loads(line.removeprefix("payload_json="))
+            except json.JSONDecodeError:
+                return {}
+    return {}
 
 
 def suggested_days_for_target(target_value: float) -> list[str]:

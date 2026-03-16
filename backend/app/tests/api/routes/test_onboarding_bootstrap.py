@@ -37,10 +37,21 @@ def test_onboarding_submission_bootstraps_first_week_state(
     db.flush()
 
     question_defs = [
-        ("Health and body care", ScaleType.DOMAIN_RATING, None),
+        ("Cardio / aerobic movement", ScaleType.DOMAIN_RATING, None),
+        ("Muscle / strength work", ScaleType.DOMAIN_RATING, None),
+        ("Mobility / flexibility work", ScaleType.DOMAIN_RATING, None),
         ("Sleep and recovery", ScaleType.DOMAIN_RATING, None),
+        ("Meal structure and planning", ScaleType.DOMAIN_RATING, None),
         ("Order, responsibility, life maintenance", ScaleType.DOMAIN_RATING, None),
-        ("Learning or skill building", ScaleType.DOMAIN_RATING, None),
+        ("On how many nights each week do you get enough sleep for yourself", ScaleType.CUSTOM_NUMERIC, None),
+        ("How many hours do you usually sleep on a typical night", ScaleType.CUSTOM_NUMERIC, None),
+        ("How many minutes before bed do you usually get off screens", ScaleType.CUSTOM_NUMERIC, None),
+        ("On how many nights each week is your bedtime within the same 30-minute window", ScaleType.CUSTOM_NUMERIC, None),
+        ("On how many mornings each week is your wake time within the same 30-minute window", ScaleType.CUSTOM_NUMERIC, None),
+        ("How many hours each week feel truly discretionary after work, care, and commute", ScaleType.CUSTOM_NUMERIC, None),
+        ("My current week has enough openings to cook or prep meals on purpose", ScaleType.LIKERT_5, None),
+        ("Which meal pattern is most realistic for you right now: cooking daily, meal prep, or a mix", ScaleType.TEXT, None),
+        ("Describe your average weekly schedule, including fixed commitments and open windows", ScaleType.TEXT, None),
         ("My actions make a real difference in my life", ScaleType.LIKERT_5, None),
         ("I can take small steps that compound over time", ScaleType.LIKERT_5, None),
         ("I often feel stuck even when I want to change", ScaleType.LIKERT_5, None),
@@ -75,12 +86,23 @@ def test_onboarding_submission_bootstraps_first_week_state(
             "assignment_id": str(assignment.id),
             "answers": [
                 {"question_id": str(questions[0].id), "text_response": json.dumps(domain_payload)},
-                {"question_id": str(questions[1].id), "text_response": json.dumps({"importance": 8, "consistency": 5, "note": ""})},
-                {"question_id": str(questions[2].id), "text_response": json.dumps({"importance": 7, "consistency": 5, "note": ""})},
-                {"question_id": str(questions[3].id), "text_response": json.dumps({"importance": 8, "consistency": 3, "note": ""})},
-                {"question_id": str(questions[4].id), "likert_value": 4},
-                {"question_id": str(questions[5].id), "likert_value": 4},
-                {"question_id": str(questions[6].id), "likert_value": 2},
+                {"question_id": str(questions[1].id), "text_response": json.dumps({"importance": 8, "consistency": 4, "note": ""})},
+                {"question_id": str(questions[2].id), "text_response": json.dumps({"importance": 7, "consistency": 3, "note": ""})},
+                {"question_id": str(questions[3].id), "text_response": json.dumps({"importance": 8, "consistency": 5, "note": ""})},
+                {"question_id": str(questions[4].id), "text_response": json.dumps({"importance": 7, "consistency": 4, "note": ""})},
+                {"question_id": str(questions[5].id), "text_response": json.dumps({"importance": 7, "consistency": 5, "note": ""})},
+                {"question_id": str(questions[6].id), "likert_value": 4},
+                {"question_id": str(questions[7].id), "likert_value": 7},
+                {"question_id": str(questions[8].id), "likert_value": 45},
+                {"question_id": str(questions[9].id), "likert_value": 4},
+                {"question_id": str(questions[10].id), "likert_value": 4},
+                {"question_id": str(questions[11].id), "likert_value": 12},
+                {"question_id": str(questions[12].id), "likert_value": 4},
+                {"question_id": str(questions[13].id), "text_response": "meal prep"},
+                {"question_id": str(questions[14].id), "text_response": "Weekdays have work, evenings are open."},
+                {"question_id": str(questions[15].id), "likert_value": 4},
+                {"question_id": str(questions[16].id), "likert_value": 4},
+                {"question_id": str(questions[17].id), "likert_value": 2},
             ],
         },
     )
@@ -96,9 +118,16 @@ def test_onboarding_submission_bootstraps_first_week_state(
     ).first()
 
     assert questionnaire_response is not None
-    assert {goal.title for goal in goals} >= {"Move", "Sleep window", "Meal structure", "Core practice"}
+    assert {goal.title for goal in goals} >= {
+        "Cardio",
+        "Strength",
+        "Mobility",
+        "Sleep duration",
+        "Sleep hygiene",
+        "Meal structure",
+    }
     assert len(cycles) == 1
-    assert len(goal_cycles) >= 4
+    assert len(goal_cycles) >= 6
     assert {dimension.name for dimension in dimensions} >= {
         "self_efficacy",
         "goal_clarity",

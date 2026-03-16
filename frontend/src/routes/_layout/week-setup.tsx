@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Container,
+  Grid,
   Paper,
   Slider,
   Stack,
@@ -11,7 +12,7 @@ import {
 } from "@mui/material"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 import { appFlowApi } from "@/api/appFlow"
 import useCustomToast from "@/hooks/useCustomToast"
@@ -28,6 +29,9 @@ function WeekSetup() {
   const [reflection, setReflection] = useState("")
   const [goalNotes, setGoalNotes] = useState<Record<string, string>>({})
   const [targetOverrides, setTargetOverrides] = useState<Record<string, number>>({})
+  const [scheduleDays, setScheduleDays] = useState<
+    { day: string; available_hours: number; notes?: string | null }[]
+  >([])
 
   const flowQuery = useQuery({
     queryKey: ["app-flow"],
@@ -58,6 +62,13 @@ function WeekSetup() {
 
   const proposals = setupQuery.data?.proposed_goals ?? []
 
+  useEffect(() => {
+    if (!setupQuery.data?.schedule_days || scheduleDays.length > 0) {
+      return
+    }
+    setScheduleDays(setupQuery.data.schedule_days)
+  }, [scheduleDays.length, setupQuery.data?.schedule_days])
+
   const submit = () => {
     mutation.mutate({
       goals: proposals.map((proposal) => ({
@@ -67,6 +78,7 @@ function WeekSetup() {
         intensity_level: proposal.intensity_level,
         note: goalNotes[proposal.goal_id] || undefined,
       })),
+      schedule_days: scheduleDays,
       schedule_note: scheduleNote || undefined,
       reflection: reflection || undefined,
     })
@@ -112,6 +124,68 @@ function WeekSetup() {
                 <Typography variant="body2" color="text.secondary">
                   Weekly availability: {setupQuery.data.weekly_available_hours} hours
                 </Typography>
+              </Stack>
+            </Paper>
+
+            <Paper sx={{ p: 3 }}>
+              <Stack spacing={2}>
+                <Box>
+                  <Typography variant="h6">Average Week</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Fill in the hours that are realistically open for training, meal prep, sleep setup,
+                    or other health practices before you confirm the goals.
+                  </Typography>
+                </Box>
+                <Grid container spacing={2}>
+                  {scheduleDays.map((scheduleDay, index) => (
+                    <Grid key={scheduleDay.day} size={{ xs: 12, md: 6 }}>
+                      <Paper variant="outlined" sx={{ p: 2 }}>
+                        <Stack spacing={2}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                            {scheduleDay.day}
+                          </Typography>
+                          <TextField
+                            type="number"
+                            label="Open hours"
+                            value={scheduleDay.available_hours}
+                            onChange={(event) =>
+                              setScheduleDays((current) =>
+                                current.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? {
+                                        ...item,
+                                        available_hours: Number(event.target.value || 0),
+                                      }
+                                    : item,
+                                ),
+                              )
+                            }
+                            inputProps={{ min: 0, max: 16, step: 0.5 }}
+                          />
+                          <TextField
+                            label="Fixed commitments / useful windows"
+                            multiline
+                            minRows={2}
+                            value={scheduleDay.notes ?? ""}
+                            onChange={(event) =>
+                              setScheduleDays((current) =>
+                                current.map((item, itemIndex) =>
+                                  itemIndex === index
+                                    ? {
+                                        ...item,
+                                        notes: event.target.value,
+                                      }
+                                    : item,
+                                ),
+                              )
+                            }
+                            placeholder="Work, school, care, commute, or likely workout / meal-prep windows"
+                          />
+                        </Stack>
+                      </Paper>
+                    </Grid>
+                  ))}
+                </Grid>
               </Stack>
             </Paper>
 
@@ -176,7 +250,7 @@ function WeekSetup() {
                   minRows={2}
                   value={scheduleNote}
                   onChange={(event) => setScheduleNote(event.target.value)}
-                  placeholder="What does your real schedule look like this week?"
+                  placeholder="Anything the calendar still misses, including meal prep, bedtime routines, or travel"
                 />
                 <TextField
                   label="Reflection on the plan"

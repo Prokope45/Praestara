@@ -14,8 +14,14 @@ from app.models import User
 
 def test_app_flow_requires_onboarding(
     client: TestClient,
+    db: Session,
     normal_user_token_headers: dict[str, str],
 ) -> None:
+    user = db.exec(select(User).where(User.email == settings.EMAIL_TEST_USER)).first()
+    user.onboarding_completed_at = None
+    db.add(user)
+    db.commit()
+
     response = client.get(f"{settings.API_V1_STR}/app/flow", headers=normal_user_token_headers)
     assert response.status_code == 200
     payload = response.json()
@@ -81,8 +87,8 @@ def test_week_setup_flow_can_be_confirmed(
         user.id,
         GoalCreate(
             category=GoalCategory.EXERCISE,
-            title="Move",
-            description="Build a stable baseline of movement this week.",
+            title="Cardio",
+            description="Build a stable baseline of aerobic movement this week.",
             target_value=3,
             target_unit="sessions",
             intensity_level=2,
@@ -101,7 +107,8 @@ def test_week_setup_flow_can_be_confirmed(
     )
     assert current.status_code == 200
     current_payload = current.json()
-    assert current_payload["proposed_goals"][0]["title"] == "Move"
+    assert current_payload["proposed_goals"][0]["title"] == "Cardio"
+    assert len(current_payload["schedule_days"]) == 7
 
     submit = client.post(
         f"{settings.API_V1_STR}/week-setup/current",
@@ -115,6 +122,15 @@ def test_week_setup_flow_can_be_confirmed(
                     "intensity_level": 2,
                     "note": "This fits the current week.",
                 }
+            ],
+            "schedule_days": [
+                {"day": "Monday", "available_hours": 1.5, "notes": "Evening"},
+                {"day": "Tuesday", "available_hours": 1.5, "notes": "Evening"},
+                {"day": "Wednesday", "available_hours": 1.0, "notes": "Morning"},
+                {"day": "Thursday", "available_hours": 1.0, "notes": "Late"},
+                {"day": "Friday", "available_hours": 1.0, "notes": "Evening"},
+                {"day": "Saturday", "available_hours": 2.0, "notes": "Open"},
+                {"day": "Sunday", "available_hours": 2.0, "notes": "Open"},
             ],
             "schedule_note": "Evenings are more realistic.",
             "reflection": "Starting small is important.",

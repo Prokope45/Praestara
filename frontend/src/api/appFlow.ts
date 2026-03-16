@@ -25,6 +25,12 @@ export interface WeekSetupGoalProposal {
   confidence_signal: number
 }
 
+export interface WeekSetupScheduleDay {
+  day: string
+  available_hours: number
+  notes?: string | null
+}
+
 export interface WeekSetupResponse {
   current_phase: string
   current_cycle_id: string
@@ -33,6 +39,7 @@ export interface WeekSetupResponse {
   stress_baseline: number
   latent_state: Record<string, number>
   physiology_state: Record<string, number>
+  schedule_days: WeekSetupScheduleDay[]
   proposed_goals: WeekSetupGoalProposal[]
   narrative_prompt: string
   confirmed: boolean
@@ -48,6 +55,7 @@ export interface WeekSetupGoalUpdate {
 
 export interface WeekSetupSubmitRequest {
   goals: WeekSetupGoalUpdate[]
+  schedule_days: WeekSetupScheduleDay[]
   schedule_note?: string | null
   reflection?: string | null
 }

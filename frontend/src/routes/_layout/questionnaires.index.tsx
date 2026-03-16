@@ -15,6 +15,7 @@ import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi"
 
 import { QuestionnairesService, type QuestionnaireAssignmentPublic } from "../../client"
 import { Button } from "../../components/ui/button"
+import { PendingQuestionnaireWidget } from "../../components/Questionnaires/PendingQuestionnaireWidget"
 
 export const Route = createFileRoute("/_layout/questionnaires/")({
   component: Questionnaires,
@@ -32,6 +33,10 @@ function Questionnaires() {
   )
   const completedAssignments = assignments?.data?.filter(
     (a: QuestionnaireAssignmentPublic) => a.status === "COMPLETED"
+  )
+  const onboardingAssignment = pendingAssignments?.find(
+    (assignment: QuestionnaireAssignmentPublic) =>
+      assignment.questionnaire.title === "Praestara Onboarding"
   )
 
   const getStatusColor = (status: string | undefined) => {
@@ -87,6 +92,12 @@ function Questionnaires() {
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
         Complete your assigned questionnaires to help track your progress
       </Typography>
+
+      {onboardingAssignment ? (
+        <Box sx={{ mb: 4 }}>
+          <PendingQuestionnaireWidget assignment={onboardingAssignment} />
+        </Box>
+      ) : null}
 
       {/* Pending Questionnaires */}
       <Box sx={{ mb: 6 }}>
@@ -148,9 +159,13 @@ function Questionnaires() {
                       })
                     }}
                   >
-                    {assignment.saved_progress && Object.keys(assignment.saved_progress).length > 0
-                      ? "Resume Questionnaire"
-                      : "Take Questionnaire"}
+                    {assignment.questionnaire.title === "Praestara Onboarding"
+                      ? assignment.saved_progress && Object.keys(assignment.saved_progress).length > 0
+                        ? "Resume Onboarding"
+                        : "Start Onboarding"
+                      : assignment.saved_progress && Object.keys(assignment.saved_progress).length > 0
+                        ? "Resume Questionnaire"
+                        : "Take Questionnaire"}
                   </Button>
                 </CardActions>
               </Card>

@@ -78,7 +78,10 @@ export function PendingQuestionnaireWidget({ assignment }: PendingQuestionnaireW
           <Button 
             variant="contained" 
             onClick={() => {
-              navigate({ to: `/questionnaires/${assignment.id}/take` })
+              navigate({
+                to: "/questionnaires/$assignmentId/take",
+                params: { assignmentId: assignment.id },
+              })
             }}
           >
             {buttonText}
