@@ -216,6 +216,8 @@ def apply_onboarding_preset(
     if preset is None:
         raise ValueError(f"Unknown preset: {preset_name}")
 
+    reset_dev_state(session, user)
+
     template = ensure_onboarding_template(session, created_by_id=user.id)
     if template is None:
         raise ValueError("Onboarding template is unavailable")

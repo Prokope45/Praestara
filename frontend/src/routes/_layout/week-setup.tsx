@@ -15,6 +15,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useEffect, useMemo, useState } from "react"
 
 import { appFlowApi } from "@/api/appFlow"
+import { devPresetsApi } from "@/api/devPresets"
 import useCustomToast from "@/hooks/useCustomToast"
 
 export const Route = createFileRoute("/_layout/week-setup")({
@@ -32,6 +33,7 @@ function WeekSetup() {
   const [scheduleDays, setScheduleDays] = useState<
     { day: string; available_hours: number; notes?: string | null }[]
   >([])
+  const [presetLoading, setPresetLoading] = useState(false)
 
   const flowQuery = useQuery({
     queryKey: ["app-flow"],
@@ -61,6 +63,43 @@ function WeekSetup() {
   const canProceed = flowQuery.data?.has_baseline
 
   const proposals = setupQuery.data?.proposed_goals ?? []
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("devPreset") !== "week_setup") {
+      return
+    }
+
+    let active = true
+    setPresetLoading(true)
+    devPresetsApi.apply("week_setup")
+      .then(async () => {
+        if (!active) return
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["app-flow"] }),
+          queryClient.invalidateQueries({ queryKey: ["week-setup"] }),
+          queryClient.invalidateQueries({ queryKey: ["questionnaire-assignments"] }),
+          queryClient.invalidateQueries({ queryKey: ["goal-scaffold", "goals"] }),
+          queryClient.invalidateQueries({ queryKey: ["self-concept", "snapshot"] }),
+          queryClient.invalidateQueries({ queryKey: ["self-concept", "history"] }),
+        ])
+        window.history.replaceState({}, "", "/week-setup")
+        showSuccessToast("Preset baseline loaded")
+      })
+      .catch(() => {
+        if (!active) return
+        showErrorToast("Unable to load preset baseline")
+      })
+      .finally(() => {
+        if (active) {
+          setPresetLoading(false)
+        }
+      })
+
+    return () => {
+      active = false
+    }
+  }, [queryClient, showErrorToast, showSuccessToast])
 
   useEffect(() => {
     if (!setupQuery.data?.schedule_days || scheduleDays.length > 0) {
@@ -105,6 +144,11 @@ function WeekSetup() {
         {!canProceed ? (
           <Alert severity="info">
             Complete onboarding first. This step depends on your baseline questionnaire.
+          </Alert>
+        ) : null}
+        {presetLoading ? (
+          <Alert severity="info">
+            Loading preset baseline for week setup...
           </Alert>
         ) : null}
 

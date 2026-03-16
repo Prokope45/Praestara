@@ -15,10 +15,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi"
 
 import { QuestionnairesService, type QuestionnaireAssignmentPublic } from "../../client"
-import { devPresetsApi } from "../../api/devPresets"
+import { appFlowApi } from "../../api/appFlow"
 import { Button } from "../../components/ui/button"
 import { PendingQuestionnaireWidget } from "../../components/Questionnaires/PendingQuestionnaireWidget"
-import useAuth from "../../hooks/useAuth"
 import useCustomToast from "../../hooks/useCustomToast"
 
 export const Route = createFileRoute("/_layout/questionnaires/")({
@@ -28,11 +27,14 @@ export const Route = createFileRoute("/_layout/questionnaires/")({
 function Questionnaires() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { user } = useAuth()
   const { showErrorToast, showSuccessToast } = useCustomToast()
   const { data: assignments, isLoading } = useQuery({
     queryKey: ["questionnaire-assignments"],
     queryFn: () => QuestionnairesService.readMyAssignments({ skip: 0, limit: 100 }),
+  })
+  const { data: flow } = useQuery({
+    queryKey: ["app-flow"],
+    queryFn: appFlowApi.getFlow,
   })
 
   const pendingAssignments = assignments?.data?.filter(
@@ -45,7 +47,6 @@ function Questionnaires() {
     (assignment: QuestionnaireAssignmentPublic) =>
       assignment.questionnaire.title === "Praestara Onboarding"
   )
-  const showDevPanel = user?.is_superuser === true
 
   const refreshState = async () => {
     await Promise.all([
@@ -60,26 +61,11 @@ function Questionnaires() {
     ])
   }
 
-  const presetMutation = useMutation({
-    mutationFn: (mode: "week_setup" | "today_ready") => devPresetsApi.apply(mode),
-    onSuccess: async (_, mode) => {
-      await refreshState()
-      showSuccessToast(
-        mode === "week_setup" ? "Preset loaded. Week setup is ready." : "Preset loaded.",
-      )
-      if (mode === "week_setup") {
-        navigate({ to: "/week-setup" })
-        return
-      }
-      navigate({ to: "/alignment/today" })
-    },
-    onError: () => {
-      showErrorToast("Unable to load preset onboarding")
-    },
-  })
-
   const resetMutation = useMutation({
-    mutationFn: devPresetsApi.reset,
+    mutationFn: async () => {
+      const { devPresetsApi } = await import("../../api/devPresets")
+      return devPresetsApi.reset()
+    },
     onSuccess: async () => {
       await refreshState()
       showSuccessToast("Local preset state cleared")
@@ -143,43 +129,72 @@ function Questionnaires() {
         Complete your assigned questionnaires to help track your progress
       </Typography>
 
-      {showDevPanel ? (
-        <Paper sx={{ p: 3, mb: 4, border: "1px dashed", borderColor: "divider" }}>
-          <Stack spacing={2}>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                Local Presets
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Skip the onboarding questionnaire and load a reusable baseline directly from here.
-              </Typography>
-            </Box>
-            <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-              <Button
-                variant="contained"
-                onClick={() => presetMutation.mutate("week_setup")}
-                disabled={presetMutation.isPending || resetMutation.isPending}
-              >
-                Load To Week Setup
-              </Button>
-              <Button
-                variant="contained"
-                onClick={() => presetMutation.mutate("today_ready")}
-                disabled={presetMutation.isPending || resetMutation.isPending}
-              >
-                Load To Today
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => resetMutation.mutate()}
-                disabled={presetMutation.isPending || resetMutation.isPending}
-              >
-                Reset State
-              </Button>
-            </Stack>
+      <Paper
+        sx={{
+          p: 3,
+          mb: 4,
+          border: "2px solid",
+          borderColor: "warning.main",
+          bgcolor: "warning.50",
+        }}
+      >
+        <Stack spacing={2}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              Local Presets
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Use this instead of redoing onboarding. These buttons load a canned baseline directly into the app.
+            </Typography>
+          </Box>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+            <Button
+              variant="contained"
+              onClick={() => (window.location.href = "/week-setup?devPreset=week_setup")}
+              disabled={resetMutation.isPending}
+            >
+              Load To Week Setup
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => (window.location.href = "/alignment/today?devPreset=today_ready")}
+              disabled={resetMutation.isPending}
+            >
+              Load To Today
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => resetMutation.mutate()}
+              disabled={resetMutation.isPending}
+            >
+              Reset State
+            </Button>
           </Stack>
-        </Paper>
-      ) : null}
+        </Stack>
+      </Paper>
+
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Stack spacing={2}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              Current App State
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Baseline: {flow?.has_baseline ? "ready" : "not set"} | Week setup:{" "}
+              {flow?.week_setup_confirmed ? "confirmed" : "not confirmed"} | Next action:{" "}
+              {flow?.pending_action ?? "none"}
+            </Typography>
+          </Box>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+            <Button variant="outlined" onClick={() => (window.location.href = "/week-setup")}>
+              Open Week Setup
+            </Button>
+            <Button variant="outlined" onClick={() => (window.location.href = "/alignment/today")}>
+              Open Today
+            </Button>
+          </Stack>
+        </Stack>
+      </Paper>
 
       {onboardingAssignment ? (
         <Box sx={{ mb: 4 }}>
