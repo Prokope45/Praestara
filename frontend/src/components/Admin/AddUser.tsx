@@ -42,6 +42,7 @@ const AddUser = () => {
       confirm_password: "",
       is_superuser: false,
       is_active: false,
+      can_delete_account: false,
     },
   })
 
@@ -177,6 +178,21 @@ const AddUser = () => {
                         />
                       }
                       label="Is active?"
+                    />
+                  )}
+                />
+                <Controller
+                  control={control}
+                  name="can_delete_account"
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={field.value ?? false}
+                          onChange={(e) => field.onChange(e.target.checked)}
+                        />
+                      }
+                      label="Can delete account?"
                     />
                   )}
                 />

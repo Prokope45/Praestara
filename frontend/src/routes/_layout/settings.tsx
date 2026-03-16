@@ -45,9 +45,12 @@ function UserSettings() {
   const { user: currentUser } = useAuth()
   const [value, setValue] = React.useState(0)
 
-  const finalTabs = currentUser?.is_superuser
-    ? tabsConfig.slice(0, 3)
-    : tabsConfig
+  const finalTabs = tabsConfig.filter((tab) => {
+    if (tab.value === "danger-zone") {
+      return !currentUser?.is_superuser && currentUser?.can_delete_account
+    }
+    return true
+  })
 
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue)

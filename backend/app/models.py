@@ -44,6 +44,7 @@ class UserBase(SQLModel):
     onboarding_completed_at: datetime | None = Field(
         default=None, sa_type=sa.DateTime(timezone=True)
     )
+    can_delete_account: bool = False
 
 
 # Properties to receive via API on creation
