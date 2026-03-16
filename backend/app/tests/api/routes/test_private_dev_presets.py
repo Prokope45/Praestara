@@ -39,3 +39,29 @@ def test_apply_dev_onboarding_preset_bootstraps_current_user(
         "Sleep hygiene",
         "Meal structure",
     }
+
+
+def test_reset_dev_state_clears_bootstrapped_user(
+    client: TestClient,
+    db: Session,
+    normal_user_token_headers: dict[str, str],
+) -> None:
+    seeded = client.post(
+        f"{settings.API_V1_STR}/private/dev/apply-onboarding-preset",
+        headers=normal_user_token_headers,
+        json={"preset": "balanced_baseline", "confirm_week_setup": False},
+    )
+    assert seeded.status_code == 200
+
+    reset = client.post(
+        f"{settings.API_V1_STR}/private/dev/reset-state",
+        headers=normal_user_token_headers,
+    )
+    assert reset.status_code == 200
+    assert reset.json()["status"] == "reset"
+
+    user = db.exec(select(User).where(User.email == settings.EMAIL_TEST_USER)).first()
+    assert user is not None
+    assert user.onboarding_completed_at is None
+    assert not list(db.exec(select(QuestionnaireResponse).where(QuestionnaireResponse.user_id == user.id)).all())
+    assert not list(db.exec(select(Goal).where(Goal.user_id == user.id)).all())

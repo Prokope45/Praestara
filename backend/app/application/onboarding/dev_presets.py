@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 import uuid
 
-from sqlmodel import Session
+from sqlmodel import Session, delete, select
 
 from app import crud
 from app.api.routes.app_flow import WeekSetupScheduleDay
@@ -13,14 +13,23 @@ from app.application import app_flow
 from app.application.onboarding.bootstrap import bootstrap_onboarding_state
 from app.application.onboarding.template import ensure_onboarding_template
 from app.goal_scaffold.enums import ObservationContext
+from app.goal_scaffold.goals.models import Goal, GoalCycle
+from app.goal_scaffold.resource_profile.models import UserResourceProfile
 from app.goal_scaffold.self_concept import service as self_concept_service
+from app.goal_scaffold.self_concept.models import (
+    ConceptDimension,
+    IdentityConsistencyIndex,
+    QualitativeObservation,
+    SelfConceptSnapshot,
+)
+from app.goal_scaffold.weekly_cycle.models import WeeklyCycle
 from app.goal_scaffold.weekly_cycle import service as weekly_service
 from app.models import (
     AnswerCreate,
-    AssignmentStatus,
     Question,
-    QuestionnaireAssignment,
     QuestionnaireAssignmentCreate,
+    QuestionnaireAssignment,
+    QuestionnaireResponse,
     QuestionnaireResponseCreate,
     ScaleType,
     User,
@@ -153,6 +162,47 @@ BALANCED_BASELINE = OnboardingPreset(
 PRESETS = {
     "balanced_baseline": BALANCED_BASELINE,
 }
+
+
+def reset_dev_state(session: Session, user: User) -> dict[str, object]:
+    assignment_ids = list(
+        session.exec(
+            select(QuestionnaireAssignment.id).where(QuestionnaireAssignment.user_id == user.id)
+        ).all()
+    )
+    if assignment_ids:
+        session.exec(
+            delete(QuestionnaireResponse).where(
+                QuestionnaireResponse.assignment_id.in_(assignment_ids)
+            )
+        )
+        session.exec(
+            delete(QuestionnaireAssignment).where(
+                QuestionnaireAssignment.id.in_(assignment_ids)
+            )
+        )
+
+    session.exec(delete(QualitativeObservation).where(QualitativeObservation.user_id == user.id))
+    session.exec(delete(SelfConceptSnapshot).where(SelfConceptSnapshot.user_id == user.id))
+    session.exec(delete(IdentityConsistencyIndex).where(IdentityConsistencyIndex.user_id == user.id))
+    session.exec(delete(ConceptDimension).where(ConceptDimension.user_id == user.id))
+    session.exec(delete(UserResourceProfile).where(UserResourceProfile.user_id == user.id))
+    session.exec(
+        delete(GoalCycle).where(
+            GoalCycle.goal_id.in_(select(Goal.id).where(Goal.user_id == user.id))
+        )
+    )
+    session.exec(delete(Goal).where(Goal.user_id == user.id))
+    session.exec(delete(WeeklyCycle).where(WeeklyCycle.user_id == user.id))
+    user.onboarding_completed_at = None
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return {
+        "status": "reset",
+        "user_id": str(user.id),
+    }
 
 
 def apply_onboarding_preset(

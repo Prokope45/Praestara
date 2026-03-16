@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.api.deps import CurrentUser, SessionDep
-from app.application.onboarding.dev_presets import PRESETS, apply_onboarding_preset
+from app.application.onboarding.dev_presets import PRESETS, apply_onboarding_preset, reset_dev_state
 from app.core.security import get_password_hash
 from app.models import (
     User,
@@ -27,11 +27,17 @@ class DevPresetApplyRequest(BaseModel):
 
 
 class DevPresetApplyResponse(BaseModel):
+    status: str = "applied"
     preset: str
-    assignment_id: str
-    response_id: str
-    cycle_id: str
-    week_setup_confirmed: bool
+    assignment_id: str | None = None
+    response_id: str | None = None
+    cycle_id: str | None = None
+    week_setup_confirmed: bool | None = None
+
+
+class DevResetResponse(BaseModel):
+    status: str
+    user_id: str
 
 
 @router.get("/dev/presets")
@@ -52,6 +58,14 @@ def apply_dev_onboarding_preset(
         confirm_week_setup=body.confirm_week_setup,
     )
     return DevPresetApplyResponse(**result)
+
+
+@router.post("/dev/reset-state", response_model=DevResetResponse)
+def reset_dev_user_state(
+    session: SessionDep,
+    current_user: CurrentUser,
+) -> Any:
+    return DevResetResponse(**reset_dev_state(session, current_user))
 
 
 @router.post("/users/", response_model=UserPublic)

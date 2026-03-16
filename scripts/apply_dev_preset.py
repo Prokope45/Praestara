@@ -7,6 +7,7 @@ BASE = "http://localhost:8000/api/v1"
 EMAIL = "admin@example.com"
 PASSWORD = "changethis"
 PRESET = "balanced_baseline"
+MODE = "today_ready"
 
 
 def post_form(url: str, data: dict[str, str]) -> dict:
@@ -30,16 +31,25 @@ def main() -> None:
     email = sys.argv[1] if len(sys.argv) > 1 else EMAIL
     password = sys.argv[2] if len(sys.argv) > 2 else PASSWORD
     preset = sys.argv[3] if len(sys.argv) > 3 else PRESET
+    mode = sys.argv[4] if len(sys.argv) > 4 else MODE
 
     token = post_form(
         f"{BASE}/login/access-token",
         {"username": email, "password": password},
     )["access_token"]
-    result = post_json(
-        f"{BASE}/private/dev/apply-onboarding-preset",
-        {"preset": preset, "confirm_week_setup": True},
-        token,
-    )
+    if mode == "reset":
+        result = post_json(
+            f"{BASE}/private/dev/reset-state",
+            {},
+            token,
+        )
+    else:
+        confirm_week_setup = mode != "week_setup"
+        result = post_json(
+            f"{BASE}/private/dev/apply-onboarding-preset",
+            {"preset": preset, "confirm_week_setup": confirm_week_setup},
+            token,
+        )
     print(json.dumps(result, indent=2))
 
 
