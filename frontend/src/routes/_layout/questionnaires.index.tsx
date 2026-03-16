@@ -8,18 +8,14 @@ import {
   Chip,
   Stack,
   LinearProgress,
-  Paper,
 } from "@mui/material"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi"
 
 import { QuestionnairesService, type QuestionnaireAssignmentPublic } from "../../client"
-import { appFlowApi } from "../../api/appFlow"
-import { devPresetsApi } from "../../api/devPresets"
 import { Button } from "../../components/ui/button"
 import { PendingQuestionnaireWidget } from "../../components/Questionnaires/PendingQuestionnaireWidget"
-import useCustomToast from "../../hooks/useCustomToast"
 
 export const Route = createFileRoute("/_layout/questionnaires/")({
   component: Questionnaires,
@@ -27,15 +23,9 @@ export const Route = createFileRoute("/_layout/questionnaires/")({
 
 function Questionnaires() {
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const { showErrorToast, showSuccessToast } = useCustomToast()
   const { data: assignments, isLoading } = useQuery({
     queryKey: ["questionnaire-assignments"],
     queryFn: () => QuestionnairesService.readMyAssignments({ skip: 0, limit: 100 }),
-  })
-  const { data: flow } = useQuery({
-    queryKey: ["app-flow"],
-    queryFn: appFlowApi.getFlow,
   })
 
   const pendingAssignments = assignments?.data?.filter(
@@ -48,56 +38,6 @@ function Questionnaires() {
     (assignment: QuestionnaireAssignmentPublic) =>
       assignment.questionnaire.title === "Praestara Onboarding"
   )
-
-  const refreshState = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["questionnaire-assignments"] }),
-      queryClient.invalidateQueries({ queryKey: ["questionnaire-assignments", "me"] }),
-      queryClient.invalidateQueries({ queryKey: ["app-flow"] }),
-      queryClient.invalidateQueries({ queryKey: ["goal-scaffold", "goals"] }),
-      queryClient.invalidateQueries({ queryKey: ["self-concept", "snapshot"] }),
-      queryClient.invalidateQueries({ queryKey: ["self-concept", "history"] }),
-      queryClient.invalidateQueries({ queryKey: ["week-setup"] }),
-      queryClient.invalidateQueries({ queryKey: ["alignment", "today"] }),
-    ])
-  }
-
-  const presetMutation = useMutation({
-    mutationFn: async (mode: "week_setup" | "today_ready") => {
-      const endpoint =
-        mode === "week_setup"
-          ? "/api/v1/private/dev/load-week-setup"
-          : "/api/v1/private/dev/load-today"
-      const response = await fetch(endpoint, {
-        method: "POST",
-      })
-      if (!response.ok) {
-        throw new Error("Preset seed failed")
-      }
-      return response.json()
-    },
-    onSuccess: async (_, mode) => {
-      await refreshState()
-      showSuccessToast(
-        mode === "week_setup" ? "Preset loaded. Opening week setup." : "Preset loaded. Opening today.",
-      )
-      window.location.href = mode === "week_setup" ? "/week-setup" : "/alignment/today"
-    },
-    onError: () => {
-      showErrorToast("Unable to load preset onboarding")
-    },
-  })
-
-  const resetMutation = useMutation({
-    mutationFn: devPresetsApi.reset,
-    onSuccess: async () => {
-      await refreshState()
-      showSuccessToast("Local preset state cleared")
-    },
-    onError: () => {
-      showErrorToast("Unable to reset local state")
-    },
-  })
 
   const getStatusColor = (status: string | undefined) => {
     switch (status) {
@@ -152,73 +92,6 @@ function Questionnaires() {
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
         Complete your assigned questionnaires to help track your progress
       </Typography>
-
-      <Paper
-        sx={{
-          p: 3,
-          mb: 4,
-          border: "2px solid",
-          borderColor: "warning.main",
-          bgcolor: "warning.50",
-        }}
-      >
-        <Stack spacing={2}>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              Local Presets
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Use this instead of redoing onboarding. These buttons load a canned baseline directly into the app.
-            </Typography>
-          </Box>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <Button
-              variant="contained"
-              onClick={() => presetMutation.mutate("week_setup")}
-              disabled={presetMutation.isPending || resetMutation.isPending}
-            >
-              {presetMutation.isPending ? "Loading..." : "Load To Week Setup"}
-            </Button>
-            <Button
-              variant="contained"
-              onClick={() => presetMutation.mutate("today_ready")}
-              disabled={presetMutation.isPending || resetMutation.isPending}
-            >
-              Load To Today
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => resetMutation.mutate()}
-              disabled={resetMutation.isPending}
-            >
-              Reset State
-            </Button>
-          </Stack>
-        </Stack>
-      </Paper>
-
-      <Paper sx={{ p: 3, mb: 4 }}>
-        <Stack spacing={2}>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 700 }}>
-              Current App State
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Baseline: {flow?.has_baseline ? "ready" : "not set"} | Week setup:{" "}
-              {flow?.week_setup_confirmed ? "confirmed" : "not confirmed"} | Next action:{" "}
-              {flow?.pending_action ?? "none"}
-            </Typography>
-          </Box>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-            <Button variant="outlined" onClick={() => (window.location.href = "/week-setup")}>
-              Open Week Setup
-            </Button>
-            <Button variant="outlined" onClick={() => (window.location.href = "/alignment/today")}>
-              Open Today
-            </Button>
-          </Stack>
-        </Stack>
-      </Paper>
 
       {onboardingAssignment ? (
         <Box sx={{ mb: 4 }}>

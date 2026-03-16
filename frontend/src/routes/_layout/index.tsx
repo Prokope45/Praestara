@@ -1,5 +1,5 @@
 import { Box, Button, Card, CardContent, Container, Paper, Stack, Typography } from "@mui/material"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useMemo } from "react"
 import { Line, Radar } from "react-chartjs-2"
@@ -22,10 +22,8 @@ import {
   QuestionnairesService,
 } from "@/client"
 import { appFlowApi } from "@/api/appFlow"
-import { devPresetsApi } from "@/api/devPresets"
 import { PendingQuestionnaireWidget } from "@/components/Questionnaires/PendingQuestionnaireWidget"
 import useAuth from "@/hooks/useAuth"
-import useCustomToast from "@/hooks/useCustomToast"
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
@@ -45,8 +43,6 @@ ChartJS.register(
 function Dashboard() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const { showErrorToast, showSuccessToast } = useCustomToast()
 
   const { data: latestSnapshot } = useQuery({
     queryKey: ["self-concept", "snapshot"],
@@ -188,51 +184,6 @@ function Dashboard() {
     }
   }, [dimensions])
 
-  const refreshAppState = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["app-flow"] }),
-      queryClient.invalidateQueries({ queryKey: ["questionnaire-assignments", "me"] }),
-      queryClient.invalidateQueries({ queryKey: ["self-concept", "snapshot"] }),
-      queryClient.invalidateQueries({ queryKey: ["self-concept", "history"] }),
-      queryClient.invalidateQueries({ queryKey: ["goal-scaffold", "goals"] }),
-      queryClient.invalidateQueries({ queryKey: ["week-setup"] }),
-      queryClient.invalidateQueries({ queryKey: ["alignment", "today"] }),
-    ])
-  }
-
-  const presetMutation = useMutation({
-    mutationFn: (mode: "week_setup" | "today_ready") => devPresetsApi.apply(mode),
-    onSuccess: async (_, mode) => {
-      await refreshAppState()
-      showSuccessToast(
-        mode === "week_setup" ? "Preset baseline loaded. Week setup is ready." : "Preset baseline loaded.",
-      )
-      if (mode === "week_setup") {
-        navigate({ to: "/week-setup" })
-        return
-      }
-      navigate({ to: "/alignment/today" })
-    },
-    onError: () => {
-      showErrorToast("Unable to load preset onboarding")
-    },
-  })
-
-  const resetMutation = useMutation({
-    mutationFn: devPresetsApi.reset,
-    onSuccess: async () => {
-      await refreshAppState()
-      showSuccessToast("Preset state cleared")
-      navigate({ to: "/" })
-    },
-    onError: () => {
-      showErrorToast("Unable to reset local state")
-    },
-  })
-
-  const showDevPresetPanel =
-    user?.is_superuser && (import.meta.env.VITE_API_URL?.includes("localhost") ?? true)
-
   return (
     <Container maxWidth={false}>
       <Box sx={{ pt: 6, pb: 4 }}>
@@ -254,45 +205,6 @@ function Dashboard() {
             </Typography>
           </Box>
         </Stack>
-
-        {showDevPresetPanel ? (
-          <Paper sx={{ p: 3, mb: 3, border: "1px dashed", borderColor: "divider" }}>
-            <Stack spacing={2}>
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                  Local Presets
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Skip the onboarding questionnaire and stamp in a reusable local baseline for testing.
-                </Typography>
-              </Box>
-              <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-                <Button
-                  variant="contained"
-                  onClick={() => presetMutation.mutate("week_setup")}
-                  disabled={presetMutation.isPending || resetMutation.isPending}
-                >
-                  Load To Week Setup
-                </Button>
-                <Button
-                  variant="contained"
-                  onClick={() => presetMutation.mutate("today_ready")}
-                  disabled={presetMutation.isPending || resetMutation.isPending}
-                >
-                  Load To Today
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="inherit"
-                  onClick={() => resetMutation.mutate()}
-                  disabled={presetMutation.isPending || resetMutation.isPending}
-                >
-                  Reset State
-                </Button>
-              </Stack>
-            </Stack>
-          </Paper>
-        ) : null}
 
         {onboardingAssignment ? (
           <Box sx={{ mb: 4 }}>
