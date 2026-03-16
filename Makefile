@@ -144,7 +144,7 @@ lint:
 
 .PHONY: frontend-build
 frontend-build:
-	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml build frontend
+	$(COMPOSE) -f $(BUILD_DIR)/docker-compose.yml --env-file $(CURDIR)/.env build frontend
 
 .PHONY: frontend-dev
 frontend-dev:
