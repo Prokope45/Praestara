@@ -79,6 +79,13 @@ function TakeQuestionnaire() {
       showSuccessToast("Questionnaire submitted successfully")
       queryClient.invalidateQueries({ queryKey: ["questionnaire-assignments"] })
       queryClient.invalidateQueries({ queryKey: ["currentUser"] })
+      queryClient.invalidateQueries({ queryKey: ["self-concept", "snapshot"] })
+      queryClient.invalidateQueries({ queryKey: ["self-concept", "history"] })
+      queryClient.invalidateQueries({ queryKey: ["goal-scaffold", "goals"] })
+      if (assignment?.questionnaire.title === "Praestara Onboarding") {
+        navigate({ to: "/alignment/today" })
+        return
+      }
       navigate({ to: "/questionnaires" })
     },
     onError: (error: any) => {

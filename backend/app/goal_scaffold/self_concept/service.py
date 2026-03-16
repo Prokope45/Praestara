@@ -130,12 +130,14 @@ def compute_snapshot(
     session: Session,
     user_id: uuid.UUID,
     cycle_id: uuid.UUID | None = None,
+    identity_consistency_index: float | None = None,
 ) -> SelfConceptSnapshot:
     dims = _get_current_dimension_map(session, user_id)
 
     snapshot = SelfConceptSnapshot(
         user_id=user_id,
         dimensions=dims,
+        identity_consistency_index=identity_consistency_index,
         cycle_id=cycle_id,
     )
     session.add(snapshot)

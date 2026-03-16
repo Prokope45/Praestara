@@ -1,24 +1,28 @@
-import { Box, Container, Typography, Paper, Card, CardContent, Chip, Button, Stack } from "@mui/material"
+import { Box, Button, Card, CardContent, Container, Paper, Stack, Typography } from "@mui/material"
+import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useMemo } from "react"
-import { useQuery } from "@tanstack/react-query"
-import { FiCompass, FiTrendingUp, FiArrowRight, FiTarget } from "react-icons/fi"
 import { Line, Radar } from "react-chartjs-2"
 import {
-  Chart as ChartJS,
   CategoryScale,
+  Chart as ChartJS,
+  Filler,
+  Legend,
+  LineElement,
   LinearScale,
   PointElement,
-  LineElement,
   RadialLinearScale,
-  Filler,
   Tooltip,
-  Legend,
 } from "chart.js"
+import { FiArrowRight } from "react-icons/fi"
 
-import useAuth from "@/hooks/useAuth"
-import { OrientationsService, QuestionnairesService } from "@/client"
+import {
+  GoalScaffoldGoalsService,
+  GoalScaffoldSelfConceptService,
+  QuestionnairesService,
+} from "@/client"
 import { PendingQuestionnaireWidget } from "@/components/Questionnaires/PendingQuestionnaireWidget"
+import useAuth from "@/hooks/useAuth"
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
@@ -32,108 +36,64 @@ ChartJS.register(
   RadialLinearScale,
   Filler,
   Tooltip,
-  Legend
+  Legend,
 )
 
 function Dashboard() {
-  const { user: currentUser } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
-  const triggerCheckin = (type: "morning" | "evening") => {
-    localStorage.setItem(
-      "praestara_checkin_force",
-      JSON.stringify({ type, ts: Date.now() })
-    )
-    window.dispatchEvent(new Event("praestara_checkin_trigger"))
-  }
 
-  // Fetch orientations from API
-  const { data: orientationsData } = useQuery({
-    queryKey: ["orientations"],
-    queryFn: () => OrientationsService.readOrientations({ limit: 100 }),
+  const { data: latestSnapshot } = useQuery({
+    queryKey: ["self-concept", "snapshot"],
+    queryFn: () => GoalScaffoldSelfConceptService.goalScaffoldGetLatestSnapshot(),
   })
 
-  const { data: eveningHistory } = useQuery({
-    queryKey: ["questionnaires", "evening_checkin"],
+  const { data: snapshotHistory } = useQuery({
+    queryKey: ["self-concept", "history"],
     queryFn: () =>
-      QuestionnairesService.readLegacyQuestionnaireResponses({
-        kind: "evening_checkin",
-        limit: 200,
+      GoalScaffoldSelfConceptService.goalScaffoldGetSnapshotHistory({
+        limit: 12,
+        offset: 0,
       }),
   })
 
-  // Fetch user's questionnaire assignments
+  const { data: goalsData } = useQuery({
+    queryKey: ["goal-scaffold", "goals"],
+    queryFn: () => GoalScaffoldGoalsService.goalScaffoldListGoals({ limit: 20, skip: 0 }),
+  })
+
   const { data: assignmentsData } = useQuery({
     queryKey: ["questionnaire-assignments", "me"],
     queryFn: () => QuestionnairesService.readMyAssignments({ skip: 0, limit: 100 }),
   })
 
-  const allOrientations = useMemo(() => {
-    return orientationsData?.data || []
-  }, [orientationsData])
+  const dimensions = (latestSnapshot?.dimensions ?? {}) as Record<string, number>
+  const history = snapshotHistory ?? []
+  const activeGoals = goalsData?.data ?? []
 
-  // Calculate overall metrics
-  const metrics = useMemo(() => {
-    const totalOrientations = allOrientations.length
-    const totalTraits = allOrientations.reduce((sum, ori) => sum + (ori.traits?.length || 0), 0)
-    const averageTraitValue =
-      totalTraits > 0
-        ? Math.round(
-            allOrientations.reduce(
-              (sum, ori) => sum + (ori.traits?.reduce((s, t) => s + t.value, 0) || 0),
-              0
-            ) / totalTraits
-          )
-        : 0
+  const pendingAssignments =
+    assignmentsData?.data?.filter((assignment) => assignment.status === "PENDING") ?? []
+  const onboardingAssignment = pendingAssignments.find(
+    (assignment) => assignment.questionnaire.title === "Praestara Onboarding",
+  )
 
-    return {
-      totalOrientations,
-      totalTraits,
-      averageTraitValue,
-    }
-  }, [allOrientations])
-
-  // Get recent orientations (top 3) - just take the first 3 since API returns them sorted
-  const recentOrientations = useMemo(() => {
-    return allOrientations.slice(0, 3)
-  }, [allOrientations])
-
-  const adherenceSeries = useMemo(() => {
-    const records = (eveningHistory?.data ?? []).slice().sort((a, b) => {
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    })
-
-    const normalized = records
-      .map((entry) => {
-        const score = entry.payload?.alignment_score as number | undefined
-        if (typeof score !== "number") return null
-        return {
-          date: new Date(entry.created_at).toLocaleDateString(),
-          value: score,
-        }
-      })
-      .filter(Boolean)
-
-    if (normalized.length > 0) return normalized as { date: string; value: number }[]
-
-    return [
-      { date: "Week 1", value: 42 },
-      { date: "Week 2", value: 46 },
-      { date: "Week 3", value: 50 },
-      { date: "Week 4", value: 55 },
-      { date: "Week 5", value: 58 },
-      { date: "Week 6", value: 62 },
-      { date: "Week 7", value: 66 },
-      { date: "Week 8", value: 70 },
-    ]
-  }, [eveningHistory])
+  const alignmentSeries = useMemo(() => {
+    return history
+      .slice()
+      .reverse()
+      .map((entry) => ({
+        label: new Date(entry.computed_at).toLocaleDateString(),
+        value: Math.round((entry.identity_consistency_index ?? 0.5) * 100),
+      }))
+  }, [history])
 
   const adherenceChart = useMemo(() => {
     return {
-      labels: adherenceSeries.map((point) => point.date),
+      labels: alignmentSeries.map((point) => point.label),
       datasets: [
         {
-          label: "Values/Self‑Concept Alignment",
-          data: adherenceSeries.map((point) => point.value),
+          label: "Identity consistency",
+          data: alignmentSeries.map((point) => point.value),
           borderColor: "#6D28D9",
           backgroundColor: "rgba(109, 40, 217, 0.15)",
           tension: 0.35,
@@ -142,84 +102,81 @@ function Dashboard() {
         },
       ],
     }
-  }, [adherenceSeries])
+  }, [alignmentSeries])
 
   const trajectoryData = useMemo(() => {
-    const labels = ["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8"]
+    const rows = history.slice().reverse()
+    const labels = rows.map((entry) => new Date(entry.computed_at).toLocaleDateString())
+
+    const seriesFor = (key: string, invert = false) =>
+      rows.map((entry) => {
+        const value = Number((entry.dimensions as Record<string, unknown>)?.[key] ?? 0.5)
+        return Math.round((invert ? 1 - value : value) * 100)
+      })
+
     return {
       labels,
       datasets: [
         {
-          label: "Values-action coherence",
-          data: [42, 44, 46, 48, 51, 55, 57, 60],
+          label: "Goal clarity",
+          data: seriesFor("goal_clarity"),
           borderColor: "#7c3aed",
           backgroundColor: "rgba(124, 58, 237, 0.08)",
           tension: 0.35,
         },
         {
-          label: "Identity continuity",
-          data: [50, 49, 51, 52, 54, 56, 55, 58],
+          label: "Self-efficacy",
+          data: seriesFor("self_efficacy"),
           borderColor: "#ec4899",
           backgroundColor: "rgba(236, 72, 153, 0.08)",
           tension: 0.35,
         },
         {
-          label: "Agency / self-efficacy",
-          data: [38, 40, 41, 43, 46, 48, 51, 53],
+          label: "Motivation",
+          data: seriesFor("motivation"),
           borderColor: "#22c55e",
           backgroundColor: "rgba(34, 197, 94, 0.08)",
           tension: 0.35,
         },
         {
-          label: "Emotional stability",
-          data: [35, 36, 34, 38, 41, 44, 46, 47],
-          borderColor: "#f97316",
-          backgroundColor: "rgba(249, 115, 22, 0.08)",
-          tension: 0.35,
-        },
-        {
-          label: "Domain balance",
-          data: [28, 30, 33, 35, 36, 39, 41, 43],
+          label: "Stress regulation",
+          data: seriesFor("stress_load", true),
           borderColor: "#0ea5e9",
           backgroundColor: "rgba(14, 165, 233, 0.08)",
           tension: 0.35,
         },
       ],
     }
-  }, [])
+  }, [history])
 
   const radarData = useMemo(() => {
-    const labels = ["Health", "Contribution", "Relationships", "Growth", "Meaning"]
+    const labels = [
+      "Clarity",
+      "Agency",
+      "Motivation",
+      "Resilience",
+      "Well-being",
+      "Stress regulation",
+    ]
     return {
       labels,
       datasets: [
         {
-          label: "3 weeks ago",
-          data: [42, 58, 31, 40, 46],
-          borderColor: "#94a3b8",
-          backgroundColor: "rgba(148, 163, 184, 0.15)",
-        },
-        {
-          label: "2 weeks ago",
-          data: [48, 60, 33, 44, 49],
-          borderColor: "#f59e0b",
-          backgroundColor: "rgba(245, 158, 11, 0.15)",
-        },
-        {
-          label: "Last week",
-          data: [52, 62, 35, 46, 50],
-          borderColor: "#10b981",
-          backgroundColor: "rgba(16, 185, 129, 0.18)",
-        },
-        {
-          label: "This week",
-          data: [58, 64, 41, 49, 53],
+          label: "Current state",
+          data: [
+            Math.round(Number(dimensions.goal_clarity ?? 0.5) * 100),
+            Math.round(Number(dimensions.self_efficacy ?? 0.5) * 100),
+            Math.round(Number(dimensions.motivation ?? 0.5) * 100),
+            Math.round(Number(dimensions.resilience ?? 0.5) * 100),
+            Math.round(Number(dimensions.well_being ?? 0.5) * 100),
+            Math.round((1 - Number(dimensions.stress_load ?? 0.5)) * 100),
+          ],
           borderColor: "#7c3aed",
           backgroundColor: "rgba(124, 58, 237, 0.18)",
         },
       ],
     }
-  }, [])
+  }, [dimensions])
 
   return (
     <Container maxWidth={false}>
@@ -233,127 +190,104 @@ function Dashboard() {
         >
           <Box>
             <Typography variant="h4" component="h1" sx={{ mb: 1 }}>
-              Hi, {currentUser?.full_name || currentUser?.email} 👋🏼
+              Hi, {user?.full_name || user?.email}
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Welcome back! Here's your progress overview.
+              {latestSnapshot
+                ? "Dashboard is now reading from your live self-concept state."
+                : "Complete onboarding to establish your first state snapshot."}
             </Typography>
           </Box>
-
-          <Stack direction="row" spacing={2} sx={{ alignSelf: { md: "flex-start" } }}>
-            <Paper
-              onClick={() => triggerCheckin("morning")}
-              sx={{
-                width: 140,
-                height: 140,
-                cursor: "pointer",
-                p: 2,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                background: "linear-gradient(135deg, #FDBA74 0%, #FDE68A 45%, #93C5FD 100%)",
-                color: "#1f2937",
-              }}
-            >
-              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                Morning
-              </Typography>
-              <Typography variant="body2">Projective check‑in</Typography>
-            </Paper>
-            <Paper
-              onClick={() => triggerCheckin("evening")}
-              sx={{
-                width: 140,
-                height: 140,
-                cursor: "pointer",
-                p: 2,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                background: "linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #b45309 75%, #7f1d1d 100%)",
-                color: "#f8fafc",
-              }}
-            >
-              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                Evening
-              </Typography>
-              <Typography variant="body2">Reflective check‑in</Typography>
-            </Paper>
-          </Stack>
         </Stack>
 
-        {(() => {
-          // Find the first pending assignment (prioritize onboarding)
-          const pendingAssignments = assignmentsData?.data?.filter(
-            (assignment) => assignment.status === "PENDING"
-          ) || []
-          
-          const onboardingAssignment = pendingAssignments.find(
-            (assignment) => assignment.questionnaire.title === "Praestara Onboarding"
-          )
-          
-          const firstPendingAssignment = onboardingAssignment || pendingAssignments[0]
-          
-          if (firstPendingAssignment) {
-            return (
-              <Box sx={{ mb: 4 }}>
-                <PendingQuestionnaireWidget assignment={firstPendingAssignment} />
-              </Box>
-            )
-          }
-          
-          return null
-        })()}
+        {onboardingAssignment ? (
+          <Box sx={{ mb: 4 }}>
+            <PendingQuestionnaireWidget assignment={onboardingAssignment} />
+          </Box>
+        ) : null}
 
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
             Alignment over time
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Values/self‑concept adherence across the last four months.
+            Identity consistency snapshots generated from your onboarding and follow-on state updates.
           </Typography>
-          <Box sx={{ height: 320 }}>
-            <Line
-              data={adherenceChart}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: { display: false },
-                },
-                scales: {
-                  y: { min: 0, max: 100, ticks: { stepSize: 20 } },
-                },
-              }}
-            />
-          </Box>
+          {alignmentSeries.length === 0 ? (
+            <Typography color="text.secondary">
+              No self-concept history yet. Finish onboarding to populate this chart.
+            </Typography>
+          ) : (
+            <Box sx={{ height: 320 }}>
+              <Line
+                data={adherenceChart}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { display: false } },
+                  scales: { y: { min: 0, max: 100, ticks: { stepSize: 20 } } },
+                }}
+              />
+            </Box>
+          )}
         </Paper>
 
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
-            Trajectory overview
+            Trait trajectory
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Longitudinal trends across key self-concept and value alignment axes.
+            Longitudinal self-concept dimensions derived from the current deterministic state.
           </Typography>
-          <Box sx={{ height: 320 }}>
-            <Line
-              data={trajectoryData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: "bottom" } },
-                scales: { y: { min: 0, max: 100, ticks: { stepSize: 20 } } },
-              }}
-            />
-          </Box>
+          {history.length === 0 ? (
+            <Typography color="text.secondary">
+              No trajectory data yet. This will populate after your first snapshot is created.
+            </Typography>
+          ) : (
+            <Box sx={{ height: 320 }}>
+              <Line
+                data={trajectoryData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { position: "bottom" } },
+                  scales: { y: { min: 0, max: 100, ticks: { stepSize: 20 } } },
+                }}
+              />
+            </Box>
+          )}
         </Paper>
 
-        {/* Value Map Snapshot */}
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
+            Current state profile
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            The latest self-concept dimensions currently informing the scaffold.
+          </Typography>
+          {latestSnapshot ? (
+            <Box sx={{ height: 320 }}>
+              <Radar
+                data={radarData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { position: "bottom" } },
+                  scales: { r: { min: 0, max: 100, ticks: { stepSize: 20 } } },
+                }}
+              />
+            </Box>
+          ) : (
+            <Typography color="text.secondary">
+              No current state yet. Complete onboarding to populate your initial profile.
+            </Typography>
+          )}
+        </Paper>
+
         <Paper sx={{ p: 3, mb: 3 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
             <Typography variant="h5" sx={{ fontWeight: "bold" }}>
-              Value map snapshot
+              Connected goals
             </Typography>
             <Button
               variant="outlined"
@@ -364,206 +298,41 @@ function Dashboard() {
             </Button>
           </Box>
 
-          {recentOrientations.length === 0 ? (
-            <Box sx={{ textAlign: "center", py: 4 }}>
-              <Typography variant="body1" color="text.secondary">
-                No values yet. Create your first value map to get started!
-              </Typography>
-              <Button
-                variant="contained"
-                sx={{ mt: 2 }}
-                onClick={() => navigate({ to: "/value-map" })}
-              >
-                Open Value Map
-              </Button>
-            </Box>
+          {activeGoals.length === 0 ? (
+            <Typography color="text.secondary">
+              No weekly goals yet. Finish onboarding to initialize your first week.
+            </Typography>
           ) : (
             <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
-              {recentOrientations.map((orientation) => {
-                const totalTraits = orientation.traits?.length || 0
-                const averageValue =
-                  totalTraits > 0
-                    ? Math.round(
-                        (orientation.traits?.reduce((sum, trait) => sum + trait.value, 0) || 0) /
-                          totalTraits
-                      )
-                    : 0
-
-                return (
-                  <Card
-                    key={orientation.id}
-                    sx={{
-                      flex: 1,
-                      cursor: "pointer",
-                      transition: "transform 0.2s, box-shadow 0.2s",
-                      "&:hover": {
-                        transform: "translateY(-4px)",
-                        boxShadow: 4,
-                      },
-                    }}
-                    onClick={() => navigate({ to: "/value-map" })}
-                  >
-                    <CardContent>
-                      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                        {orientation.title}
-                        </Typography>
-                      </Box>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          mb: 2,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                        }}
-                      >
-                        {orientation.description || "No description"}
-                      </Typography>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                        <Typography variant="body2" color="text.secondary">
-                        {totalTraits} traits
-                        </Typography>
-                        {totalTraits > 0 && (
-                          <Chip
-                            label={`${averageValue}% avg`}
-                            size="small"
-                            color={averageValue >= 70 ? "success" : "default"}
-                          />
-                        )}
-                      </Box>
-                    </CardContent>
-                  </Card>
-                )
-              })}
+              {activeGoals.slice(0, 4).map((goal) => (
+                <Card
+                  key={goal.id}
+                  sx={{
+                    flex: 1,
+                    cursor: "pointer",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                    "&:hover": {
+                      transform: "translateY(-4px)",
+                      boxShadow: 4,
+                    },
+                  }}
+                  onClick={() => navigate({ to: "/value-map" })}
+                >
+                  <CardContent>
+                    <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+                      {goal.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      {goal.description || "No description yet"}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      Weekly target: {goal.target_value} {goal.target_unit}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              ))}
             </Stack>
           )}
-        </Paper>
-
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
-            Value balance (last 4 weeks)
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Weekly snapshots of value-domain alignment.
-          </Typography>
-          <Box sx={{ height: 320 }}>
-            <Radar
-              data={radarData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                  r: { min: 0, max: 100, ticks: { stepSize: 20 } },
-                },
-              }}
-            />
-          </Box>
-        </Paper>
-
-        {/* Metrics Cards */}
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={3} sx={{ mb: 4 }}>
-          <Paper
-            sx={{
-              p: 3,
-              flex: 1,
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              color: "white",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <FiCompass size={24} />
-              <Typography variant="h6" sx={{ ml: 1 }}>
-              Value domains
-              </Typography>
-            </Box>
-            <Typography variant="h3" sx={{ fontWeight: "bold" }}>
-              {metrics.totalOrientations}
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
-              Active domains
-            </Typography>
-          </Paper>
-
-          <Paper
-            sx={{
-              p: 3,
-              flex: 1,
-              background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-              color: "white",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <FiTarget size={24} />
-              <Typography variant="h6" sx={{ ml: 1 }}>
-              Value traits
-              </Typography>
-            </Box>
-            <Typography variant="h3" sx={{ fontWeight: "bold" }}>
-              {metrics.totalTraits}
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
-              Total traits tracked
-            </Typography>
-          </Paper>
-
-          <Paper
-            sx={{
-              p: 3,
-              flex: 1,
-              background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-              color: "white",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-              <FiTrendingUp size={24} />
-              <Typography variant="h6" sx={{ ml: 1 }}>
-              Average alignment
-              </Typography>
-            </Box>
-            <Typography variant="h3" sx={{ fontWeight: "bold" }}>
-              {metrics.averageTraitValue}%
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 1, opacity: 0.9 }}>
-              Across all traits
-            </Typography>
-          </Paper>
-        </Stack>
-
-        {/* Quick Actions */}
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: "bold", mb: 3 }}>
-            Quick Actions
-          </Typography>
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <Button
-              variant="outlined"
-              fullWidth
-              sx={{ py: 2 }}
-              onClick={() => navigate({ to: "/value-map" })}
-            >
-              View Value Map
-            </Button>
-            <Button
-              variant="outlined"
-              fullWidth
-              sx={{ py: 2 }}
-              onClick={() => navigate({ to: "/settings" })}
-            >
-              Settings
-            </Button>
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{ py: 2 }}
-              onClick={() => navigate({ to: "/value-map" })}
-            >
-              Open Value Map
-            </Button>
-          </Stack>
         </Paper>
       </Box>
     </Container>

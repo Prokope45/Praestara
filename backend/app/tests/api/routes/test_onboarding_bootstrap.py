@@ -16,6 +16,7 @@ from app.models import (
     User,
 )
 from app.goal_scaffold.goals.models import Goal, GoalCycle
+from app.goal_scaffold.self_concept.models import ConceptDimension, SelfConceptSnapshot
 from app.goal_scaffold.weekly_cycle.models import WeeklyCycle
 
 
@@ -88,6 +89,8 @@ def test_onboarding_submission_bootstraps_first_week_state(
     goals = list(db.exec(select(Goal).where(Goal.user_id == user.id)).all())
     cycles = list(db.exec(select(WeeklyCycle).where(WeeklyCycle.user_id == user.id)).all())
     goal_cycles = list(db.exec(select(GoalCycle)).all())
+    dimensions = list(db.exec(select(ConceptDimension).where(ConceptDimension.user_id == user.id)).all())
+    snapshots = list(db.exec(select(SelfConceptSnapshot).where(SelfConceptSnapshot.user_id == user.id)).all())
     questionnaire_response = db.exec(
         select(QuestionnaireResponse).where(QuestionnaireResponse.assignment_id == assignment.id)
     ).first()
@@ -96,6 +99,16 @@ def test_onboarding_submission_bootstraps_first_week_state(
     assert {goal.title for goal in goals} >= {"Move", "Sleep window", "Meal structure", "Core practice"}
     assert len(cycles) == 1
     assert len(goal_cycles) >= 4
+    assert {dimension.name for dimension in dimensions} >= {
+        "self_efficacy",
+        "goal_clarity",
+        "motivation",
+        "resilience",
+        "optimism",
+        "well_being",
+        "stress_load",
+    }
+    assert len(snapshots) == 1
 
 
 def test_read_my_assignments_auto_assigns_onboarding_for_existing_user(

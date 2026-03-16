@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from sqlalchemy import func
 from sqlmodel import Session, select
 
-from app.goal_scaffold.enums import GoalCategory
+from app.goal_scaffold.enums import DimensionSource, GoalCategory
 from app.goal_scaffold.fitness.models import ExerciseDefinition
 from app.goal_scaffold.fitness.models import FitnessPlanGenerateRequest
 from app.goal_scaffold.fitness.service import generate_weekly_plan
@@ -15,6 +15,8 @@ from app.goal_scaffold.goals.models import Goal, GoalCreate, GoalCycle, GoalUpda
 from app.goal_scaffold.goals.service import create_goal, create_goal_cycle, update_goal
 from app.goal_scaffold.resource_profile import service as resource_service
 from app.goal_scaffold.resource_profile.models import UserResourceProfileUpdate
+from app.goal_scaffold.self_concept import service as self_concept_service
+from app.goal_scaffold.self_concept.models import ConceptDimension
 from app.goal_scaffold.weekly_cycle import service as weekly_service
 from app.models import Answer, Question, QuestionnaireAssignment, QuestionnaireResponse
 
@@ -43,6 +45,76 @@ NEGATIVE_SELF_EFFICACY_ITEMS = {
     "I rely on external pressure to do what I intend",
 }
 
+POSITIVE_GOAL_CLARITY_ITEMS = {
+    "I can name a few things that matter to me at a deep level",
+    "My days feel connected to something larger than immediate demands",
+    "Even when life is hard, I can usually tell what direction I want to move",
+}
+
+NEGATIVE_GOAL_CLARITY_ITEMS = {
+    "I feel pulled between short-term comfort and long-term meaning",
+    "I often lose touch with what matters when I am stressed or tired",
+    "I frequently feel uncertain about what I really care about",
+}
+
+POSITIVE_MOTIVATION_ITEMS = {
+    "I move toward challenges that matter to me",
+    "Once I start something meaningful, it is easier to keep going",
+    "I do best when goals feel self-chosen rather than imposed",
+    "I can tolerate discomfort if it serves something I care about",
+}
+
+NEGATIVE_MOTIVATION_ITEMS = {
+    "I avoid tasks mainly because they feel emotionally uncomfortable",
+    "I delay important things because the feelings around them are intense",
+    "I do best when someone else is expecting me to follow through",
+    "I tend to seek immediate relief when I am stressed",
+}
+
+POSITIVE_RESILIENCE_ITEMS = {
+    "I can recover from setbacks without abandoning my direction",
+    "When upset, I can return to baseline relatively quickly",
+    "I can reflect on a difficult day without spiraling",
+    "I can notice urges without acting on them immediately",
+}
+
+NEGATIVE_RESILIENCE_ITEMS = {
+    "Strong emotions make it hard for me to think clearly",
+    "I judge myself harshly when I fall short of my intentions",
+    "I tend to get stuck in thoughts instead of learning from them",
+    "My emotions are often confusing or hard to name",
+}
+
+POSITIVE_OPTIMISM_ITEMS = {
+    "I can imagine the kind of person I want to become in the future",
+    "I feel like I am becoming someone over time, not just reacting to events",
+    "I have a clear sense of what kind of person I do not want to become",
+}
+
+NEGATIVE_OPTIMISM_ITEMS = {
+    "My sense of self changes drastically depending on who I am around",
+    "I feel uncertain about who I really am",
+    "Stress makes it hard for me to recognize myself in my choices",
+}
+
+WELL_BEING_FREQUENCY_ITEMS = {
+    "Low interest or reduced pleasure",
+    "Low mood or feeling down",
+    "Low energy or fatigue",
+    "Feeling bad about yourself or like you are failing",
+}
+
+STRESS_FREQUENCY_ITEMS = {
+    "Sleep disturbance (too little or too much)",
+    "Feeling nervous or on edge",
+    "Not being able to stop worrying",
+    "Worrying too much about different things",
+    "Trouble relaxing",
+    "Being easily irritated",
+    "Feeling afraid something bad will happen",
+    "Restlessness that makes it hard to sit still",
+}
+
 
 def bootstrap_onboarding_state(
     session: Session,
@@ -63,6 +135,7 @@ def bootstrap_onboarding_state(
     specs = _derive_goal_specs(domain_ratings, self_efficacy)
 
     cycle = weekly_service.ensure_current_cycle(session, response.user_id)
+    _seed_self_concept(session, response.user_id, answer_rows, cycle.id)
     goal_ids: list[str] = []
     for spec in specs:
         goal = _upsert_goal(session, response.user_id, spec)
@@ -126,6 +199,121 @@ def _compute_self_efficacy(answer_rows: list[tuple[Answer, Question]]) -> float:
     if not values:
         return 0.5
     return sum(values) / len(values)
+
+
+def _seed_self_concept(
+    session: Session,
+    user_id: uuid.UUID,
+    answer_rows: list[tuple[Answer, Question]],
+    cycle_id: uuid.UUID,
+) -> None:
+    dimension_values = {
+        "self_efficacy": _compute_self_efficacy(answer_rows),
+        "goal_clarity": _compute_likert_dimension(
+            answer_rows,
+            positive_items=POSITIVE_GOAL_CLARITY_ITEMS,
+            negative_items=NEGATIVE_GOAL_CLARITY_ITEMS,
+        ),
+        "motivation": _compute_likert_dimension(
+            answer_rows,
+            positive_items=POSITIVE_MOTIVATION_ITEMS,
+            negative_items=NEGATIVE_MOTIVATION_ITEMS,
+        ),
+        "resilience": _compute_likert_dimension(
+            answer_rows,
+            positive_items=POSITIVE_RESILIENCE_ITEMS,
+            negative_items=NEGATIVE_RESILIENCE_ITEMS,
+        ),
+        "optimism": _compute_likert_dimension(
+            answer_rows,
+            positive_items=POSITIVE_OPTIMISM_ITEMS,
+            negative_items=NEGATIVE_OPTIMISM_ITEMS,
+        ),
+        "well_being": _compute_inverse_frequency_dimension(
+            answer_rows,
+            items=WELL_BEING_FREQUENCY_ITEMS,
+        ),
+        "stress_load": _compute_frequency_dimension(
+            answer_rows,
+            items=STRESS_FREQUENCY_ITEMS,
+        ),
+    }
+
+    current_dimensions = self_concept_service.get_current_dimensions(session, user_id)
+    for name, value in dimension_values.items():
+        current = session.exec(
+            select(ConceptDimension).where(
+                ConceptDimension.user_id == user_id,
+                ConceptDimension.name == name,
+            )
+        ).first()
+        bounded_value = round(max(0.0, min(1.0, value)), 4)
+        if current is None:
+            self_concept_service.create_dimension(
+                session,
+                user_id,
+                name,
+                bounded_value,
+                DimensionSource.QUESTIONNAIRE,
+            )
+        elif abs(current_dimensions.get(name, 0.0) - bounded_value) > 1e-6:
+            self_concept_service.update_dimension(
+                session,
+                current.id,
+                bounded_value,
+                DimensionSource.QUESTIONNAIRE,
+            )
+
+    ici = self_concept_service.compute_ici(session, user_id, cycle_id)
+    self_concept_service.compute_snapshot(
+        session,
+        user_id,
+        cycle_id=cycle_id,
+        identity_consistency_index=ici.value,
+    )
+
+
+def _compute_likert_dimension(
+    answer_rows: list[tuple[Answer, Question]],
+    *,
+    positive_items: set[str],
+    negative_items: set[str],
+) -> float:
+    values: list[float] = []
+    for answer, question in answer_rows:
+        if answer.likert_value is None:
+            continue
+        normalized = max(0.0, min(1.0, (answer.likert_value - 1) / 4))
+        if question.question_text in positive_items:
+            values.append(normalized)
+        elif question.question_text in negative_items:
+            values.append(1.0 - normalized)
+    if not values:
+        return 0.5
+    return sum(values) / len(values)
+
+
+def _compute_frequency_dimension(
+    answer_rows: list[tuple[Answer, Question]],
+    *,
+    items: set[str],
+) -> float:
+    values: list[float] = []
+    for answer, question in answer_rows:
+        if answer.likert_value is None or question.question_text not in items:
+            continue
+        values.append(max(0.0, min(1.0, answer.likert_value / 3)))
+    if not values:
+        return 0.5
+    return sum(values) / len(values)
+
+
+def _compute_inverse_frequency_dimension(
+    answer_rows: list[tuple[Answer, Question]],
+    *,
+    items: set[str],
+) -> float:
+    return 1.0 - _compute_frequency_dimension(answer_rows, items=items)
 
 
 def _derive_goal_specs(
