@@ -8,7 +8,6 @@ import type { IconType } from "react-icons/lib"
 
 import useAuth from "@/hooks/useAuth"
 
-const ClipboardIcon = ContentPasteOutlined as IconType
 const UsersIcon = PeopleOutlined as IconType
 
 const items = [
@@ -34,11 +33,9 @@ interface Item {
 const SidebarItems = ({ onClose }: SidebarItemsProps) => {
   const { user: currentUser } = useAuth()
 
-  const onboardingItem: Item = { icon: ClipboardIcon, title: "Onboarding", path: "/onboarding" }
-  const baseItems = [items[0], onboardingItem, ...items.slice(1)]
   const finalItems: Item[] = currentUser?.is_superuser
-    ? [...baseItems, { icon: UsersIcon, title: "Admin", path: "/admin" }]
-    : baseItems
+    ? [...items, { icon: UsersIcon, title: "Admin", path: "/admin" }]
+    : items
 
   return (
     <>

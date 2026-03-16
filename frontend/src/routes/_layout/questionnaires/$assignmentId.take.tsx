@@ -9,16 +9,20 @@ import {
 } from "@mui/material"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useState } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 
 import { QuestionnairesService, type AnswerCreate } from "../../../client"
 import { Button } from "../../../components/ui/button"
 import { LikertScaleQuestion } from "../../../components/Questionnaires/LikertScaleQuestion"
+import { AnimatedProgressBar } from "../../../components/Common/AnimatedProgressBar"
 import useCustomToast from "../../../hooks/useCustomToast"
 
 export const Route = createFileRoute("/_layout/questionnaires/$assignmentId/take")({
   component: TakeQuestionnaire,
 })
+
+const QUESTIONS_PER_PAGE = 5
+const AUTOSAVE_DELAY = 30000 // 30 seconds
 
 function TakeQuestionnaire() {
   const { assignmentId } = Route.useParams()
@@ -26,12 +30,46 @@ function TakeQuestionnaire() {
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const queryClient = useQueryClient()
 
-  const [answers, setAnswers] = useState<Record<string, number>>({})
+  const [currentPage, setCurrentPage] = useState(0)
+  const [answers, setAnswers] = useState<Record<string, any>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const { data: assignment, isLoading } = useQuery({
     queryKey: ["questionnaire-assignment", assignmentId],
     queryFn: () => QuestionnairesService.readAssignment({ assignmentId }),
+  })
+
+  // Load saved progress when assignment loads
+  useEffect(() => {
+    if (assignment?.saved_progress) {
+      // Handle both old format (just answers) and new format (with lastPage)
+      if (assignment.saved_progress.answers && typeof assignment.saved_progress.answers === 'object') {
+        setAnswers(assignment.saved_progress.answers)
+        if (typeof assignment.saved_progress.lastPage === 'number') {
+          setCurrentPage(assignment.saved_progress.lastPage)
+        }
+      } else {
+        // Backwards compatibility: old format was just the answers object
+        setAnswers(assignment.saved_progress)
+      }
+    }
+  }, [assignment])
+
+  const saveProgressMutation = useMutation({
+    mutationFn: (progress: Record<string, any>) =>
+      QuestionnairesService.updateAssignmentProgress({
+        assignmentId,
+        requestBody: progress,
+      }),
+    onSuccess: () => {
+      setHasUnsavedChanges(false)
+      showSuccessToast("Progress saved")
+    },
+    onError: () => {
+      showErrorToast("Failed to save progress")
+    },
   })
 
   const submitMutation = useMutation({
@@ -40,6 +78,7 @@ function TakeQuestionnaire() {
     onSuccess: () => {
       showSuccessToast("Questionnaire submitted successfully")
       queryClient.invalidateQueries({ queryKey: ["questionnaire-assignments"] })
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] })
       navigate({ to: "/questionnaires" })
     },
     onError: (error: any) => {
@@ -47,8 +86,37 @@ function TakeQuestionnaire() {
     },
   })
 
+  // Autosave logic
+  const saveProgress = useCallback(() => {
+    if (hasUnsavedChanges && Object.keys(answers).length > 0) {
+      saveProgressMutation.mutate({
+        answers,
+        lastPage: currentPage,
+      })
+    }
+  }, [answers, currentPage, hasUnsavedChanges, saveProgressMutation])
+
+  // Set up autosave timer
+  useEffect(() => {
+    if (hasUnsavedChanges) {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current)
+      }
+      autosaveTimerRef.current = setTimeout(() => {
+        saveProgress()
+      }, AUTOSAVE_DELAY)
+    }
+
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current)
+      }
+    }
+  }, [hasUnsavedChanges, saveProgress])
+
   const handleAnswerChange = (questionId: string, value: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }))
+    setHasUnsavedChanges(true)
     // Clear error for this question
     if (errors[questionId]) {
       setErrors((prev) => {
@@ -59,7 +127,25 @@ function TakeQuestionnaire() {
     }
   }
 
-  const validateForm = () => {
+  const validateCurrentPage = () => {
+    const questions = assignment?.questionnaire?.questions || []
+    const sortedQuestions = [...questions].sort((a, b) => a.order - b.order)
+    const startIdx = currentPage * QUESTIONS_PER_PAGE
+    const endIdx = Math.min(startIdx + QUESTIONS_PER_PAGE, sortedQuestions.length)
+    const pageQuestions = sortedQuestions.slice(startIdx, endIdx)
+
+    const newErrors: Record<string, string> = {}
+    pageQuestions.forEach((question) => {
+      if (question.is_required && !answers[question.id]) {
+        newErrors[question.id] = "This question is required"
+      }
+    })
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const validateAllQuestions = () => {
     const newErrors: Record<string, string> = {}
     const questions = assignment?.questionnaire?.questions || []
 
@@ -73,18 +159,82 @@ function TakeQuestionnaire() {
     return Object.keys(newErrors).length === 0
   }
 
+  const handleNextPage = () => {
+    if (validateCurrentPage()) {
+      saveProgress() // Save when navigating
+      setCurrentPage((prev) => prev + 1)
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    } else {
+      showErrorToast("Please answer all required questions on this page")
+    }
+  }
+
+  const handlePreviousPage = () => {
+    saveProgress() // Save when navigating
+    setCurrentPage((prev) => prev - 1)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  const handleSaveAndExit = async () => {
+    if (Object.keys(answers).length > 0) {
+      try {
+        await saveProgressMutation.mutateAsync({
+          answers,
+          lastPage: currentPage,
+        })
+        navigate({ to: "/questionnaires" })
+      } catch (error) {
+        // Error toast already shown by mutation
+      }
+    } else {
+      navigate({ to: "/questionnaires" })
+    }
+  }
+
   const handleSubmit = () => {
-    if (!validateForm()) {
+    if (!validateAllQuestions()) {
       showErrorToast("Please answer all required questions")
+      // Find the first page with errors
+      const questions = assignment?.questionnaire?.questions || []
+      const sortedQuestions = [...questions].sort((a, b) => a.order - b.order)
+      for (let i = 0; i < sortedQuestions.length; i++) {
+        const question = sortedQuestions[i]
+        if (question.is_required && !answers[question.id]) {
+          setCurrentPage(Math.floor(i / QUESTIONS_PER_PAGE))
+          break
+        }
+      }
       return
     }
 
+    const questions = assignment?.questionnaire?.questions || []
     const answersList: AnswerCreate[] = Object.entries(answers).map(
-      ([questionId, value]) => ({
-        question_id: questionId,
-        likert_value: value,
-        text_response: null,
-      })
+      ([questionId, value]) => {
+        const question = questions.find((q) => q.id === questionId)
+        const scaleType = question?.scale_type
+        
+        // Handle different scale types
+        if (scaleType === "TEXT") {
+          return {
+            question_id: questionId,
+            likert_value: null,
+            text_response: value,
+          }
+        } else if (scaleType === "DOMAIN_RATING") {
+          return {
+            question_id: questionId,
+            likert_value: null,
+            text_response: JSON.stringify(value),
+          }
+        } else {
+          // LIKERT_5, LIKERT_7, YES_NO, CUSTOM_NUMERIC, FREQUENCY
+          return {
+            question_id: questionId,
+            likert_value: value,
+            text_response: null,
+          }
+        }
+      }
     )
 
     submitMutation.mutate({
@@ -126,6 +276,12 @@ function TakeQuestionnaire() {
   }
 
   const questions = assignment.questionnaire?.questions || []
+  const sortedQuestions = [...questions].sort((a, b) => a.order - b.order)
+  const totalPages = Math.ceil(sortedQuestions.length / QUESTIONS_PER_PAGE)
+  const startIdx = currentPage * QUESTIONS_PER_PAGE
+  const endIdx = Math.min(startIdx + QUESTIONS_PER_PAGE, sortedQuestions.length)
+  const currentPageQuestions = sortedQuestions.slice(startIdx, endIdx)
+  
   const answeredCount = Object.keys(answers).length
   const progress = questions.length > 0 ? (answeredCount / questions.length) * 100 : 0
 
@@ -141,8 +297,12 @@ function TakeQuestionnaire() {
           </Typography>
         )}
 
+        <Alert severity="info" sx={{ mb: 3 }}>
+          Your progress is saved automatically. You can pause and return to this questionnaire at any time.
+        </Alert>
+
         {assignment.due_date && (
-          <Alert severity="info" sx={{ mb: 3 }}>
+          <Alert severity="warning" sx={{ mb: 3 }}>
             <strong>Due:</strong>{" "}
             {new Date(assignment.due_date).toLocaleDateString("en-US", {
               month: "long",
@@ -155,54 +315,84 @@ function TakeQuestionnaire() {
         )}
 
         <Box sx={{ mb: 4 }}>
-          <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Progress: {answeredCount} of {questions.length} questions answered
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {Math.round(progress)}%
-            </Typography>
-          </Stack>
-          <LinearProgress variant="determinate" value={progress} />
+          <AnimatedProgressBar
+            current={answeredCount}
+            total={questions.length}
+            percentage={progress}
+            label="Progress"
+          />
         </Box>
+
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="body2" color="text.secondary">
+            Page {currentPage + 1} of {totalPages}
+          </Typography>
+          {hasUnsavedChanges && (
+            <Typography variant="caption" color="warning.main">
+              Unsaved changes
+            </Typography>
+          )}
+        </Stack>
       </Paper>
 
-      <Box component="form" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-        {questions
-          .sort((a, b) => a.order - b.order)
-          .map((question, index) => (
-            <LikertScaleQuestion
-              key={question.id}
-              questionText={question.question_text}
-              questionNumber={index + 1}
-              scaleType={question.scale_type as "LIKERT_5" | "LIKERT_7" | "YES_NO" | "CUSTOM_NUMERIC"}
-              isRequired={question.is_required || false}
-              value={answers[question.id] || null}
-              onChange={(value) => handleAnswerChange(question.id, value)}
-              error={errors[question.id]}
-              customMinValue={question.custom_min_value}
-              customMaxValue={question.custom_max_value}
-              customUnitLabel={question.custom_unit_label}
-            />
-          ))}
+      <Box component="form" onSubmit={(e) => { e.preventDefault(); }}>
+        {currentPageQuestions.map((question, index) => (
+          <LikertScaleQuestion
+            key={question.id}
+            questionText={question.question_text}
+            questionNumber={startIdx + index + 1}
+            scaleType={question.scale_type as "LIKERT_5" | "LIKERT_7" | "YES_NO" | "CUSTOM_NUMERIC"}
+            isRequired={question.is_required || false}
+            value={answers[question.id] || null}
+            onChange={(value) => handleAnswerChange(question.id, value)}
+            error={errors[question.id]}
+            customMinValue={question.custom_min_value}
+            customMaxValue={question.custom_max_value}
+            customUnitLabel={question.custom_unit_label}
+          />
+        ))}
 
         <Paper elevation={0} sx={{ p: 3, mt: 4, bgcolor: "background.paper" }}>
-          <Stack direction="row" spacing={2} justifyContent="flex-end">
+          <Stack direction="row" spacing={2} justifyContent="space-between">
             <Button
               variant="outlined"
-              onClick={() => navigate({ to: "/questionnaires" })}
-              disabled={submitMutation.isPending}
+              onClick={handleSaveAndExit}
+              disabled={submitMutation.isPending || saveProgressMutation.isPending}
+              loading={saveProgressMutation.isPending}
             >
-              Cancel
+              Save & Exit
             </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              loading={submitMutation.isPending}
-              disabled={submitMutation.isPending}
-            >
-              Submit Questionnaire
-            </Button>
+            
+            <Stack direction="row" spacing={2}>
+              {currentPage > 0 && (
+                <Button
+                  variant="outlined"
+                  onClick={handlePreviousPage}
+                  disabled={submitMutation.isPending}
+                >
+                  Previous
+                </Button>
+              )}
+              
+              {currentPage < totalPages - 1 ? (
+                <Button
+                  variant="contained"
+                  onClick={handleNextPage}
+                  disabled={submitMutation.isPending}
+                >
+                  Next
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  onClick={handleSubmit}
+                  loading={submitMutation.isPending}
+                  disabled={submitMutation.isPending}
+                >
+                  Submit Questionnaire
+                </Button>
+              )}
+            </Stack>
           </Stack>
         </Paper>
       </Box>

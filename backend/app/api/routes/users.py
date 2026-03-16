@@ -24,8 +24,6 @@ from app.models import (
     UsersPublic,
     UserUpdate,
     UserUpdateMe,
-    QuestionnaireTemplate,
-    QuestionnaireAssignmentCreate,
 )
 from app.utils import generate_new_account_email, send_email
 
@@ -66,6 +64,11 @@ def create_user(*, session: SessionDep, user_in: UserCreate) -> Any:
         )
 
     user = crud.create_user(session=session, user_create=user_in)
+    
+    # Auto-assign onboarding questionnaire to non-admin users
+    if not user.is_superuser:
+        crud.assign_onboarding_questionnaire(session=session, user_id=user.id)
+    
     if settings.emails_enabled and user_in.email:
         email_data = generate_new_account_email(
             email_to=user_in.email, username=user_in.email, password=user_in.password
@@ -199,22 +202,8 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     user_create = UserCreate.model_validate(user_in)
     user = crud.create_user(session=session, user_create=user_create)
     
-    # Auto-assign "Initial Assessment" questionnaire if it exists
-    initial_questionnaire = session.exec(
-        select(QuestionnaireTemplate).where(
-            QuestionnaireTemplate.title == "Initial Assessment",
-            QuestionnaireTemplate.is_active == True
-        )
-    ).first()
-    
-    if initial_questionnaire:
-        from datetime import datetime, timedelta
-        assignment_data = QuestionnaireAssignmentCreate(
-            questionnaire_id=initial_questionnaire.id,
-            user_id=user.id,
-            due_date=datetime.utcnow() + timedelta(days=7)  # 7 days to complete
-        )
-        crud.create_questionnaire_assignment(session=session, assignment_in=assignment_data)
+    # Auto-assign onboarding questionnaire
+    crud.assign_onboarding_questionnaire(session=session, user_id=user.id)
     
     return user
 

@@ -17,6 +17,9 @@ class ScaleType(str, Enum):
     LIKERT_7 = "LIKERT_7"
     YES_NO = "YES_NO"
     CUSTOM_NUMERIC = "CUSTOM_NUMERIC"
+    TEXT = "TEXT"
+    FREQUENCY = "FREQUENCY"
+    DOMAIN_RATING = "DOMAIN_RATING"
 
 
 class AppointmentStatus(str, Enum):
@@ -343,6 +346,7 @@ class QuestionnaireAssignmentBase(SQLModel):
     due_date: datetime | None = None
     status: AssignmentStatus = Field(default=AssignmentStatus.PENDING)
     reminder_sent: bool = False
+    saved_progress: dict[str, Any] | None = Field(default=None, sa_type=sa.JSON)
 
 
 class QuestionnaireAssignmentCreate(SQLModel):

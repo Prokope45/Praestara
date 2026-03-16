@@ -583,6 +583,9 @@ export type QuestionnaireAssignmentPublic = {
     due_date?: (string | null);
     status?: AssignmentStatus;
     reminder_sent?: boolean;
+    saved_progress?: ({
+    [key: string]: unknown;
+} | null);
     id: string;
     questionnaire_id: string;
     user_id: string;
@@ -662,7 +665,7 @@ export type QuestionPublic = {
     questionnaire_id: string;
 };
 
-export type ScaleType = 'LIKERT_5' | 'LIKERT_7' | 'YES_NO' | 'CUSTOM_NUMERIC';
+export type ScaleType = 'LIKERT_5' | 'LIKERT_7' | 'YES_NO' | 'CUSTOM_NUMERIC' | 'TEXT' | 'FREQUENCY' | 'DOMAIN_RATING';
 
 export type SelfConceptSnapshotPublic = {
     id: string;
@@ -1366,6 +1369,15 @@ export type QuestionnairesDeleteAssignmentData = {
 };
 
 export type QuestionnairesDeleteAssignmentResponse = (Message);
+
+export type QuestionnairesUpdateAssignmentProgressData = {
+    assignmentId: string;
+    requestBody: {
+        [key: string]: unknown;
+    };
+};
+
+export type QuestionnairesUpdateAssignmentProgressResponse = (QuestionnaireAssignmentPublic);
 
 export type QuestionnairesCreateResponseData = {
     requestBody: QuestionnaireResponseCreate;
