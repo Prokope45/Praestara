@@ -63,7 +63,19 @@ function Questionnaires() {
   }
 
   const presetMutation = useMutation({
-    mutationFn: (mode: "week_setup" | "today_ready") => devPresetsApi.apply(mode),
+    mutationFn: async (mode: "week_setup" | "today_ready") => {
+      const endpoint =
+        mode === "week_setup"
+          ? "/api/v1/private/dev/load-week-setup"
+          : "/api/v1/private/dev/load-today"
+      const response = await fetch(endpoint, {
+        method: "POST",
+      })
+      if (!response.ok) {
+        throw new Error("Preset seed failed")
+      }
+      return response.json()
+    },
     onSuccess: async (_, mode) => {
       await refreshState()
       showSuccessToast(

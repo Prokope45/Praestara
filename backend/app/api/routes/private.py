@@ -2,9 +2,12 @@ from typing import Any
 
 from fastapi import APIRouter
 from pydantic import BaseModel
+from sqlmodel import select
 
+from app import crud
 from app.api.deps import CurrentUser, SessionDep
 from app.application.onboarding.dev_presets import PRESETS, apply_onboarding_preset, reset_dev_state
+from app.core.config import settings
 from app.core.security import get_password_hash
 from app.models import (
     User,
@@ -40,6 +43,17 @@ class DevResetResponse(BaseModel):
     user_id: str
 
 
+def _get_local_dev_user(session: SessionDep) -> User:
+    user = crud.get_user_by_email(session=session, email=str(settings.FIRST_SUPERUSER))
+    if user is not None:
+        return user
+
+    fallback = session.exec(select(User).where(User.is_superuser == True)).first()
+    if fallback is None:
+        raise ValueError("No local superuser available for dev preset seeding")
+    return fallback
+
+
 @router.get("/dev/presets")
 def list_dev_presets() -> dict[str, list[str]]:
     return {"presets": sorted(PRESETS.keys())}
@@ -66,6 +80,30 @@ def reset_dev_user_state(
     current_user: CurrentUser,
 ) -> Any:
     return DevResetResponse(**reset_dev_state(session, current_user))
+
+
+@router.post("/dev/load-week-setup", response_model=DevPresetApplyResponse)
+def load_week_setup_for_local_dev(session: SessionDep) -> Any:
+    user = _get_local_dev_user(session)
+    result = apply_onboarding_preset(
+        session,
+        user,
+        preset_name="balanced_baseline",
+        confirm_week_setup=False,
+    )
+    return DevPresetApplyResponse(**result)
+
+
+@router.post("/dev/load-today", response_model=DevPresetApplyResponse)
+def load_today_for_local_dev(session: SessionDep) -> Any:
+    user = _get_local_dev_user(session)
+    result = apply_onboarding_preset(
+        session,
+        user,
+        preset_name="balanced_baseline",
+        confirm_week_setup=True,
+    )
+    return DevPresetApplyResponse(**result)
 
 
 @router.post("/users/", response_model=UserPublic)
