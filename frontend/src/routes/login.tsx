@@ -1,4 +1,4 @@
-import { Container, Box, Typography } from "@mui/material"
+import { Alert, Container, Box, Typography } from "@mui/material"
 import {
   Link as RouterLink,
   createFileRoute,
@@ -79,20 +79,31 @@ function Login() {
           Praestara
         </Typography>
       </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      )}
       
       <Field
         invalid={!!errors.username}
-        errorText={errors.username?.message || (error ? 'Invalid credentials' : '')}
+        errorText={errors.username?.message}
         sx={{ width: '100%' }}
       >
         <InputGroup
           startElement={<FiMail />}
           {...register("username", {
-            required: "Username is required",
-            pattern: emailPattern,
+            required: "Email or Username is required",
+            validate: (value) => {
+              if (value.includes("@")) {
+                return emailPattern.value.test(value) || emailPattern.message
+              }
+              return true
+            }
           })}
-          placeholder="Email"
-          type="email"
+          placeholder="Email or Username"
+          type="text"
           fullWidth
         />
       </Field>

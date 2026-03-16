@@ -69,7 +69,8 @@ def test_recovery_password_user_not_exits(
         f"{settings.API_V1_STR}/password-recovery/{email}",
         headers=normal_user_token_headers,
     )
-    assert r.status_code == 404
+    assert r.status_code == 200
+    assert r.json() == {"message": "Password recovery email sent"}
 
 
 def test_reset_password(client: TestClient, db: Session) -> None:

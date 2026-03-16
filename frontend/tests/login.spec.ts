@@ -9,7 +9,7 @@ type OptionsType = {
 }
 
 const fillForm = async (page: Page, email: string, password: string) => {
-  await page.getByPlaceholder("Email").fill(email)
+  await page.getByPlaceholder("Email or Username").fill(email)
   await page.getByPlaceholder("Password", { exact: true }).fill(password)
 }
 
@@ -27,7 +27,7 @@ const verifyInput = async (
 test("Inputs are visible, empty and editable", async ({ page }) => {
   await page.goto("/login")
 
-  await verifyInput(page, "Email")
+  await verifyInput(page, "Email or Username")
   await verifyInput(page, "Password", { exact: true })
 })
 
@@ -61,10 +61,19 @@ test("Log in with valid email and password ", async ({ page }) => {
 test("Log in with invalid email", async ({ page }) => {
   await page.goto("/login")
 
-  await fillForm(page, "invalidemail", firstSuperuserPassword)
+  await fillForm(page, "invalidemail@", firstSuperuserPassword)
   await page.getByRole("button", { name: "Log In" }).click()
 
   await expect(page.getByText("Invalid email address")).toBeVisible()
+})
+
+test("Log in with invalid username", async ({ page }) => {
+  await page.goto("/login")
+
+  await fillForm(page, "invalidusername", firstSuperuserPassword)
+  await page.getByRole("button", { name: "Log In" }).click()
+
+  await expect(page.getByText("Incorrect username or password. If you need to recover your password, please use your full email address.")).toBeVisible()
 })
 
 test("Log in with invalid password", async ({ page }) => {

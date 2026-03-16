@@ -140,7 +140,7 @@ function SignUp() {
 
           <Typography sx={{ textAlign: 'center' }}>
             Already have an account?{" "}
-            <RouterLink to="/login" className="main-link">
+            <RouterLink to="/login" style={{ color: 'inherit', fontWeight: 'bold' }}>
               Log In
             </RouterLink>
           </Typography>

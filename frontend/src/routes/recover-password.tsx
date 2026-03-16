@@ -1,4 +1,4 @@
-import { Container, Typography, TextField, Stack, Box } from "@mui/material"
+import { Alert, Container, Typography, TextField, Stack, Box } from "@mui/material"
 import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, redirect } from "@tanstack/react-router"
 import { type SubmitHandler, useForm } from "react-hook-form"
@@ -8,7 +8,6 @@ import { type ApiError, LoginService } from "@/client"
 import { Button } from "@/components/ui/button"
 import { InputGroup } from "@/components/ui/input-group"
 import { isLoggedIn } from "@/hooks/useAuth"
-import useCustomToast from "@/hooks/useCustomToast"
 import { emailPattern, handleError } from "@/utils"
 
 interface FormData {
@@ -33,8 +32,6 @@ function RecoverPassword() {
     reset,
     formState: { errors, isSubmitting },
   } = useForm<FormData>()
-  const { showSuccessToast } = useCustomToast()
-
   const recoverPassword = async (data: FormData) => {
     await LoginService.recoverPassword({
       email: data.email,
@@ -44,7 +41,6 @@ function RecoverPassword() {
   const mutation = useMutation({
     mutationFn: recoverPassword,
     onSuccess: () => {
-      showSuccessToast("Password recovery email sent successfully.")
       reset()
     },
     onError: (err: ApiError) => {
@@ -83,6 +79,13 @@ function RecoverPassword() {
         <Typography sx={{ textAlign: 'center', mb: 2 }}>
           A password recovery email will be sent to the registered account.
         </Typography>
+        
+        {mutation.isSuccess && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            If an account exists with this email, a password recovery link has been sent.
+          </Alert>
+        )}
+
         <Stack spacing={2}>
           <InputGroup startElement={<FiMail />}>
             <TextField
