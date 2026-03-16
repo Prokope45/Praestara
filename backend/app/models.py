@@ -1,14 +1,14 @@
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
-from pydantic import EmailStr
 import sqlalchemy as sa
+from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
-    from typing import List
+    pass
 
 
 # Enums for questionnaire system
@@ -137,6 +137,18 @@ class ItemPublic(ItemBase):
 class ItemsPublic(SQLModel):
     data: list[ItemPublic]
     count: int
+
+
+# Analysis models
+class AnalyzeRequest(SQLModel):
+    prompt: str
+    details: list[dict[str, Any]]
+    model: str | None = None
+    temperature: float | None = 0.5
+
+
+class AnalyzeResponse(SQLModel):
+    answer: str
 
 
 # Generic message

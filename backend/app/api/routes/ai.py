@@ -4,13 +4,14 @@ Integrates with the Koios RAG AI service for intelligent responses.
 """
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
+from app.KoiosClient.koios_client import ai_client
 from app.api.deps import CurrentUser
 from app.core.config import settings
-from app.models import Message
-from app.ai_utils.ai_client import ai_client
+from app.models import AnalyzeRequest, AnalyzeResponse, Message
 
 logger = logging.getLogger(__name__)
 
@@ -94,8 +95,58 @@ def chat_with_ai(*, current_user: CurrentUser, payload: Message) -> Message:
         ) from e
 
 
+@router.post("/analyze", response_model=AnalyzeResponse)
+def analyze_with_ai(*, current_user: CurrentUser, payload: AnalyzeRequest) -> AnalyzeResponse:
+    """Send an analysis request to the AI service.
+
+    Args:
+        current_user: The authenticated user making the request.
+        payload: The payload containing the prompt and details.
+
+    Returns:
+        AnalyzeResponse: The AI-generated answer.
+
+    Raises:
+        HTTPException: If the AI service is not configured or if the
+            request fails.
+    """
+    if not ai_client.is_configured:
+        raise HTTPException(
+            status_code=503,
+            detail="AI service is not configured. Please set AI_API_URL and AI_ENCRYPTION_KEY."
+        )
+
+    user_id = str(current_user.id)
+
+    try:
+        logger.info(f"Analyzing prompt: {payload.prompt}")
+        answer = ai_client.process_analysis(
+            user_id=user_id,
+            prompt=payload.prompt,
+            details=payload.details,
+            model=payload.model,
+            temperature=payload.temperature,
+        )
+
+        return AnalyzeResponse(answer=answer)
+
+    except ValueError as e:
+        logger.error("AI service validation error: %s", e)
+        raise HTTPException(
+            status_code=502,
+            detail=f"AI service error: {e}"
+        ) from e
+
+    except Exception as e:
+        logger.error("AI service request failed: %s", e)
+        raise HTTPException(
+            status_code=502,
+            detail=f"AI service request failed: {e}"
+        ) from e
+
+
 @router.get("/history")
-def get_chat_history(current_user: CurrentUser) -> dict:
+def get_chat_history(current_user: CurrentUser) -> dict[str, Any]:
     """Get the chat history for the current user.
 
     Retrieves the persistent chat history from the AI service.
@@ -142,7 +193,7 @@ def get_chat_history(current_user: CurrentUser) -> dict:
 
 
 @router.delete("/history")
-def clear_chat_history(current_user: CurrentUser) -> dict:
+def clear_chat_history(current_user: CurrentUser) -> dict[str, Any]:
     """Clear the chat history for the current user.
 
     Deletes all stored chat history from the AI service for this user.

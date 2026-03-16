@@ -7,6 +7,7 @@ import base64
 import json
 import os
 import logging
+from typing import Any
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
@@ -15,7 +16,7 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 
-class AIEncryption:
+class KoiosEncryption:
     """Utility class for encrypting and decrypting data for AI service communication."""
 
     @staticmethod
@@ -39,7 +40,7 @@ class AIEncryption:
         return AESGCM(key)
 
     @classmethod
-    def encrypt(cls, data: dict | str) -> str:
+    def encrypt(cls, data: dict[str, Any] | str) -> str:
         """Encrypt a dictionary or string into a base64-encoded string.
 
         The output format is: base64(nonce + ciphertext + tag)
@@ -66,7 +67,7 @@ class AIEncryption:
         return base64.b64encode(combined).decode("utf-8")
 
     @classmethod
-    def decrypt(cls, encrypted_str: str) -> dict | str:
+    def decrypt(cls, encrypted_str: str) -> dict[str, Any] | str:
         """Decrypt a base64-encoded string into a dictionary or string.
 
         Args:
@@ -92,7 +93,10 @@ class AIEncryption:
 
             # Try to parse as JSON, return string if it fails
             try:
-                return json.loads(decoded)
+                result = json.loads(decoded)
+                if isinstance(result, dict):
+                    return result
+                return decoded
             except json.JSONDecodeError:
                 return decoded
         except Exception as e:
