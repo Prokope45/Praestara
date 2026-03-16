@@ -183,6 +183,13 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
         raise HTTPException(
             status_code=403, detail="Super users are not allowed to delete themselves"
         )
+    if not current_user.can_delete_account:
+        raise HTTPException(
+            status_code=403, detail=(
+                "You do not have permission to delete your account."
+                "Please contact an administrator."
+            )
+        )
     session.delete(current_user)
     session.commit()
     return Message(message="User deleted successfully")
