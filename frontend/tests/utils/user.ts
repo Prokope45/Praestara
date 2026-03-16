@@ -19,7 +19,7 @@ export async function signUpNewUser(
 export async function logInUser(page: Page, email: string, password: string) {
   await page.goto("/login")
 
-  await page.getByPlaceholder("Email").fill(email)
+  await page.getByPlaceholder("Email or Username").fill(email)
   await page.getByPlaceholder("Password", { exact: true }).fill(password)
   await page.getByRole("button", { name: "Log In" }).click()
   await page.waitForURL("/")
