@@ -61,22 +61,10 @@ services:
       - "8000:8000"
     build:
       context: ../backend
-    # command: sleep infinity  # Infinite loop to keep container alive doing nothing
     command:
       - fastapi
       - run
-      - --reload
       - "app/main.py"
-    develop:
-      watch:
-        - path: ./backend
-          action: sync
-          target: /app
-          ignore:
-            - ./backend/.venv
-            - .venv
-        - path: ./backend/pyproject.toml
-          action: rebuild
     # TODO: remove once coverage is done locally
     volumes:
       - ./backend/htmlcov:/app/htmlcov
