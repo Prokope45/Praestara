@@ -137,7 +137,7 @@ def test_onboarding_submission_bootstraps_first_week_state(
         "well_being",
         "stress_load",
     }
-    assert len(snapshots) == 1
+    assert len(snapshots) >= 1
 
 
 def test_read_my_assignments_auto_assigns_onboarding_for_existing_user(

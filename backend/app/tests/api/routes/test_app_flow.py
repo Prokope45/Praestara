@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from fastapi.testclient import TestClient
-from sqlmodel import Session, select
+from sqlmodel import Session, delete, select
 
 from app.core.config import settings
 from app.goal_scaffold.enums import DimensionSource, GoalCategory
@@ -38,6 +38,7 @@ def test_week_setup_flow_can_be_confirmed(
     user = db.exec(select(User).where(User.email == settings.EMAIL_TEST_USER)).first()
     user.onboarding_completed_at = datetime.now(timezone.utc)
     db.add(user)
+    db.exec(delete(QualitativeObservation).where(QualitativeObservation.user_id == user.id))
 
     db.add(
         ConceptDimension(
