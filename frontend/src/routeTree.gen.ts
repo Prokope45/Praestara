@@ -17,6 +17,7 @@ import { Route as RecoverPasswordImport } from './routes/recover-password'
 import { Route as LoginImport } from './routes/login'
 import { Route as LayoutImport } from './routes/_layout'
 import { Route as LayoutIndexImport } from './routes/_layout/index'
+import { Route as LayoutWeekSetupImport } from './routes/_layout/week-setup'
 import { Route as LayoutValueMapImport } from './routes/_layout/value-map'
 import { Route as LayoutSettingsImport } from './routes/_layout/settings'
 import { Route as LayoutOrientationsImport } from './routes/_layout/orientations'
@@ -61,6 +62,11 @@ const LayoutRoute = LayoutImport.update({
 
 const LayoutIndexRoute = LayoutIndexImport.update({
   path: '/',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutWeekSetupRoute = LayoutWeekSetupImport.update({
+  path: '/week-setup',
   getParentRoute: () => LayoutRoute,
 } as any)
 
@@ -195,6 +201,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutValueMapImport
       parentRoute: typeof LayoutImport
     }
+    '/_layout/week-setup': {
+      preLoaderRoute: typeof LayoutWeekSetupImport
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/': {
       preLoaderRoute: typeof LayoutIndexImport
       parentRoute: typeof LayoutImport
@@ -238,6 +248,7 @@ export const routeTree = rootRoute.addChildren([
     LayoutOrientationsRoute,
     LayoutSettingsRoute,
     LayoutValueMapRoute,
+    LayoutWeekSetupRoute,
     LayoutIndexRoute,
     LayoutQuestionnairesIndexRoute,
     LayoutQuestionnairesAssignmentIdTakeRoute,

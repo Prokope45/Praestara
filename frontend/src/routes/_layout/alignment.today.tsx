@@ -1,4 +1,5 @@
 import {
+  Alert,
   Box,
   Button,
   Checkbox,
@@ -19,6 +20,7 @@ import {
   type AlignmentSurfaceResponse,
   type AlignmentTodayRequest,
 } from "@/api/alignment"
+import { appFlowApi } from "@/api/appFlow"
 import { ApiError } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
@@ -43,6 +45,11 @@ function AlignmentToday() {
   const todayQuery = useQuery({
     queryKey: ["alignment", "today", selectedDate],
     queryFn: () => alignmentApi.getToday(selectedDate),
+  })
+
+  const flowQuery = useQuery({
+    queryKey: ["app-flow"],
+    queryFn: appFlowApi.getFlow,
   })
 
   useEffect(() => {
@@ -101,6 +108,11 @@ function AlignmentToday() {
     <Container maxWidth="sm" sx={{ py: 6 }}>
       <Paper sx={{ p: 4, borderRadius: 4 }}>
         <Stack spacing={3}>
+          {flowQuery.data?.pending_action === "confirm_week_setup" ? (
+            <Alert severity="info">
+              Confirm your current week setup before relying on the daily loop.
+            </Alert>
+          ) : null}
           <Box>
             <Typography variant="h5">Today</Typography>
             <Typography variant="body2" color="text.secondary">

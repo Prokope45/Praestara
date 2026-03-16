@@ -21,6 +21,7 @@ import {
   GoalScaffoldSelfConceptService,
   QuestionnairesService,
 } from "@/client"
+import { appFlowApi } from "@/api/appFlow"
 import { PendingQuestionnaireWidget } from "@/components/Questionnaires/PendingQuestionnaireWidget"
 import useAuth from "@/hooks/useAuth"
 
@@ -65,6 +66,11 @@ function Dashboard() {
   const { data: assignmentsData } = useQuery({
     queryKey: ["questionnaire-assignments", "me"],
     queryFn: () => QuestionnairesService.readMyAssignments({ skip: 0, limit: 100 }),
+  })
+
+  const { data: flow } = useQuery({
+    queryKey: ["app-flow"],
+    queryFn: appFlowApi.getFlow,
   })
 
   const dimensions = (latestSnapshot?.dimensions ?? {}) as Record<string, number>
@@ -204,6 +210,24 @@ function Dashboard() {
           <Box sx={{ mb: 4 }}>
             <PendingQuestionnaireWidget assignment={onboardingAssignment} />
           </Box>
+        ) : null}
+
+        {flow?.pending_action === "confirm_week_setup" ? (
+          <Paper sx={{ p: 3, mb: 3 }}>
+            <Stack direction={{ xs: "column", md: "row" }} spacing={2} justifyContent="space-between">
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                  Confirm your first week
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Your baseline has been mapped. Review the proposed goals before entering the daily loop.
+                </Typography>
+              </Box>
+              <Button variant="contained" onClick={() => navigate({ to: "/week-setup" })}>
+                Open Week Setup
+              </Button>
+            </Stack>
+          </Paper>
         ) : null}
 
         <Paper sx={{ p: 3, mb: 3 }}>

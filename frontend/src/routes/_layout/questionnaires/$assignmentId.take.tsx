@@ -83,7 +83,7 @@ function TakeQuestionnaire() {
       queryClient.invalidateQueries({ queryKey: ["self-concept", "history"] })
       queryClient.invalidateQueries({ queryKey: ["goal-scaffold", "goals"] })
       if (assignment?.questionnaire.title === "Praestara Onboarding") {
-        navigate({ to: "/alignment/today" })
+        navigate({ to: "/week-setup" })
         return
       }
       navigate({ to: "/questionnaires" })
