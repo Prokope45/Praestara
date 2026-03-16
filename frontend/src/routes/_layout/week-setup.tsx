@@ -58,7 +58,8 @@ function WeekSetup() {
     },
   })
 
-  const canProceed = flowQuery.data?.has_baseline
+  const showOnboardingGate =
+    flowQuery.isSuccess && !flowQuery.data?.has_baseline && !setupQuery.data
 
   const proposals = setupQuery.data?.proposed_goals ?? []
 
@@ -102,7 +103,7 @@ function WeekSetup() {
           </Typography>
         </Box>
 
-        {!canProceed ? (
+        {showOnboardingGate ? (
           <Alert severity="info">
             Complete onboarding first. This step depends on your baseline questionnaire.
           </Alert>
