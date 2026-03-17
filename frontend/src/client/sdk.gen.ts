@@ -126,12 +126,6 @@ import type {
   LoginRecoverPasswordHtmlContentResponse,
   PrivateCreateUserData,
   PrivateCreateUserResponse,
-  QuestionnairesReadLegacyQuestionnaireResponsesData,
-  QuestionnairesReadLegacyQuestionnaireResponsesResponse,
-  QuestionnairesCreateLegacyQuestionnaireResponseData,
-  QuestionnairesCreateLegacyQuestionnaireResponseResponse,
-  QuestionnairesDeleteLegacyQuestionnaireResponseData,
-  QuestionnairesDeleteLegacyQuestionnaireResponseResponse,
   QuestionnairesReadQuestionnaireTemplatesData,
   QuestionnairesReadQuestionnaireTemplatesResponse,
   QuestionnairesCreateQuestionnaireTemplateData,
@@ -288,7 +282,7 @@ export class AiService {
    * Raises:
    * HTTPException: If the AI service is not configured or if the
    * request fails.
-   * @returns unknown Successful Response
+   * @returns ChatHistoryResponse Successful Response
    * @throws ApiError
    */
   public static getChatHistory(): CancelablePromise<AiGetChatHistoryResponse> {
@@ -313,7 +307,7 @@ export class AiService {
    * Raises:
    * HTTPException: If the AI service is not configured or if the
    * request fails.
-   * @returns unknown Successful Response
+   * @returns ClearHistoryResponse Successful Response
    * @throws ApiError
    */
   public static clearChatHistory(): CancelablePromise<AiClearChatHistoryResponse> {
@@ -3090,78 +3084,6 @@ export class PrivateService {
 }
 
 export class QuestionnairesService {
-  /**
-   * Read Legacy Questionnaire Responses
-   * Retrieve legacy questionnaire responses (onboarding, checkins, etc.).
-   * @param data The data for the request.
-   * @param data.skip
-   * @param data.limit
-   * @param data.kind
-   * @returns LegacyQuestionnaireResponsesPublic Successful Response
-   * @throws ApiError
-   */
-  public static readLegacyQuestionnaireResponses(
-    data: QuestionnairesReadLegacyQuestionnaireResponsesData = {},
-  ): CancelablePromise<QuestionnairesReadLegacyQuestionnaireResponsesResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/questionnaires/legacy",
-      query: {
-        skip: data.skip,
-        limit: data.limit,
-        kind: data.kind,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Create Legacy Questionnaire Response
-   * Create a legacy questionnaire response (onboarding, checkins, etc.).
-   * @param data The data for the request.
-   * @param data.requestBody
-   * @returns LegacyQuestionnaireResponsePublic Successful Response
-   * @throws ApiError
-   */
-  public static createLegacyQuestionnaireResponse(
-    data: QuestionnairesCreateLegacyQuestionnaireResponseData,
-  ): CancelablePromise<QuestionnairesCreateLegacyQuestionnaireResponseResponse> {
-    return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/v1/questionnaires/legacy",
-      body: data.requestBody,
-      mediaType: "application/json",
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Delete Legacy Questionnaire Response
-   * Delete a legacy questionnaire response.
-   * @param data The data for the request.
-   * @param data.id
-   * @returns Message Successful Response
-   * @throws ApiError
-   */
-  public static deleteLegacyQuestionnaireResponse(
-    data: QuestionnairesDeleteLegacyQuestionnaireResponseData,
-  ): CancelablePromise<QuestionnairesDeleteLegacyQuestionnaireResponseResponse> {
-    return __request(OpenAPI, {
-      method: "DELETE",
-      url: "/api/v1/questionnaires/legacy/{id}",
-      path: {
-        id: data.id,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
   /**
    * Read Questionnaire Templates
    * Retrieve questionnaire templates (Admin only).

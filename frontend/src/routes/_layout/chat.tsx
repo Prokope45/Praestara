@@ -44,7 +44,7 @@ function Chat() {
   useEffect(() => {
     if (historyData && Array.isArray(historyData.history)) {
       const loadedMessages: ChatMessage[] = historyData.history.map(
-        (msg: { role: string; content: string }) => ({
+        (msg: any) => ({
           role: msg.role as "user" | "assistant",
           content: msg.content,
         })

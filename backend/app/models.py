@@ -82,8 +82,8 @@ class User(UserBase, table=True):
     appointments: list["Appointment"] = Relationship(back_populates="user", cascade_delete=True)
     questionnaire_assignments: list["QuestionnaireAssignment"] = Relationship(back_populates="user", cascade_delete=True)
     questionnaire_responses: list["QuestionnaireResponse"] = Relationship(back_populates="user", cascade_delete=True)
-    legacy_questionnaire_responses: list["LegacyQuestionnaireResponse"] = Relationship(
-        back_populates="owner", cascade_delete=True
+    checkins: list["Checkin"] = Relationship(
+        back_populates="user", cascade_delete=True
     )
     engine89_results: list["Engine89Result"] = Relationship(
         back_populates="owner", cascade_delete=True
@@ -379,37 +379,40 @@ class AnswerPublic(AnswerBase):
     question: QuestionPublic
 
 
-# Legacy Questionnaire response models (for checkins and engine89)
-class LegacyQuestionnaireResponseBase(SQLModel):
-    kind: str = Field(max_length=50)
-    schema_version: str = Field(default="v1", max_length=20)
-    payload: dict[str, Any] = Field(sa_type=sa.JSON)
+# Checkin models
+class CheckinBase(SQLModel):
+    type: str = Field(max_length=50)
+    text: str = Field(sa_type=sa.Text)
+    reply: str = Field(sa_type=sa.Text)
+    alignment_score: int | None = None
+    onboarding_id: str | None = None
+    morning_id: str | None = None
 
 
-class LegacyQuestionnaireResponseCreate(LegacyQuestionnaireResponseBase):
+class CheckinCreate(CheckinBase):
     pass
 
 
-class LegacyQuestionnaireResponse(LegacyQuestionnaireResponseBase, table=True):
+class Checkin(CheckinBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(
+    user_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
-    owner: Optional["User"] = Relationship(back_populates="legacy_questionnaire_responses")
+    user: Optional["User"] = Relationship(back_populates="checkins")
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         sa_type=sa.DateTime(timezone=True),
     )
 
 
-class LegacyQuestionnaireResponsePublic(LegacyQuestionnaireResponseBase):
+class CheckinPublic(CheckinBase):
     id: uuid.UUID
-    owner_id: uuid.UUID
+    user_id: uuid.UUID
     created_at: datetime
 
 
-class LegacyQuestionnaireResponsesPublic(SQLModel):
-    data: list[LegacyQuestionnaireResponsePublic]
+class CheckinsPublic(SQLModel):
+    data: list[CheckinPublic]
     count: int
 
 

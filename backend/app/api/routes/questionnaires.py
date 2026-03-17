@@ -24,10 +24,6 @@ from app.models import (
     QuestionnaireResponsePublic,
     QuestionnaireResponsesPublic,
     QuestionnaireResponseUpdate,
-    LegacyQuestionnaireResponse,
-    LegacyQuestionnaireResponseCreate,
-    LegacyQuestionnaireResponsePublic,
-    LegacyQuestionnaireResponsesPublic,
     Appointment,
     AppointmentCreate,
     AppointmentPublic,
@@ -38,84 +34,6 @@ from app.models import (
 )
 
 router = APIRouter()
-
-
-# Legacy Questionnaire Response endpoints (for onboarding, checkins, etc.)
-@router.get("/legacy", response_model=LegacyQuestionnaireResponsesPublic)
-def read_legacy_questionnaire_responses(
-    session: SessionDep,
-    current_user: CurrentUser,
-    skip: int = 0,
-    limit: int = 100,
-    kind: str | None = None,
-) -> Any:
-    """
-    Retrieve legacy questionnaire responses (onboarding, checkins, etc.).
-    """
-    if current_user.is_superuser:
-        count_statement = select(func.count()).select_from(LegacyQuestionnaireResponse)
-        statement = select(LegacyQuestionnaireResponse)
-        if kind:
-            count_statement = count_statement.where(LegacyQuestionnaireResponse.kind == kind)
-            statement = statement.where(LegacyQuestionnaireResponse.kind == kind)
-    else:
-        count_statement = (
-            select(func.count())
-            .select_from(LegacyQuestionnaireResponse)
-            .where(LegacyQuestionnaireResponse.owner_id == current_user.id)
-        )
-        statement = select(LegacyQuestionnaireResponse).where(
-            LegacyQuestionnaireResponse.owner_id == current_user.id
-        )
-        if kind:
-            count_statement = count_statement.where(LegacyQuestionnaireResponse.kind == kind)
-            statement = statement.where(LegacyQuestionnaireResponse.kind == kind)
-
-    count = session.exec(count_statement).one()
-    responses = session.exec(statement.offset(skip).limit(limit)).all()
-    return LegacyQuestionnaireResponsesPublic(data=responses, count=count)
-
-
-@router.post("/legacy", response_model=LegacyQuestionnaireResponsePublic)
-def create_legacy_questionnaire_response(
-    *,
-    session: SessionDep,
-    current_user: CurrentUser,
-    response_in: LegacyQuestionnaireResponseCreate,
-) -> Any:
-    """
-    Create a legacy questionnaire response (onboarding, checkins, etc.).
-    """
-    response = LegacyQuestionnaireResponse.model_validate(
-        response_in, update={"owner_id": current_user.id}
-    )
-    session.add(response)
-
-    if response_in.kind == "onboarding":
-        current_user.onboarding_completed_at = datetime.now(timezone.utc)
-        session.add(current_user)
-
-    session.commit()
-    session.refresh(response)
-    return response
-
-
-@router.delete("/legacy/{id}", response_model=Message)
-def delete_legacy_questionnaire_response(
-    session: SessionDep, current_user: CurrentUser, id: uuid.UUID
-) -> Message:
-    """
-    Delete a legacy questionnaire response.
-    """
-    response = session.get(LegacyQuestionnaireResponse, id)
-    if not response:
-        raise HTTPException(status_code=404, detail="Legacy questionnaire response not found")
-    if not current_user.is_superuser and response.owner_id != current_user.id:
-        raise HTTPException(status_code=400, detail="Not enough permissions")
-
-    session.delete(response)
-    session.commit()
-    return Message(message="Legacy questionnaire response deleted successfully")
 
 
 # Questionnaire Template endpoints (Admin only)

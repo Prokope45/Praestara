@@ -82,6 +82,16 @@ export type Body_users_upload_profile_image = {
   file: Blob | File
 }
 
+/**
+ * Response model for chat history.
+ */
+export type ChatHistoryResponse = {
+  history: Array<{
+    [key: string]: string
+  }>
+  message_count: number
+}
+
 export type CheckinPublic = {
   id: string
   type: "morning" | "evening"
@@ -112,6 +122,13 @@ export type CheckinsPublic = {
 
 export type CheckinUpdate = {
   text: string
+}
+
+/**
+ * Response model for clearing history.
+ */
+export type ClearHistoryResponse = {
+  messages_deleted: number
 }
 
 export type ConceptDimensionPublic = {
@@ -354,30 +371,6 @@ export type IdentityConsistencyIndexPublic = {
   }
   computed_at: string
   cycle_id: string | null
-}
-
-export type LegacyQuestionnaireResponseCreate = {
-  kind: string
-  schema_version?: string
-  payload: {
-    [key: string]: unknown
-  }
-}
-
-export type LegacyQuestionnaireResponsePublic = {
-  kind: string
-  schema_version?: string
-  payload: {
-    [key: string]: unknown
-  }
-  id: string
-  owner_id: string
-  created_at: string
-}
-
-export type LegacyQuestionnaireResponsesPublic = {
-  data: Array<LegacyQuestionnaireResponsePublic>
-  count: number
 }
 
 export type MealEntryCreate = {
@@ -832,13 +825,9 @@ export type AiAnalyzeWithAiData = {
 
 export type AiAnalyzeWithAiResponse = AnalyzeResponse
 
-export type AiGetChatHistoryResponse = {
-  [key: string]: unknown
-}
+export type AiGetChatHistoryResponse = ChatHistoryResponse
 
-export type AiClearChatHistoryResponse = {
-  [key: string]: unknown
-}
+export type AiClearChatHistoryResponse = ClearHistoryResponse
 
 export type CheckinsCreateCheckinData = {
   requestBody: CheckinRequest
@@ -1210,28 +1199,6 @@ export type PrivateCreateUserData = {
 }
 
 export type PrivateCreateUserResponse = UserPublic
-
-export type QuestionnairesReadLegacyQuestionnaireResponsesData = {
-  kind?: string | null
-  limit?: number
-  skip?: number
-}
-
-export type QuestionnairesReadLegacyQuestionnaireResponsesResponse =
-  LegacyQuestionnaireResponsesPublic
-
-export type QuestionnairesCreateLegacyQuestionnaireResponseData = {
-  requestBody: LegacyQuestionnaireResponseCreate
-}
-
-export type QuestionnairesCreateLegacyQuestionnaireResponseResponse =
-  LegacyQuestionnaireResponsePublic
-
-export type QuestionnairesDeleteLegacyQuestionnaireResponseData = {
-  id: string
-}
-
-export type QuestionnairesDeleteLegacyQuestionnaireResponseResponse = Message
 
 export type QuestionnairesReadQuestionnaireTemplatesData = {
   limit?: number

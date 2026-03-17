@@ -17,7 +17,7 @@ import {
 } from "chart.js"
 
 import useAuth from "@/hooks/useAuth"
-import { QuestionnairesService } from "@/client"
+import { CheckinsService, QuestionnairesService } from "@/client"
 import { PendingQuestionnaireWidget } from "@/components/Questionnaires/PendingQuestionnaireWidget"
 
 export const Route = createFileRoute("/_layout/")({
@@ -47,10 +47,10 @@ function Dashboard() {
   }
 
   const { data: eveningHistory } = useQuery({
-    queryKey: ["questionnaires", "evening_checkin"],
+    queryKey: ["checkins", "evening"],
     queryFn: () =>
-      QuestionnairesService.readLegacyQuestionnaireResponses({
-        kind: "evening_checkin",
+      CheckinsService.readCheckins({
+        type: "evening",
         limit: 200,
       }),
   })
@@ -68,7 +68,7 @@ function Dashboard() {
 
     const normalized = records
       .map((entry) => {
-        const score = entry.payload?.alignment_score as number | undefined
+        const score = entry.alignment_score as number | undefined
         if (typeof score !== "number") return null
         return {
           date: new Date(entry.created_at).toLocaleDateString(),

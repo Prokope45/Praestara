@@ -17,7 +17,8 @@ from app.models import (
     Engine89ResultPublic,
     Engine89ResultsPublic,
     Message,
-    LegacyQuestionnaireResponse,
+    Checkin,
+    QuestionnaireResponse,
 )
 
 router = APIRouter(prefix="/engine89", tags=["engine89"])
@@ -40,30 +41,70 @@ def export_for_engine89(
     """
     Export de-identified questionnaire payloads for Engine89.
     """
-    if current_user.is_superuser:
-        statement = select(LegacyQuestionnaireResponse)
-        if kind:
-            statement = statement.where(LegacyQuestionnaireResponse.kind == kind)
-    else:
-        statement = select(LegacyQuestionnaireResponse).where(
-            LegacyQuestionnaireResponse.owner_id == current_user.id
-        )
-        if kind:
-            statement = statement.where(LegacyQuestionnaireResponse.kind == kind)
-
-    responses = session.exec(statement).all()
     export_data = []
-    for response in responses:
-        export_data.append(
-            {
-                "subject_hash": _subject_hash(response.owner_id),
-                "response_id": str(response.id),
-                "kind": response.kind,
-                "schema_version": response.schema_version,
-                "created_at": response.created_at.isoformat(),
-                "payload": response.payload,
-            }
-        )
+
+    # Checkins
+    if current_user.is_superuser:
+        c_statement = select(Checkin)
+        if kind and kind.endswith("_checkin"):
+            c_statement = c_statement.where(Checkin.type == kind.replace("_checkin", ""))
+    else:
+        c_statement = select(Checkin).where(Checkin.user_id == current_user.id)
+        if kind and kind.endswith("_checkin"):
+            c_statement = c_statement.where(Checkin.type == kind.replace("_checkin", ""))
+
+    if not kind or kind.endswith("_checkin"):
+        checkins = session.exec(c_statement).all()
+        for checkin in checkins:
+            export_data.append({
+                "subject_hash": _subject_hash(checkin.user_id),
+                "response_id": str(checkin.id),
+                "kind": f"{checkin.type}_checkin",
+                "schema_version": "v1",
+                "created_at": checkin.created_at.isoformat(),
+                "payload": {
+                    "type": checkin.type,
+                    "text": checkin.text,
+                    "reply": checkin.reply,
+                    "alignment_score": checkin.alignment_score,
+                    "onboarding_id": checkin.onboarding_id,
+                    "morning_id": checkin.morning_id
+                }
+            })
+
+    # QuestionnaireResponses
+    if current_user.is_superuser:
+        q_statement = select(QuestionnaireResponse)
+    else:
+        q_statement = select(QuestionnaireResponse).where(QuestionnaireResponse.user_id == current_user.id)
+
+    if not kind or kind == "onboarding":
+        q_responses = session.exec(q_statement).all()
+        for q_resp in q_responses:
+            if kind == "onboarding" and q_resp.assignment.questionnaire.title != "Praestara Onboarding":
+                continue
+            
+            payload = {"sectionB": {"domains": []}}
+            for answer in q_resp.answers:
+                question = answer.question
+                if question.scale_type == "DOMAIN_RATING":
+                    payload["sectionB"]["domains"].append({
+                        "name": question.question_text,
+                        "importance": answer.likert_value
+                    })
+                elif question.scale_type == "TEXT":
+                    payload[question.question_text] = answer.text_response
+                elif question.scale_type in ("LIKERT_5", "LIKERT_7", "FREQUENCY"):
+                    payload[question.question_text] = answer.likert_value
+                    
+            export_data.append({
+                "subject_hash": _subject_hash(q_resp.user_id),
+                "response_id": str(q_resp.id),
+                "kind": "onboarding" if q_resp.assignment.questionnaire.title == "Praestara Onboarding" else "questionnaire",
+                "schema_version": "v1",
+                "created_at": q_resp.completed_at.isoformat(),
+                "payload": payload
+            })
 
     return {"data": export_data, "count": len(export_data)}
 
@@ -82,8 +123,9 @@ def import_engine89_results(
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
     users = session.exec(select(Engine89Result.owner_id.distinct())).all()
-    user_ids = session.exec(select(LegacyQuestionnaireResponse.owner_id.distinct())).all()
-    candidate_ids = set(users) | set(user_ids)
+    user_ids_c = session.exec(select(Checkin.user_id.distinct())).all()
+    user_ids_q = session.exec(select(QuestionnaireResponse.user_id.distinct())).all()
+    candidate_ids = set(users) | set(user_ids_c) | set(user_ids_q)
 
     hash_map = {_subject_hash(user_id): user_id for user_id in candidate_ids}
 

@@ -10,9 +10,41 @@ from sqlmodel import desc, func, select
 
 from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
-from app.models import LegacyQuestionnaireResponse, Message
+from app.models import Checkin, Message, QuestionnaireResponse, QuestionnaireAssignment, QuestionnaireTemplate
 
 router = APIRouter(prefix="/checkins", tags=["checkins"])
+
+def _get_onboarding_payload(session: SessionDep, user_id: uuid.UUID) -> tuple[dict[str, Any] | None, str | None]:
+    statement = (
+        select(QuestionnaireResponse)
+        .join(QuestionnaireAssignment)
+        .join(QuestionnaireTemplate)
+        .where(
+            QuestionnaireResponse.user_id == user_id,
+            QuestionnaireTemplate.title == "Praestara Onboarding"
+        )
+        .order_by(desc(QuestionnaireResponse.completed_at))
+    )
+    response = session.exec(statement).first()
+    
+    if not response:
+        return None, None
+        
+    payload = {"sectionB": {"domains": []}}
+    # Fetch questions and answers
+    for answer in response.answers:
+        question = answer.question
+        if question.scale_type == "DOMAIN_RATING":
+            payload["sectionB"]["domains"].append({
+                "name": question.question_text,
+                "importance": answer.likert_value
+            })
+        elif question.scale_type == "TEXT":
+            payload[question.question_text] = answer.text_response
+        elif question.scale_type in ("LIKERT_5", "LIKERT_7", "FREQUENCY"):
+            payload[question.question_text] = answer.likert_value
+            
+    return payload, str(response.id)
 
 
 class CheckinRequest(BaseModel):
@@ -183,31 +215,24 @@ def _call_llm(prompt: str) -> str | None:
 def create_checkin(
     *, session: SessionDep, current_user: CurrentUser, payload: CheckinRequest
 ) -> CheckinResponse:
-    onboarding = session.exec(
-        select(LegacyQuestionnaireResponse)
-        .where(
-            LegacyQuestionnaireResponse.owner_id == current_user.id,
-            LegacyQuestionnaireResponse.kind == "onboarding",
-        )
-        .order_by(desc(LegacyQuestionnaireResponse.created_at))
-    ).first()
+    onboarding_payload, onboarding_id = _get_onboarding_payload(session, current_user.id)
 
     last_morning = None
     if payload.type == "evening":
         last_morning = session.exec(
-            select(LegacyQuestionnaireResponse)
+            select(Checkin)
             .where(
-                LegacyQuestionnaireResponse.owner_id == current_user.id,
-                LegacyQuestionnaireResponse.kind == "morning_checkin",
+                Checkin.user_id == current_user.id,
+                Checkin.type == "morning",
             )
-            .order_by(desc(LegacyQuestionnaireResponse.created_at))
+            .order_by(desc(Checkin.created_at))
         ).first()
 
     prompt = _build_prompt(
         checkin_type=payload.type,
         checkin_text=payload.text,
-        onboarding_payload=onboarding.payload if onboarding else None,
-        last_morning_text=(last_morning.payload.get("text") if last_morning else None),
+        onboarding_payload=onboarding_payload,
+        last_morning_text=(last_morning.text if last_morning else None),
     )
 
     reply = _call_llm(prompt)
@@ -215,35 +240,26 @@ def create_checkin(
         reply = _fallback_reply(
             checkin_type=payload.type,
             checkin_text=payload.text,
-            onboarding_payload=onboarding.payload if onboarding else None,
-            last_morning_text=(last_morning.payload.get("text") if last_morning else None),
+            onboarding_payload=onboarding_payload,
+            last_morning_text=(last_morning.text if last_morning else None),
         )
 
     alignment_score = None
     if payload.type == "evening":
-        domains = _extract_domains(onboarding.payload if onboarding else None)
+        domains = _extract_domains(onboarding_payload)
         missing = _missing_domains(payload.text, domains, threshold=7)
         if domains:
             mentioned = max(len(domains) - len(missing), 0)
             alignment_score = min(100, 45 + mentioned * 8)
 
-    response_payload = {
-        "type": payload.type,
-        "text": payload.text,
-        "reply": reply,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "onboarding_id": str(onboarding.id) if onboarding else None,
-        "morning_id": str(last_morning.id) if last_morning else None,
-        "alignment_score": alignment_score,
-    }
-
-    response = LegacyQuestionnaireResponse.model_validate(
-        {
-            "kind": f"{payload.type}_checkin",
-            "schema_version": "v1",
-            "payload": response_payload,
-            "owner_id": current_user.id,
-        }
+    response = Checkin(
+        type=payload.type,
+        text=payload.text,
+        reply=reply,
+        user_id=current_user.id,
+        alignment_score=alignment_score,
+        onboarding_id=onboarding_id,
+        morning_id=str(last_morning.id) if last_morning else None,
     )
     session.add(response)
     session.commit()
@@ -267,41 +283,40 @@ def read_checkins(
     """
     # Build the base query
     if type:
-        kind_filter = f"{type}_checkin"
         count_statement = (
             select(func.count())
-            .select_from(LegacyQuestionnaireResponse)
+            .select_from(Checkin)
             .where(
-                LegacyQuestionnaireResponse.owner_id == current_user.id,
-                LegacyQuestionnaireResponse.kind == kind_filter,
+                Checkin.user_id == current_user.id,
+                Checkin.type == type,
             )
         )
         statement = (
-            select(LegacyQuestionnaireResponse)
+            select(Checkin)
             .where(
-                LegacyQuestionnaireResponse.owner_id == current_user.id,
-                LegacyQuestionnaireResponse.kind == kind_filter,
+                Checkin.user_id == current_user.id,
+                Checkin.type == type,
             )
-            .order_by(desc(LegacyQuestionnaireResponse.created_at))
+            .order_by(desc(Checkin.created_at))
             .offset(skip)
             .limit(limit)
         )
     else:
         count_statement = (
             select(func.count())
-            .select_from(LegacyQuestionnaireResponse)
+            .select_from(Checkin)
             .where(
-                LegacyQuestionnaireResponse.owner_id == current_user.id,
-                LegacyQuestionnaireResponse.kind.in_(["morning_checkin", "evening_checkin"]),
+                Checkin.user_id == current_user.id,
+                Checkin.type.in_(["morning", "evening"]),
             )
         )
         statement = (
-            select(LegacyQuestionnaireResponse)
+            select(Checkin)
             .where(
-                LegacyQuestionnaireResponse.owner_id == current_user.id,
-                LegacyQuestionnaireResponse.kind.in_(["morning_checkin", "evening_checkin"]),
+                Checkin.user_id == current_user.id,
+                Checkin.type.in_(["morning", "evening"]),
             )
-            .order_by(desc(LegacyQuestionnaireResponse.created_at))
+            .order_by(desc(Checkin.created_at))
             .offset(skip)
             .limit(limit)
         )
@@ -312,17 +327,16 @@ def read_checkins(
     # Transform to CheckinPublic format
     data = []
     for checkin in checkins:
-        payload = checkin.payload
         data.append(
             CheckinPublic(
                 id=checkin.id,
-                type=payload.get("type", "morning"),
-                text=payload.get("text", ""),
-                reply=payload.get("reply", ""),
+                type=checkin.type,
+                text=checkin.text,
+                reply=checkin.reply,
                 created_at=checkin.created_at,
-                alignment_score=payload.get("alignment_score"),
-                onboarding_id=payload.get("onboarding_id"),
-                morning_id=payload.get("morning_id"),
+                alignment_score=checkin.alignment_score,
+                onboarding_id=checkin.onboarding_id,
+                morning_id=checkin.morning_id,
             )
         )
 
@@ -336,28 +350,23 @@ def read_checkin(
     """
     Get a specific checkin by ID.
     """
-    checkin = session.get(LegacyQuestionnaireResponse, checkin_id)
+    checkin = session.get(Checkin, checkin_id)
     if not checkin:
         raise HTTPException(status_code=404, detail="Checkin not found")
 
     # Verify ownership
-    if checkin.owner_id != current_user.id:
+    if checkin.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    # Verify it's a checkin (not onboarding or other type)
-    if checkin.kind not in ["morning_checkin", "evening_checkin"]:
-        raise HTTPException(status_code=404, detail="Checkin not found")
-
-    payload = checkin.payload
     return CheckinPublic(
         id=checkin.id,
-        type=payload.get("type", "morning"),
-        text=payload.get("text", ""),
-        reply=payload.get("reply", ""),
+        type=checkin.type,
+        text=checkin.text,
+        reply=checkin.reply,
         created_at=checkin.created_at,
-        alignment_score=payload.get("alignment_score"),
-        onboarding_id=payload.get("onboarding_id"),
-        morning_id=payload.get("morning_id"),
+        alignment_score=checkin.alignment_score,
+        onboarding_id=checkin.onboarding_id,
+        morning_id=checkin.morning_id,
     )
 
 
@@ -372,36 +381,28 @@ def update_checkin(
     """
     Update a checkin's text. The AI reply is not regenerated.
     """
-    checkin = session.get(LegacyQuestionnaireResponse, checkin_id)
+    checkin = session.get(Checkin, checkin_id)
     if not checkin:
         raise HTTPException(status_code=404, detail="Checkin not found")
 
     # Verify ownership
-    if checkin.owner_id != current_user.id:
+    if checkin.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    # Verify it's a checkin
-    if checkin.kind not in ["morning_checkin", "evening_checkin"]:
-        raise HTTPException(status_code=404, detail="Checkin not found")
-
-    # Update only the text field in the payload
-    payload = checkin.payload.copy()
-    payload["text"] = checkin_in.text
-    checkin.payload = payload
-
+    checkin.text = checkin_in.text
     session.add(checkin)
     session.commit()
     session.refresh(checkin)
 
     return CheckinPublic(
         id=checkin.id,
-        type=payload.get("type", "morning"),
-        text=payload.get("text", ""),
-        reply=payload.get("reply", ""),
+        type=checkin.type,
+        text=checkin.text,
+        reply=checkin.reply,
         created_at=checkin.created_at,
-        alignment_score=payload.get("alignment_score"),
-        onboarding_id=payload.get("onboarding_id"),
-        morning_id=payload.get("morning_id"),
+        alignment_score=checkin.alignment_score,
+        onboarding_id=checkin.onboarding_id,
+        morning_id=checkin.morning_id,
     )
 
 
@@ -412,17 +413,13 @@ def delete_checkin(
     """
     Delete a checkin.
     """
-    checkin = session.get(LegacyQuestionnaireResponse, checkin_id)
+    checkin = session.get(Checkin, checkin_id)
     if not checkin:
         raise HTTPException(status_code=404, detail="Checkin not found")
 
     # Verify ownership
-    if checkin.owner_id != current_user.id:
+    if checkin.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-
-    # Verify it's a checkin
-    if checkin.kind not in ["morning_checkin", "evening_checkin"]:
-        raise HTTPException(status_code=404, detail="Checkin not found")
 
     session.delete(checkin)
     session.commit()
