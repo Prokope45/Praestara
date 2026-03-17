@@ -10,7 +10,7 @@ from typing import Any
 
 import httpx
 
-from app.KoiosClient.koios_encryption import KoiosEncryption
+from app.KoiosClient.KoiosEncryption import KoiosEncryption
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -439,7 +439,3 @@ class KoiosClient:
         """Clear the cached token (useful for testing or forced refresh)."""
         self._token = None
         self._token_expiry = None
-
-
-# Singleton instance for easy import
-ai_client = KoiosClient()

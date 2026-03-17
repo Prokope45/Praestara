@@ -8,38 +8,18 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from app.KoiosClient.koios_client import ai_client
+from app.KoiosClient import ai_client
 from app.api.deps import CurrentUser
 from app.core.config import settings
 from app.models import AnalyzeRequest, AnalyzeResponse, Message
+from app.KoiosClient.models import ChatMessage, ChatHistoryResponse, ClearHistoryResponse
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/ai", tags=["ai"])
+ai_router = APIRouter(prefix="/ai", tags=["ai"])
 
 
-# Response models for history endpoints
-class ChatMessage:
-    """A single chat message."""
-
-    role: str
-    content: str
-
-
-class ChatHistoryResponse:
-    """Response model for chat history."""
-
-    history: list[dict[str, str]]
-    message_count: int
-
-
-class ClearHistoryResponse:
-    """Response model for clearing history."""
-
-    messages_deleted: int
-
-
-@router.post("/chat", response_model=Message)
+@ai_router.post("/chat", response_model=Message)
 def chat_with_ai(*, current_user: CurrentUser, payload: Message) -> Message:
     """Send a message to the AI service and return the reply.
 
@@ -95,7 +75,7 @@ def chat_with_ai(*, current_user: CurrentUser, payload: Message) -> Message:
         ) from e
 
 
-@router.post("/analyze", response_model=AnalyzeResponse)
+@ai_router.post("/analyze", response_model=AnalyzeResponse)
 def analyze_with_ai(*, current_user: CurrentUser, payload: AnalyzeRequest) -> AnalyzeResponse:
     """Send an analysis request to the AI service.
 
@@ -145,7 +125,7 @@ def analyze_with_ai(*, current_user: CurrentUser, payload: AnalyzeRequest) -> An
         ) from e
 
 
-@router.get("/history")
+@ai_router.get("/history")
 def get_chat_history(current_user: CurrentUser) -> dict[str, Any]:
     """Get the chat history for the current user.
 
@@ -192,7 +172,7 @@ def get_chat_history(current_user: CurrentUser) -> dict[str, Any]:
         ) from e
 
 
-@router.delete("/history")
+@ai_router.delete("/history")
 def clear_chat_history(current_user: CurrentUser) -> dict[str, Any]:
     """Clear the chat history for the current user.
 
