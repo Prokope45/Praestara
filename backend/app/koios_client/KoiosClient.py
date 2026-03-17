@@ -10,7 +10,7 @@ from typing import Any
 
 import httpx
 
-from app.KoiosClient.KoiosEncryption import KoiosEncryption
+from app.koios_client.KoiosEncryption import KoiosEncryption
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)

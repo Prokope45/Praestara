@@ -1,4 +1,4 @@
-from app.KoiosClient import ai_router
+from app.koios_client import ai_router
 from fastapi import APIRouter
 
 from app.api.routes import checkins, engine89, login, private, questionnaires, users, utils

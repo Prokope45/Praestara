@@ -8,11 +8,11 @@ from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
-from app.KoiosClient import ai_client
+from app.koios_client import ai_client
 from app.api.deps import CurrentUser
 from app.core.config import settings
 from app.models import AnalyzeRequest, AnalyzeResponse, Message
-from app.KoiosClient.models import ChatMessage, ChatHistoryResponse, ClearHistoryResponse
+from app.koios_client.models import ChatMessage, ChatHistoryResponse, ClearHistoryResponse
 
 logger = logging.getLogger(__name__)
 
@@ -125,8 +125,8 @@ def analyze_with_ai(*, current_user: CurrentUser, payload: AnalyzeRequest) -> An
         ) from e
 
 
-@ai_router.get("/history")
-def get_chat_history(current_user: CurrentUser) -> dict[str, Any]:
+@ai_router.get("/history", response_model=ChatHistoryResponse)
+def get_chat_history(current_user: CurrentUser) -> ChatHistoryResponse:
     """Get the chat history for the current user.
 
     Retrieves the persistent chat history from the AI service.
@@ -172,8 +172,8 @@ def get_chat_history(current_user: CurrentUser) -> dict[str, Any]:
         ) from e
 
 
-@ai_router.delete("/history")
-def clear_chat_history(current_user: CurrentUser) -> dict[str, Any]:
+@ai_router.delete("/history", response_model=ClearHistoryResponse)
+def clear_chat_history(current_user: CurrentUser) -> ClearHistoryResponse:
     """Clear the chat history for the current user.
 
     Deletes all stored chat history from the AI service for this user.
