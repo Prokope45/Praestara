@@ -1,22 +1,21 @@
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Depends
-from sqlmodel import func, select, col
+from fastapi import APIRouter, Depends, HTTPException
+from sqlmodel import select
 
-from app import crud
 from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.models import (
+    AppointmentCreate,
+    AppointmentPublic,
+    AppointmentsPublic,
+    AppointmentUpdate,
+    AssignmentStatus,
     Message,
-    QuestionnaireTemplate,
-    QuestionnaireTemplateCreate,
-    QuestionnaireTemplatePublic,
-    QuestionnaireTemplatesPublic,
-    QuestionnaireTemplateUpdate,
     QuestionnaireAssignment,
-    QuestionnaireAssignmentCreate,
     QuestionnaireAssignmentBulkCreate,
+    QuestionnaireAssignmentCreate,
     QuestionnaireAssignmentPublic,
     QuestionnaireAssignmentsPublic,
     QuestionnaireResponse,
@@ -24,14 +23,13 @@ from app.models import (
     QuestionnaireResponsePublic,
     QuestionnaireResponsesPublic,
     QuestionnaireResponseUpdate,
-    Appointment,
-    AppointmentCreate,
-    AppointmentPublic,
-    AppointmentsPublic,
-    AppointmentUpdate,
-    AssignmentStatus,
+    QuestionnaireTemplateCreate,
+    QuestionnaireTemplatePublic,
+    QuestionnaireTemplatesPublic,
+    QuestionnaireTemplateUpdate,
     User,
 )
+from app.questionnaire import questionnaire
 
 router = APIRouter()
 
@@ -44,17 +42,13 @@ router = APIRouter()
 )
 def read_questionnaire_templates(
     session: SessionDep, skip: int = 0, limit: int = 100
-) -> Any:
+) -> QuestionnaireTemplatesPublic:
     """
     Retrieve questionnaire templates (Admin only).
     """
-    count_statement = select(func.count()).select_from(QuestionnaireTemplate)
-    count = session.exec(count_statement).one()
-    
-    statement = select(QuestionnaireTemplate).offset(skip).limit(limit)
-    templates = session.exec(statement).all()
-    
-    return QuestionnaireTemplatesPublic(data=templates, count=count)
+    return questionnaire.template.read_templates(
+        session=session, skip=skip, limit=limit
+    )
 
 
 @router.post(
@@ -68,7 +62,7 @@ def create_questionnaire_template(
     """
     Create new questionnaire template (Admin only).
     """
-    template = crud.create_questionnaire_template(
+    template = questionnaire.template.create_template(
         session=session, questionnaire_in=template_in, created_by_id=current_user.id
     )
     return template
@@ -85,7 +79,10 @@ def read_questionnaire_template(
     """
     Get questionnaire template by ID (Admin only).
     """
-    template = session.get(QuestionnaireTemplate, template_id)
+    template = questionnaire.template.read_template(
+        session=session,
+        template_id=template_id
+    )
     if not template:
         raise HTTPException(status_code=404, detail="Questionnaire template not found")
     return template
@@ -105,12 +102,15 @@ def update_questionnaire_template(
     """
     Update questionnaire template (Admin only).
     """
-    db_template = session.get(QuestionnaireTemplate, template_id)
-    if not db_template:
+    template = questionnaire.template.read_template(
+        session=session,
+        template_id=template_id
+    )
+    if not template:
         raise HTTPException(status_code=404, detail="Questionnaire template not found")
-    
-    template = crud.update_questionnaire_template(
-        session=session, db_questionnaire=db_template, questionnaire_in=template_in
+
+    template = questionnaire.template.update_template(
+        session=session, db_questionnaire=template, questionnaire_in=template_in
     )
     return template
 
@@ -125,13 +125,19 @@ def delete_questionnaire_template(
     """
     Delete questionnaire template (Admin only).
     """
-    template = session.get(QuestionnaireTemplate, template_id)
-    if not template:
+    message: str = ""
+    try:
+        result = questionnaire.template.delete_template(
+            session=session,
+            template_id=template_id
+        )
+        if result.get("isDeleted", False):
+            message = "Questionnaire template deleted successfully"
+        else:
+            message = "Failed to delete questionnaire template"
+    except ValueError:
         raise HTTPException(status_code=404, detail="Questionnaire template not found")
-    
-    session.delete(template)
-    session.commit()
-    return Message(message="Questionnaire template deleted successfully")
+    return Message(message=message)
 
 
 # Assignment endpoints
@@ -147,22 +153,26 @@ def create_assignment(
     Assign questionnaire to user (Admin only).
     """
     # Verify questionnaire exists
-    template = session.get(QuestionnaireTemplate, assignment_in.questionnaire_id)
+    template = questionnaire.template.read_template(
+        session=session, template_id=assignment_in.questionnaire_id
+    )
     if not template:
         raise HTTPException(status_code=404, detail="Questionnaire template not found")
-    
+
     # Verify user exists
     user = session.get(User, assignment_in.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     # If appointment_id provided, verify it exists
     if assignment_in.appointment_id:
-        appointment = session.get(Appointment, assignment_in.appointment_id)
+        appointment = questionnaire.appointment.read(
+            session=session, appointment_id=assignment_in.appointment_id
+        )
         if not appointment:
             raise HTTPException(status_code=404, detail="Appointment not found")
-    
-    assignment = crud.create_questionnaire_assignment(
+
+    assignment = questionnaire.assignment.create(
         session=session, assignment_in=assignment_in
     )
     return assignment
@@ -179,26 +189,30 @@ def create_bulk_assignments(
     Assign questionnaire to multiple users at once (Admin only).
     """
     # Verify questionnaire exists
-    template = session.get(QuestionnaireTemplate, assignment_in.questionnaire_id)
+    template = questionnaire.template.read_template(
+        session=session, template_id=assignment_in.questionnaire_id
+    )
     if not template:
         raise HTTPException(status_code=404, detail="Questionnaire template not found")
-    
+
     # Verify all users exist
     for user_id in assignment_in.user_ids:
         user = session.get(User, user_id)
         if not user:
             raise HTTPException(status_code=404, detail=f"User {user_id} not found")
-    
+
     # If appointment_id provided, verify it exists
     if assignment_in.appointment_id:
-        appointment = session.get(Appointment, assignment_in.appointment_id)
+        appointment = questionnaire.appointment.read(
+            session=session, appointment_id=assignment_in.appointment_id
+        )
         if not appointment:
             raise HTTPException(status_code=404, detail="Appointment not found")
-    
-    assignments = crud.create_bulk_questionnaire_assignments(
+
+    assignments = questionnaire.assignment.create_bulk(
         session=session, assignment_in=assignment_in
     )
-    
+
     return {
         "message": f"Questionnaire assigned to {len(assignments)} user(s) successfully",
         "count": len(assignments)
@@ -212,31 +226,13 @@ def create_bulk_assignments(
 )
 def read_all_assignments(
     session: SessionDep, skip: int = 0, limit: int = 100, questionnaire_id: uuid.UUID | None = None
-) -> Any:
+) -> QuestionnaireAssignmentsPublic:
     """
     Get all questionnaire assignments (Admin only). Optionally filter by questionnaire_id.
     """
-    if questionnaire_id:
-        count_statement = (
-            select(func.count())
-            .select_from(QuestionnaireAssignment)
-            .where(QuestionnaireAssignment.questionnaire_id == questionnaire_id)
-        )
-        count = session.exec(count_statement).one()
-        
-        statement = (
-            select(QuestionnaireAssignment)
-            .where(QuestionnaireAssignment.questionnaire_id == questionnaire_id)
-            .offset(skip)
-            .limit(limit)
-        )
-    else:
-        count_statement = select(func.count()).select_from(QuestionnaireAssignment)
-        count = session.exec(count_statement).one()
-        
-        statement = select(QuestionnaireAssignment).offset(skip).limit(limit)
-    
-    assignments = session.exec(statement).all()
+    assignments, count = questionnaire.assignment.read_all(
+        session=session, skip=skip, limit=limit, questionnaire_id=questionnaire_id
+    )
     return QuestionnaireAssignmentsPublic(data=assignments, count=count)
 
 
@@ -250,21 +246,9 @@ def read_my_assignments(
     """
     Get current user's questionnaire assignments.
     """
-    count_statement = (
-        select(func.count())
-        .select_from(QuestionnaireAssignment)
-        .where(QuestionnaireAssignment.user_id == current_user.id)
+    assignments, count = questionnaire.assignment.read_my_assignments(
+        session=session, current_user=current_user, skip=skip, limit=limit
     )
-    count = session.exec(count_statement).one()
-    
-    statement = (
-        select(QuestionnaireAssignment)
-        .where(QuestionnaireAssignment.user_id == current_user.id)
-        .offset(skip)
-        .limit(limit)
-    )
-    assignments = session.exec(statement).all()
-    
     return QuestionnaireAssignmentsPublic(data=assignments, count=count)
 
 
@@ -278,14 +262,16 @@ def read_assignment(
     """
     Get specific assignment with questions.
     """
-    assignment = session.get(QuestionnaireAssignment, assignment_id)
+    assignment = questionnaire.assignment.read(
+        session=session, assignment_id=assignment_id
+    )
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
-    
+
     # Users can only view their own assignments, admins can view all
     if assignment.user_id != current_user.id and not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+
     return assignment
 
 
@@ -299,13 +285,19 @@ def delete_assignment(
     """
     Delete/remove a questionnaire assignment (Admin only).
     """
-    assignment = session.get(QuestionnaireAssignment, assignment_id)
-    if not assignment:
+    message: str = ""
+    try:
+        result = questionnaire.assignment.delete(
+            session=session,
+            assignment_id=assignment_id
+        )
+        if result.get("isDeleted", False):
+            message = "Assignment removed successfully"
+        else:
+            message = "Failed to remove questionnaire template"
+    except ValueError:
         raise HTTPException(status_code=404, detail="Assignment not found")
-    
-    session.delete(assignment)
-    session.commit()
-    return Message(message="Assignment removed successfully")
+    return Message(message=message)
 
 
 @router.patch(
@@ -323,20 +315,22 @@ def update_assignment_progress(
     Save questionnaire progress (partial answers).
     """
     assignment = session.get(QuestionnaireAssignment, assignment_id)
+    assignment = questionnaire.assignment.read(
+        session=session, assignment_id=assignment_id
+    )
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
-    
+
     if assignment.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not your assignment")
-    
+
     if assignment.status == AssignmentStatus.COMPLETED:
         raise HTTPException(status_code=400, detail="Assignment already completed")
-    
-    assignment.saved_progress = progress
-    session.add(assignment)
-    session.commit()
-    session.refresh(assignment)
-    
+
+    questionnaire.assignment.update_progress(
+        session=session, assignment=assignment, progress=progress
+    )
+
     return assignment
 
 
@@ -352,16 +346,18 @@ def create_response(
     Submit questionnaire response.
     """
     # Verify assignment exists and belongs to current user
-    assignment = session.get(QuestionnaireAssignment, response_in.assignment_id)
+    assignment = questionnaire.assignment.read(
+        session=session, assignment_id=response_in.assignment_id
+    )
     if not assignment:
         raise HTTPException(status_code=404, detail="Assignment not found")
-    
+
     if assignment.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not your assignment")
-    
+
     if assignment.status == AssignmentStatus.COMPLETED:
         raise HTTPException(status_code=400, detail="Assignment already completed")
-    
+
     # Check if response already exists
     existing_response = session.exec(
         select(QuestionnaireResponse).where(
@@ -370,18 +366,18 @@ def create_response(
     ).first()
     if existing_response:
         raise HTTPException(status_code=400, detail="Response already submitted")
-    
-    response = crud.create_questionnaire_response(
+
+    response = questionnaire.create_questionnaire_response(
         session=session, response_in=response_in, user_id=current_user.id
     )
-    
+
     # If this is the Praestara Onboarding questionnaire, mark onboarding as completed
     if assignment.questionnaire.title == "Praestara Onboarding":
         current_user.onboarding_completed_at = datetime.now(timezone.utc)
         session.add(current_user)
         session.commit()
         session.refresh(current_user)
-    
+
     return response
 
 
@@ -395,21 +391,9 @@ def read_my_responses(
     """
     Get current user's questionnaire responses.
     """
-    count_statement = (
-        select(func.count())
-        .select_from(QuestionnaireResponse)
-        .where(QuestionnaireResponse.user_id == current_user.id)
+    responses, count = questionnaire.read_my_responses(
+        session=session, current_user=current_user, skip=skip, limit=limit
     )
-    count = session.exec(count_statement).one()
-    
-    statement = (
-        select(QuestionnaireResponse)
-        .where(QuestionnaireResponse.user_id == current_user.id)
-        .offset(skip)
-        .limit(limit)
-    )
-    responses = session.exec(statement).all()
-    
     return QuestionnaireResponsesPublic(data=responses, count=count)
 
 
@@ -419,18 +403,20 @@ def read_my_responses(
 )
 def read_response(
     response_id: uuid.UUID, session: SessionDep, current_user: CurrentUser
-) -> Any:
+) -> QuestionnaireResponsePublic:
     """
     Get specific response.
     """
-    response = session.get(QuestionnaireResponse, response_id)
+    response = questionnaire.read_response(
+        session=session, response_id=response_id
+    )
     if not response:
         raise HTTPException(status_code=404, detail="Response not found")
-    
+
     # Users can only view their own responses, admins can view all
     if response.user_id != current_user.id and not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+
     return response
 
 
@@ -448,15 +434,16 @@ def update_response_score(
     """
     Update response manual score override (Admin only).
     """
-    response = session.get(QuestionnaireResponse, response_id)
+    response = questionnaire.read_response(session=session, response_id=response_id)
     if not response:
         raise HTTPException(status_code=404, detail="Response not found")
-    
-    response.manual_score_override = response_in.manual_score_override
-    session.add(response)
-    session.commit()
-    session.refresh(response)
-    
+
+    questionnaire.update_response_score(
+        session=session,
+        response=response,
+        score_override=response_in.manual_score_override
+    )
+
     return response
 
 
@@ -472,27 +459,14 @@ def read_appointments(
     Retrieve appointments. Users see their own, admins see all.
     """
     if current_user.is_superuser:
-        count_statement = select(func.count()).select_from(Appointment)
-        count = session.exec(count_statement).one()
-        
-        statement = select(Appointment).offset(skip).limit(limit)
-        appointments = session.exec(statement).all()
+        appointments, count = questionnaire.appointment.read_all(
+            session=session, skip=skip, limit=limit
+        )
     else:
-        count_statement = (
-            select(func.count())
-            .select_from(Appointment)
-            .where(Appointment.user_id == current_user.id)
+        appointments, count = questionnaire.appointment.read_my_appointments(
+            session=session, current_user=current_user, skip=skip, limit=limit
         )
-        count = session.exec(count_statement).one()
-        
-        statement = (
-            select(Appointment)
-            .where(Appointment.user_id == current_user.id)
-            .offset(skip)
-            .limit(limit)
-        )
-        appointments = session.exec(statement).all()
-    
+
     return AppointmentsPublic(data=appointments, count=count)
 
 
@@ -511,10 +485,9 @@ def create_appointment(
     user = session.get(User, appointment_in.user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    appointment = crud.create_appointment(session=session, appointment_in=appointment_in)
-    return appointment
 
+    appointment = questionnaire.appointment.create(session=session, appointment_in=appointment_in)
+    return appointment
 
 @router.get(
     "/appointments/{appointment_id}",
@@ -526,14 +499,14 @@ def read_appointment(
     """
     Get appointment by ID.
     """
-    appointment = session.get(Appointment, appointment_id)
+    appointment = questionnaire.appointment.read(session=session, appointment_id=appointment_id)
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
-    
+
     # Users can only view their own appointments, admins can view all
     if appointment.user_id != current_user.id and not current_user.is_superuser:
         raise HTTPException(status_code=403, detail="Not enough permissions")
-    
+
     return appointment
 
 
@@ -551,16 +524,14 @@ def update_appointment(
     """
     Update appointment (Admin only).
     """
-    appointment = session.get(Appointment, appointment_id)
+    appointment = questionnaire.appointment.read(session=session, appointment_id=appointment_id)
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
-    
-    update_data = appointment_in.model_dump(exclude_unset=True)
-    appointment.sqlmodel_update(update_data)
-    session.add(appointment)
-    session.commit()
-    session.refresh(appointment)
-    
+
+    appointment = questionnaire.appointment.update(
+        session=session, db_appointment=appointment, appointment_in=appointment_in
+    )
+
     return appointment
 
 
@@ -574,10 +545,12 @@ def delete_appointment(
     """
     Delete appointment (Admin only).
     """
-    appointment = session.get(Appointment, appointment_id)
+    appointment = questionnaire.appointment.read(session=session, appointment_id=appointment_id)
     if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
-    
-    session.delete(appointment)
-    session.commit()
-    return Message(message="Appointment deleted successfully")
+
+    result = questionnaire.appointment.delete(session=session, db_appointment=appointment)
+    if result.get("isDeleted", False):
+        return Message(message="Appointment deleted successfully")
+    else:
+        raise HTTPException(status_code=500, detail="Failed to delete appointment")
