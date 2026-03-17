@@ -6,6 +6,8 @@ import { request as __request } from "./core/request"
 import type {
   AiChatWithAiData,
   AiChatWithAiResponse,
+  AiAnalyzeWithAiData,
+  AiAnalyzeWithAiResponse,
   AiGetChatHistoryResponse,
   AiClearChatHistoryResponse,
   CheckinsCreateCheckinData,
@@ -113,16 +115,6 @@ import type {
   GoalScaffoldGetMetricSeriesResponse,
   GoalScaffoldGetDashboardResponse,
   GoalScaffoldListAvailableSeriesResponse,
-  ItemsReadItemsData,
-  ItemsReadItemsResponse,
-  ItemsCreateItemData,
-  ItemsCreateItemResponse,
-  ItemsReadItemData,
-  ItemsReadItemResponse,
-  ItemsUpdateItemData,
-  ItemsUpdateItemResponse,
-  ItemsDeleteItemData,
-  ItemsDeleteItemResponse,
   LoginLoginAccessTokenData,
   LoginLoginAccessTokenResponse,
   LoginTestTokenResponse,
@@ -132,16 +124,6 @@ import type {
   LoginResetPasswordResponse,
   LoginRecoverPasswordHtmlContentData,
   LoginRecoverPasswordHtmlContentResponse,
-  OrientationsReadOrientationsData,
-  OrientationsReadOrientationsResponse,
-  OrientationsCreateOrientationEndpointData,
-  OrientationsCreateOrientationEndpointResponse,
-  OrientationsReadOrientationData,
-  OrientationsReadOrientationResponse,
-  OrientationsUpdateOrientationEndpointData,
-  OrientationsUpdateOrientationEndpointResponse,
-  OrientationsDeleteOrientationData,
-  OrientationsDeleteOrientationResponse,
   PrivateCreateUserData,
   PrivateCreateUserResponse,
   QuestionnairesReadLegacyQuestionnaireResponsesData,
@@ -249,6 +231,39 @@ export class AiService {
     return __request(OpenAPI, {
       method: "POST",
       url: "/api/v1/ai/chat",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Analyze With Ai
+   * Send an analysis request to the AI service.
+   *
+   * Args:
+   * current_user: The authenticated user making the request.
+   * payload: The payload containing the prompt and details.
+   *
+   * Returns:
+   * AnalyzeResponse: The AI-generated answer.
+   *
+   * Raises:
+   * HTTPException: If the AI service is not configured or if the
+   * request fails.
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns AnalyzeResponse Successful Response
+   * @throws ApiError
+   */
+  public static analyzeWithAi(
+    data: AiAnalyzeWithAiData,
+  ): CancelablePromise<AiAnalyzeWithAiResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/ai/analyze",
       body: data.requestBody,
       mediaType: "application/json",
       errors: {
@@ -2945,127 +2960,6 @@ export class HabitsService {
   }
 }
 
-export class ItemsService {
-  /**
-   * Read Items
-   * Retrieve items.
-   * @param data The data for the request.
-   * @param data.skip
-   * @param data.limit
-   * @returns ItemsPublic Successful Response
-   * @throws ApiError
-   */
-  public static readItems(
-    data: ItemsReadItemsData = {},
-  ): CancelablePromise<ItemsReadItemsResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/items/",
-      query: {
-        skip: data.skip,
-        limit: data.limit,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Create Item
-   * Create new item.
-   * @param data The data for the request.
-   * @param data.requestBody
-   * @returns ItemPublic Successful Response
-   * @throws ApiError
-   */
-  public static createItem(
-    data: ItemsCreateItemData,
-  ): CancelablePromise<ItemsCreateItemResponse> {
-    return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/v1/items/",
-      body: data.requestBody,
-      mediaType: "application/json",
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Read Item
-   * Get item by ID.
-   * @param data The data for the request.
-   * @param data.id
-   * @returns ItemPublic Successful Response
-   * @throws ApiError
-   */
-  public static readItem(
-    data: ItemsReadItemData,
-  ): CancelablePromise<ItemsReadItemResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/items/{id}",
-      path: {
-        id: data.id,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Update Item
-   * Update an item.
-   * @param data The data for the request.
-   * @param data.id
-   * @param data.requestBody
-   * @returns ItemPublic Successful Response
-   * @throws ApiError
-   */
-  public static updateItem(
-    data: ItemsUpdateItemData,
-  ): CancelablePromise<ItemsUpdateItemResponse> {
-    return __request(OpenAPI, {
-      method: "PUT",
-      url: "/api/v1/items/{id}",
-      path: {
-        id: data.id,
-      },
-      body: data.requestBody,
-      mediaType: "application/json",
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Delete Item
-   * Delete an item.
-   * @param data The data for the request.
-   * @param data.id
-   * @returns Message Successful Response
-   * @throws ApiError
-   */
-  public static deleteItem(
-    data: ItemsDeleteItemData,
-  ): CancelablePromise<ItemsDeleteItemResponse> {
-    return __request(OpenAPI, {
-      method: "DELETE",
-      url: "/api/v1/items/{id}",
-      path: {
-        id: data.id,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-}
-
 export class LoginService {
   /**
    * Login Access Token
@@ -3163,127 +3057,6 @@ export class LoginService {
       url: "/api/v1/password-recovery-html-content/{email}",
       path: {
         email: data.email,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-}
-
-export class OrientationsService {
-  /**
-   * Read Orientations
-   * Retrieve orientations.
-   * @param data The data for the request.
-   * @param data.skip
-   * @param data.limit
-   * @returns OrientationsPublic Successful Response
-   * @throws ApiError
-   */
-  public static readOrientations(
-    data: OrientationsReadOrientationsData = {},
-  ): CancelablePromise<OrientationsReadOrientationsResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/orientations/",
-      query: {
-        skip: data.skip,
-        limit: data.limit,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Create Orientation Endpoint
-   * Create new orientation.
-   * @param data The data for the request.
-   * @param data.requestBody
-   * @returns OrientationPublic Successful Response
-   * @throws ApiError
-   */
-  public static createOrientationEndpoint(
-    data: OrientationsCreateOrientationEndpointData,
-  ): CancelablePromise<OrientationsCreateOrientationEndpointResponse> {
-    return __request(OpenAPI, {
-      method: "POST",
-      url: "/api/v1/orientations/",
-      body: data.requestBody,
-      mediaType: "application/json",
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Read Orientation
-   * Get orientation by ID.
-   * @param data The data for the request.
-   * @param data.id
-   * @returns OrientationPublic Successful Response
-   * @throws ApiError
-   */
-  public static readOrientation(
-    data: OrientationsReadOrientationData,
-  ): CancelablePromise<OrientationsReadOrientationResponse> {
-    return __request(OpenAPI, {
-      method: "GET",
-      url: "/api/v1/orientations/{id}",
-      path: {
-        id: data.id,
-      },
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Update Orientation Endpoint
-   * Update an orientation.
-   * @param data The data for the request.
-   * @param data.id
-   * @param data.requestBody
-   * @returns OrientationPublic Successful Response
-   * @throws ApiError
-   */
-  public static updateOrientationEndpoint(
-    data: OrientationsUpdateOrientationEndpointData,
-  ): CancelablePromise<OrientationsUpdateOrientationEndpointResponse> {
-    return __request(OpenAPI, {
-      method: "PUT",
-      url: "/api/v1/orientations/{id}",
-      path: {
-        id: data.id,
-      },
-      body: data.requestBody,
-      mediaType: "application/json",
-      errors: {
-        422: "Validation Error",
-      },
-    })
-  }
-
-  /**
-   * Delete Orientation
-   * Delete an orientation.
-   * @param data The data for the request.
-   * @param data.id
-   * @returns Message Successful Response
-   * @throws ApiError
-   */
-  public static deleteOrientation(
-    data: OrientationsDeleteOrientationData,
-  ): CancelablePromise<OrientationsDeleteOrientationResponse> {
-    return __request(OpenAPI, {
-      method: "DELETE",
-      url: "/api/v1/orientations/{id}",
-      path: {
-        id: data.id,
       },
       errors: {
         422: "Validation Error",

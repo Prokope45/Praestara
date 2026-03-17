@@ -15,8 +15,6 @@ const items = [
   { icon: ContentPasteOutlined as IconType, title: "Questionnaires", path: "/questionnaires" },
   { icon: MapOutlined as IconType, title: "Value Map", path: "/value-map" },
   { icon: QuestionAnswerOutlined as IconType, title: "Chat", path: "/chat" },
-  // { icon: FiFileText, title: "Notes", path: "/notes" },
-  // { icon: FiCompass, title: "Orientations", path: "/orientations" },
   { icon: SettingsOutlined as IconType, title: "User Settings", path: "/settings" },
 ]
 

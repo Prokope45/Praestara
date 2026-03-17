@@ -1,9 +1,6 @@
 """Utility modules for the application."""
-from . import KoiosClient
+from .KoiosClient import ai_client
 from .routes import ai_router
-
-# Singleton instance for easy import
-ai_client = KoiosClient()
 
 __all__ = [
     "ai_client",

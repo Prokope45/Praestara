@@ -439,3 +439,7 @@ class KoiosClient:
         """Clear the cached token (useful for testing or forced refresh)."""
         self._token = None
         self._token_expiry = None
+
+
+# Singleton instance for easy import
+ai_client = KoiosClient()
