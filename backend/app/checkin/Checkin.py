@@ -2,10 +2,10 @@ import re
 import uuid
 from typing import Any
 
-import httpx
 from sqlmodel import Session, desc, func, select
 
 from app.core.config import settings
+from app.koios_client.KoiosClient import ai_client
 from app.models import (
     Checkin,
     QuestionnaireAssignment,
@@ -60,42 +60,59 @@ class CheckinLogic:
 
         return payload, str(response.id)
 
-    def _build_prompt(
+    def _build_analysis_payload(
         self,
         *,
         checkin_type: str,
         checkin_text: str,
         onboarding_payload: dict[str, Any] | None,
         last_morning_text: str | None,
-    ) -> str:
-        context_parts = [
+    ) -> tuple[str, list[dict[str, Any]]]:
+        prompt_parts = [
             "You are Praestara: non-moralizing, values-anchored, non-diagnostic.",
             "Your goal is to connect actions to values and self-concept, without accountability or judgment.",
             "If there are discrepancies between stated values and today's plan/summary, gently reflect them without questions.",
-            "Close with a short glimpse of how today's direction reinforces who the person is becoming.",
         ]
 
-        if onboarding_payload:
-            context_parts.append("Onboarding values/self-concept data (JSON):")
-            context_parts.append(str(onboarding_payload))
-
         if checkin_type == "morning":
-            context_parts.append("Morning check-in (user plans):")
-            context_parts.append(checkin_text)
-            context_parts.append(
+            prompt_parts.append(
                 "Respond with: (1) a brief reflection, (2) a closing glimpse of how this direction supports the identity trajectory. No questions."
             )
         else:
-            if last_morning_text:
-                context_parts.append("Morning plan (earlier today):")
-                context_parts.append(last_morning_text)
-            context_parts.append("Evening check-in (what they did today):")
-            context_parts.append(checkin_text)
-            context_parts.append(
+            prompt_parts.append(
                 "Respond with: (1) a brief reflection comparing plan vs day, (2) a closing glimpse of how this supports identity trajectory. No questions."
             )
 
-        return "\n\n".join(context_parts)
+        prompt = "\n".join(prompt_parts)
+
+        details = []
+        if onboarding_payload:
+            details.append({
+                "key": "onboarding_data",
+                "value": str(onboarding_payload),
+                "description": "Onboarding values/self-concept data"
+            })
+
+        if checkin_type == "morning":
+            details.append({
+                "key": "morning_plan",
+                "value": checkin_text,
+                "description": "Morning check-in (user plans)"
+            })
+        else:
+            if last_morning_text:
+                details.append({
+                    "key": "morning_plan",
+                    "value": last_morning_text,
+                    "description": "Morning plan (earlier today)"
+                })
+            details.append({
+                "key": "evening_summary",
+                "value": checkin_text,
+                "description": "Evening check-in (what they did today)"
+            })
+
+        return prompt, details
 
     def _extract_domains(self, onboarding_payload: dict[str, Any] | None) -> list[dict[str, Any]]:
         if not onboarding_payload:
@@ -162,33 +179,16 @@ class CheckinLogic:
         lines.append("These reflections accumulate into a steadier identity trajectory over time.")
         return " ".join(lines)
 
-    def _call_llm(self, prompt: str) -> str | None:
-        if not settings.LLM_ENDPOINT:
-            return None
-
-        headers: dict[str, str] = {}
-        if settings.LLM_API_KEY:
-            headers["Authorization"] = f"Bearer {settings.LLM_API_KEY}"
-
-        request_body = {
-            "prompt": prompt,
-            "max_tokens": settings.LLM_MAX_TOKENS,
-            "temperature": settings.LLM_TEMPERATURE,
-        }
-
-        timeout_seconds = min(settings.LLM_TIMEOUT_SECONDS, 8)
+    def _call_ai(self, user_id: uuid.UUID, prompt: str, details: list[dict[str, Any]]) -> str | None:
         try:
-            with httpx.Client(timeout=timeout_seconds) as client:
-                response = client.post(str(settings.LLM_ENDPOINT), json=request_body, headers=headers)
-                response.raise_for_status()
-        except httpx.HTTPError:
+            return ai_client.process_analysis(
+                user_id=str(user_id),
+                prompt=prompt,
+                details=details,
+                temperature=settings.LLM_TEMPERATURE if hasattr(settings, "LLM_TEMPERATURE") else 0.5,
+            )
+        except Exception:
             return None
-
-        data = response.json()
-        reply = data.get("output") or data.get("reply") or data.get("text")
-        if not reply:
-            return None
-        return str(reply)
 
     def create(self, *, session: Session, user_id: uuid.UUID, checkin_type: str, text: str) -> Checkin:
         onboarding_payload, onboarding_id = self._get_onboarding_payload(session, user_id)
@@ -204,14 +204,14 @@ class CheckinLogic:
                 .order_by(desc(Checkin.created_at))
             ).first()
 
-        prompt = self._build_prompt(
+        prompt, details = self._build_analysis_payload(
             checkin_type=checkin_type,
             checkin_text=text,
             onboarding_payload=onboarding_payload,
             last_morning_text=(last_morning.text if last_morning else None),
         )
 
-        reply = self._call_llm(prompt)
+        reply = self._call_ai(user_id, prompt, details)
         if reply is None:
             reply = self._fallback_reply(
                 checkin_type=checkin_type,
