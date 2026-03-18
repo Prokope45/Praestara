@@ -2,7 +2,7 @@ import { Box, Container, Typography, Paper, Button, Stack } from "@mui/material"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { FiArrowRight } from "react-icons/fi"
+import { FiArrowRight, FiCheckCircle } from "react-icons/fi"
 import { Line, Radar } from "react-chartjs-2"
 import {
   Chart as ChartJS,
@@ -46,6 +46,15 @@ function Dashboard() {
     window.dispatchEvent(new Event("praestara_checkin_trigger"))
   }
 
+  const { data: morningHistory } = useQuery({
+    queryKey: ["checkins", "morning"],
+    queryFn: () =>
+      CheckinsService.readCheckins({
+        type: "morning",
+        limit: 200,
+      }),
+  })
+
   const { data: eveningHistory } = useQuery({
     queryKey: ["checkins", "evening"],
     queryFn: () =>
@@ -54,6 +63,20 @@ function Dashboard() {
         limit: 200,
       }),
   })
+
+  const isSameDay = (dateString: string) => {
+    const candidate = new Date(dateString)
+    const today = new Date()
+    return candidate.toDateString() === today.toDateString()
+  }
+
+  const morningDone = useMemo(() => {
+    return (morningHistory?.data ?? []).some((entry) => isSameDay(entry.created_at))
+  }, [morningHistory])
+
+  const eveningDone = useMemo(() => {
+    return (eveningHistory?.data ?? []).some((entry) => isSameDay(entry.created_at))
+  }, [eveningHistory])
 
   // Fetch user's questionnaire assignments
   const { data: assignmentsData } = useQuery({
@@ -217,8 +240,15 @@ function Dashboard() {
                 justifyContent: "space-between",
                 background: "linear-gradient(135deg, #FDBA74 0%, #FDE68A 45%, #93C5FD 100%)",
                 color: "#1f2937",
+                border: morningDone ? "3px solid #10b981" : "3px solid transparent",
+                position: "relative",
               }}
             >
+              {morningDone && (
+                <Box sx={{ position: "absolute", top: 8, right: 8, color: "#10b981", bgcolor: "white", borderRadius: "50%", display: "flex", p: 0.2 }}>
+                  <FiCheckCircle size={20} />
+                </Box>
+              )}
               <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                 Morning
               </Typography>
@@ -236,8 +266,15 @@ function Dashboard() {
                 justifyContent: "space-between",
                 background: "linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #b45309 75%, #7f1d1d 100%)",
                 color: "#f8fafc",
+                border: eveningDone ? "3px solid #10b981" : "3px solid transparent",
+                position: "relative",
               }}
             >
+              {eveningDone && (
+                <Box sx={{ position: "absolute", top: 8, right: 8, color: "#10b981", bgcolor: "white", borderRadius: "50%", display: "flex", p: 0.2 }}>
+                  <FiCheckCircle size={20} />
+                </Box>
+              )}
               <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                 Evening
               </Typography>

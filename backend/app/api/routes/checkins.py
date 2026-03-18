@@ -131,7 +131,7 @@ def update_checkin(
     checkin_in: CheckinUpdate,
 ) -> CheckinPublic:
     """
-    Update a checkin's text. The AI reply is not regenerated.
+    Update a checkin's text. The AI reply is regenerated with the updated context.
     """
     checkin = checkin_logic.read(session=session, checkin_id=checkin_id)
     if not checkin:
