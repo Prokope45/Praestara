@@ -5,10 +5,10 @@ from sqlmodel import Session
 
 from app.core.config import settings
 from app.core.security import verify_password
-from app.crud import create_user
 from app.models import UserCreate
 from app.tests.utils.user import user_authentication_headers
 from app.tests.utils.utils import random_email, random_lower_string
+from app.user import user_logic
 from app.utils import generate_password_reset_token
 
 
@@ -85,7 +85,7 @@ def test_reset_password(client: TestClient, db: Session) -> None:
         is_active=True,
         is_superuser=False,
     )
-    user = create_user(session=db, user_create=user_create)
+    user = user_logic.create(session=db, user_create=user_create)
     token = generate_password_reset_token(email=email)
     headers = user_authentication_headers(client=client, email=email, password=password)
     data = {"new_password": new_password, "token": token}

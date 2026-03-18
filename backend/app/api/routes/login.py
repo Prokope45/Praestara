@@ -4,15 +4,14 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlmodel import select
 
-from app import crud
 from app.api.deps import CurrentUser, SessionDep, get_current_active_superuser
 from app.core import security
 from app.core.config import settings
 from app.core.security import get_password_hash
-from sqlmodel import select
-
 from app.models import Message, NewPassword, Token, User, UserPublic
+from app.user import user_logic
 from app.utils import (
     generate_password_reset_token,
     generate_reset_password_email,
@@ -36,19 +35,19 @@ def login_access_token(
         users = session.exec(statement).all()
         if len(users) > 1:
             raise HTTPException(
-                status_code=400, 
+                status_code=400,
                 detail="Multiple accounts found with this username. Please use your full email address to log in."
             )
         elif len(users) == 1:
             email = users[0].email
 
-    user = crud.authenticate(
+    user = user_logic.authenticate(
         session=session, email=email, password=form_data.password
     )
     if not user:
         if "@" not in form_data.username:
             raise HTTPException(
-                status_code=400, 
+                status_code=400,
                 detail="Incorrect username or password. If you need to recover your password, please use your full email address."
             )
         raise HTTPException(status_code=400, detail="Incorrect email or password")
@@ -75,11 +74,11 @@ def recover_password(email: str, session: SessionDep) -> Message:
     """
     Password Recovery
     """
-    user = crud.get_user_by_email(session=session, email=email)
+    user = user_logic.get_by_email(session=session, email=email)
 
     if not user:
         return Message(message="Password recovery email sent")
-        
+
     password_reset_token = generate_password_reset_token(email=email)
     email_data = generate_reset_password_email(
         email_to=user.email, email=email, token=password_reset_token
@@ -100,7 +99,7 @@ def reset_password(session: SessionDep, body: NewPassword) -> Message:
     email = verify_password_reset_token(token=body.token)
     if not email:
         raise HTTPException(status_code=400, detail="Invalid token")
-    user = crud.get_user_by_email(session=session, email=email)
+    user = user_logic.get_by_email(session=session, email=email)
     if not user:
         raise HTTPException(
             status_code=404,
@@ -124,7 +123,7 @@ def recover_password_html_content(email: str, session: SessionDep) -> Any:
     """
     HTML Content for Password Recovery
     """
-    user = crud.get_user_by_email(session=session, email=email)
+    user = user_logic.get_by_email(session=session, email=email)
 
     if not user:
         raise HTTPException(
