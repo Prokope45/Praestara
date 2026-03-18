@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 
-import { CheckinsService, QuestionnairesService } from "@/client"
+import { CheckinsService } from "@/client"
 
 export const Route = createFileRoute("/_layout/checkins")({
   component: Checkins,
@@ -41,8 +41,8 @@ function Checkins() {
   const { data: morningHistory } = useQuery({
     queryKey: ["checkins", "morning"],
     queryFn: () =>
-      QuestionnairesService.readLegacyQuestionnaireResponses({
-        kind: "morning_checkin",
+      CheckinsService.readCheckins({
+        type: "morning",
         limit: 10,
       }),
   })
@@ -50,8 +50,8 @@ function Checkins() {
   const { data: eveningHistory } = useQuery({
     queryKey: ["checkins", "evening"],
     queryFn: () =>
-      QuestionnairesService.readLegacyQuestionnaireResponses({
-        kind: "evening_checkin",
+      CheckinsService.readCheckins({
+        type: "evening",
         limit: 10,
       }),
   })
@@ -77,7 +77,7 @@ function Checkins() {
                     {new Date(entry.created_at).toLocaleDateString()}
                   </Typography>
                   <Stack spacing={0.5}>
-                    {splitIntoSentences((entry.payload as any).text ?? "").map((sentence, idx) => (
+                    {splitIntoSentences(entry.text ?? "").map((sentence, idx) => (
                       <Typography key={idx} variant="body2">
                         {sentence}
                       </Typography>
@@ -96,7 +96,7 @@ function Checkins() {
                     {new Date(entry.created_at).toLocaleDateString()}
                   </Typography>
                   <Stack spacing={0.5}>
-                    {splitIntoSentences((entry.payload as any).text ?? "").map((sentence, idx) => (
+                    {splitIntoSentences(entry.text ?? "").map((sentence, idx) => (
                       <Typography key={idx} variant="body2">
                         {sentence}
                       </Typography>

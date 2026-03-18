@@ -1,14 +1,14 @@
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
-from pydantic import EmailStr
 import sqlalchemy as sa
+from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 
 if TYPE_CHECKING:
-    from typing import List
+    pass
 
 
 # Enums for questionnaire system
@@ -78,14 +78,12 @@ class UpdatePassword(SQLModel):
 class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
-    items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
-    orientations: list["Orientation"] = Relationship(back_populates="owner", cascade_delete=True)
     created_questionnaires: list["QuestionnaireTemplate"] = Relationship(back_populates="created_by", cascade_delete=True)
     appointments: list["Appointment"] = Relationship(back_populates="user", cascade_delete=True)
     questionnaire_assignments: list["QuestionnaireAssignment"] = Relationship(back_populates="user", cascade_delete=True)
     questionnaire_responses: list["QuestionnaireResponse"] = Relationship(back_populates="user", cascade_delete=True)
-    legacy_questionnaire_responses: list["LegacyQuestionnaireResponse"] = Relationship(
-        back_populates="owner", cascade_delete=True
+    checkins: list["Checkin"] = Relationship(
+        back_populates="user", cascade_delete=True
     )
     engine89_results: list["Engine89Result"] = Relationship(
         back_populates="owner", cascade_delete=True
@@ -102,41 +100,16 @@ class UsersPublic(SQLModel):
     count: int
 
 
-# Shared properties
-class ItemBase(SQLModel):
-    title: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=255)
+# Analysis models
+class AnalyzeRequest(SQLModel):
+    prompt: str
+    details: list[dict[str, Any]]
+    model: str | None = None
+    temperature: float | None = 0.5
 
 
-# Properties to receive on item creation
-class ItemCreate(ItemBase):
-    pass
-
-
-# Properties to receive on item update
-class ItemUpdate(ItemBase):
-    title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
-
-
-# Database model, database table inferred from class name
-class Item(ItemBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    title: str = Field(max_length=255)
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
-    )
-    owner: User | None = Relationship(back_populates="items")
-
-
-# Properties to return via API, id is always required
-class ItemPublic(ItemBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-
-
-class ItemsPublic(SQLModel):
-    data: list[ItemPublic]
-    count: int
+class AnalyzeResponse(SQLModel):
+    answer: str
 
 
 # Generic message
@@ -158,72 +131,6 @@ class TokenPayload(SQLModel):
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
-
-
-# Orientation Trait models
-class OrientationTraitBase(SQLModel):
-    name: str = Field(max_length=255)
-    value: int = Field(ge=0, le=100)  # 0-100 percentage
-    description: str | None = Field(default=None, max_length=500)
-
-
-class OrientationTraitCreate(OrientationTraitBase):
-    pass
-
-
-class OrientationTraitUpdate(OrientationTraitBase):
-    name: str | None = Field(default=None, max_length=255)  # type: ignore
-    value: int | None = Field(default=None, ge=0, le=100)  # type: ignore
-
-
-class OrientationTrait(OrientationTraitBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    orientation_id: uuid.UUID = Field(
-        foreign_key="orientation.id", nullable=False, ondelete="CASCADE"
-    )
-    orientation: Optional["Orientation"] = Relationship(back_populates="traits")
-
-
-class OrientationTraitPublic(OrientationTraitBase):
-    id: uuid.UUID
-
-
-# Orientation models
-class OrientationBase(SQLModel):
-    title: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=1000)
-    notes: str | None = Field(default=None)
-
-
-class OrientationCreate(OrientationBase):
-    traits: list[OrientationTraitCreate] = []
-
-
-class OrientationUpdate(OrientationBase):
-    title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
-    traits: list[OrientationTraitCreate] | None = None
-
-
-class Orientation(OrientationBase, table=True):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(
-        foreign_key="user.id", nullable=False, ondelete="CASCADE"
-    )
-    owner: Optional["User"] = Relationship(back_populates="orientations")
-    traits: list["OrientationTrait"] = Relationship(
-        back_populates="orientation", cascade_delete=True
-    )
-
-
-class OrientationPublic(OrientationBase):
-    id: uuid.UUID
-    owner_id: uuid.UUID
-    traits: list[OrientationTraitPublic] = []
-
-
-class OrientationsPublic(SQLModel):
-    data: list[OrientationPublic]
-    count: int
 
 
 # Question models (defined before QuestionnaireTemplate to avoid forward reference issues)
@@ -472,37 +379,40 @@ class AnswerPublic(AnswerBase):
     question: QuestionPublic
 
 
-# Legacy Questionnaire response models (for checkins and engine89)
-class LegacyQuestionnaireResponseBase(SQLModel):
-    kind: str = Field(max_length=50)
-    schema_version: str = Field(default="v1", max_length=20)
-    payload: dict[str, Any] = Field(sa_type=sa.JSON)
+# Checkin models
+class CheckinBase(SQLModel):
+    type: str = Field(max_length=50)
+    text: str = Field(sa_type=sa.Text)
+    reply: str = Field(sa_type=sa.Text)
+    alignment_score: int | None = None
+    onboarding_id: str | None = None
+    morning_id: str | None = None
 
 
-class LegacyQuestionnaireResponseCreate(LegacyQuestionnaireResponseBase):
+class CheckinCreate(CheckinBase):
     pass
 
 
-class LegacyQuestionnaireResponse(LegacyQuestionnaireResponseBase, table=True):
+class Checkin(CheckinBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    owner_id: uuid.UUID = Field(
+    user_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
-    owner: Optional["User"] = Relationship(back_populates="legacy_questionnaire_responses")
+    user: Optional["User"] = Relationship(back_populates="checkins")
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         sa_type=sa.DateTime(timezone=True),
     )
 
 
-class LegacyQuestionnaireResponsePublic(LegacyQuestionnaireResponseBase):
+class CheckinPublic(CheckinBase):
     id: uuid.UUID
-    owner_id: uuid.UUID
+    user_id: uuid.UUID
     created_at: datetime
 
 
-class LegacyQuestionnaireResponsesPublic(SQLModel):
-    data: list[LegacyQuestionnaireResponsePublic]
+class CheckinsPublic(SQLModel):
+    data: list[CheckinPublic]
     count: int
 
 

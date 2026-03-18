@@ -1,23 +1,22 @@
 import { Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material"
 import { Link as RouterLink } from "@tanstack/react-router"
-import {
-  QuestionAnswerOutlined, HomeOutlined, ContentPasteOutlined,
-  MapOutlined, SettingsOutlined, PeopleOutlined
-} from "@mui/icons-material"
+
 import type { IconType } from "react-icons/lib"
+import { FiMap } from "react-icons/fi";
+import { FiHome } from "react-icons/fi";
+import { FiClipboard } from "react-icons/fi";
+import { FiSettings } from "react-icons/fi";
+import { FiUsers } from "react-icons/fi";
+import { HiOutlineChatAlt2 } from "react-icons/hi";
 
 import useAuth from "@/hooks/useAuth"
 
-const UsersIcon = PeopleOutlined as IconType
-
 const items = [
-  { icon: HomeOutlined as IconType, title: "Dashboard", path: "/" },
-  { icon: ContentPasteOutlined as IconType, title: "Questionnaires", path: "/questionnaires" },
-  { icon: MapOutlined as IconType, title: "Value Map", path: "/value-map" },
-  { icon: QuestionAnswerOutlined as IconType, title: "Chat", path: "/chat" },
-  // { icon: FiFileText, title: "Notes", path: "/notes" },
-  // { icon: FiCompass, title: "Orientations", path: "/orientations" },
-  { icon: SettingsOutlined as IconType, title: "User Settings", path: "/settings" },
+  { icon: FiHome as IconType, title: "Dashboard", path: "/" },
+  { icon: FiClipboard as IconType, title: "Questionnaires", path: "/questionnaires" },
+  { icon: FiMap as IconType, title: "Value Map", path: "/value-map" },
+  { icon: HiOutlineChatAlt2 as IconType, title: "Chat", path: "/chat" },
+  { icon: FiSettings as IconType, title: "User Settings", path: "/settings" },
 ]
 
 interface SidebarItemsProps {
@@ -34,7 +33,7 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
   const { user: currentUser } = useAuth()
 
   const finalItems: Item[] = currentUser?.is_superuser
-    ? [...items, { icon: UsersIcon, title: "Admin", path: "/admin" }]
+    ? [...items, { icon: FiUsers, title: "Admin", path: "/admin" }]
     : items
 
   return (

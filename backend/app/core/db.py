@@ -1,13 +1,9 @@
 from sqlmodel import Session, create_engine, select
 
-from app import crud
 from app.core.config import settings
 from app.models import (
     User,
     UserCreate,
-    OrientationCreate,
-    OrientationTraitCreate,
-    Orientation,
 )
 
 engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
@@ -36,4 +32,6 @@ def init_db(session: Session) -> None:
             password=settings.FIRST_SUPERUSER_PASSWORD,
             is_superuser=True,
         )
-        user = crud.create_user(session=session, user_create=user_in)
+        # Circular import, so lazy load
+        from app.user import user_logic
+        user = user_logic.create(session=session, user_create=user_in)

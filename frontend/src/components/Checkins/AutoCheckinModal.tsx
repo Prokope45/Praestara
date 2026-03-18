@@ -2,7 +2,7 @@ import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, 
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useEffect, useMemo, useState } from "react"
 
-import { CheckinsService, QuestionnairesService } from "@/client"
+import { CheckinsService } from "@/client"
 import useAuth from "@/hooks/useAuth"
 
 const isSameDay = (dateString: string) => {
@@ -28,13 +28,13 @@ function AutoCheckinModal() {
   const { data: morningHistory } = useQuery({
     queryKey: ["checkins", "morning", "latest"],
     queryFn: () =>
-      QuestionnairesService.readLegacyQuestionnaireResponses({ kind: "morning_checkin", limit: 20 }),
+      CheckinsService.readCheckins({ type: "morning", limit: 20 }),
   })
 
   const { data: eveningHistory } = useQuery({
     queryKey: ["checkins", "evening", "latest"],
     queryFn: () =>
-      QuestionnairesService.readLegacyQuestionnaireResponses({ kind: "evening_checkin", limit: 20 }),
+      CheckinsService.readCheckins({ type: "evening", limit: 20 }),
   })
 
   const morningDone = useMemo(() => {

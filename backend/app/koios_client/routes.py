@@ -4,41 +4,22 @@ Integrates with the Koios RAG AI service for intelligent responses.
 """
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
+from app.koios_client import ai_client
 from app.api.deps import CurrentUser
 from app.core.config import settings
-from app.models import Message
-from app.ai_utils.ai_client import ai_client
+from app.models import AnalyzeRequest, AnalyzeResponse, Message
+from app.koios_client.models import ChatMessage, ChatHistoryResponse, ClearHistoryResponse
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/ai", tags=["ai"])
+ai_router = APIRouter(prefix="/ai", tags=["ai"])
 
 
-# Response models for history endpoints
-class ChatMessage:
-    """A single chat message."""
-
-    role: str
-    content: str
-
-
-class ChatHistoryResponse:
-    """Response model for chat history."""
-
-    history: list[dict[str, str]]
-    message_count: int
-
-
-class ClearHistoryResponse:
-    """Response model for clearing history."""
-
-    messages_deleted: int
-
-
-@router.post("/chat", response_model=Message)
+@ai_router.post("/chat", response_model=Message)
 def chat_with_ai(*, current_user: CurrentUser, payload: Message) -> Message:
     """Send a message to the AI service and return the reply.
 
@@ -94,8 +75,58 @@ def chat_with_ai(*, current_user: CurrentUser, payload: Message) -> Message:
         ) from e
 
 
-@router.get("/history")
-def get_chat_history(current_user: CurrentUser) -> dict:
+@ai_router.post("/analyze", response_model=AnalyzeResponse)
+def analyze_with_ai(*, current_user: CurrentUser, payload: AnalyzeRequest) -> AnalyzeResponse:
+    """Send an analysis request to the AI service.
+
+    Args:
+        current_user: The authenticated user making the request.
+        payload: The payload containing the prompt and details.
+
+    Returns:
+        AnalyzeResponse: The AI-generated answer.
+
+    Raises:
+        HTTPException: If the AI service is not configured or if the
+            request fails.
+    """
+    if not ai_client.is_configured:
+        raise HTTPException(
+            status_code=503,
+            detail="AI service is not configured. Please set AI_API_URL and AI_ENCRYPTION_KEY."
+        )
+
+    user_id = str(current_user.id)
+
+    try:
+        logger.info(f"Analyzing prompt: {payload.prompt}")
+        answer = ai_client.process_analysis(
+            user_id=user_id,
+            prompt=payload.prompt,
+            details=payload.details,
+            model=payload.model,
+            temperature=payload.temperature,
+        )
+
+        return AnalyzeResponse(answer=answer)
+
+    except ValueError as e:
+        logger.error("AI service validation error: %s", e)
+        raise HTTPException(
+            status_code=502,
+            detail=f"AI service error: {e}"
+        ) from e
+
+    except Exception as e:
+        logger.error("AI service request failed: %s", e)
+        raise HTTPException(
+            status_code=502,
+            detail=f"AI service request failed: {e}"
+        ) from e
+
+
+@ai_router.get("/history", response_model=ChatHistoryResponse)
+def get_chat_history(current_user: CurrentUser) -> ChatHistoryResponse:
     """Get the chat history for the current user.
 
     Retrieves the persistent chat history from the AI service.
@@ -141,8 +172,8 @@ def get_chat_history(current_user: CurrentUser) -> dict:
         ) from e
 
 
-@router.delete("/history")
-def clear_chat_history(current_user: CurrentUser) -> dict:
+@ai_router.delete("/history", response_model=ClearHistoryResponse)
+def clear_chat_history(current_user: CurrentUser) -> ClearHistoryResponse:
     """Clear the chat history for the current user.
 
     Deletes all stored chat history from the AI service for this user.
