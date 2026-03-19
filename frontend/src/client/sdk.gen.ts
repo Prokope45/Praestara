@@ -14,6 +14,8 @@ import type {
   CheckinsCreateCheckinResponse,
   CheckinsReadCheckinsData,
   CheckinsReadCheckinsResponse,
+  CheckinsReadCheckinTimelineData,
+  CheckinsReadCheckinTimelineResponse,
   CheckinsReadCheckinData,
   CheckinsReadCheckinResponse,
   CheckinsUpdateCheckinData,
@@ -369,6 +371,29 @@ export class CheckinsService {
   }
 
   /**
+   * Read Checkin Timeline
+   * Retrieve checkins for the current user for the last `days`.
+   * @param data The data for the request.
+   * @param data.days
+   * @returns CheckinsPublic Successful Response
+   * @throws ApiError
+   */
+  public static readCheckinTimeline(
+    data: CheckinsReadCheckinTimelineData = {},
+  ): CancelablePromise<CheckinsReadCheckinTimelineResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/checkins/timeline",
+      query: {
+        days: data.days,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
    * Read Checkin
    * Get a specific checkin by ID.
    * @param data The data for the request.
@@ -393,7 +418,7 @@ export class CheckinsService {
 
   /**
    * Update Checkin
-   * Update a checkin's text. The AI reply is not regenerated.
+   * Update a checkin's text. The AI reply is regenerated with the updated context.
    * @param data The data for the request.
    * @param data.checkinId
    * @param data.requestBody

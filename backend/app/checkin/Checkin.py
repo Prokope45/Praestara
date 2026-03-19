@@ -1,6 +1,7 @@
 import re
 import uuid
 from typing import Any
+from datetime import datetime, timedelta, timezone
 
 from sqlmodel import Session, desc, func, select
 
@@ -243,6 +244,21 @@ class CheckinLogic:
         session.refresh(response)
 
         return response
+
+    def read_timeline(
+        self, *, session: Session, user_id: uuid.UUID, days: int
+    ) -> list[Checkin]:
+        since = datetime.now(timezone.utc) - timedelta(days=days)
+        statement = (
+            select(Checkin)
+            .where(
+                Checkin.user_id == user_id,
+                Checkin.type.in_(["morning", "evening"]),
+                Checkin.created_at >= since
+            )
+            .order_by(desc(Checkin.created_at))
+        )
+        return session.exec(statement).all()
 
     def read_all(
         self, *, session: Session, user_id: uuid.UUID, skip: int, limit: int, type: str | None
