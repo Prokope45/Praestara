@@ -14,6 +14,7 @@ import {
   Typography,
 } from "@mui/material"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useState } from "react"
 import { FiTrash2, FiUsers } from "react-icons/fi"
 
 import {
@@ -23,6 +24,7 @@ import {
 } from "../../client"
 import useCustomToast from "../../hooks/useCustomToast"
 import { AnimatedProgressBar } from "../Common/AnimatedProgressBar"
+import { DeleteConfirmation } from "../Common/DeleteConfirmation"
 import { Button } from "../ui/button"
 
 interface ViewAssignmentsProps {
@@ -38,6 +40,7 @@ export function ViewAssignments({
 }: ViewAssignmentsProps) {
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+  const [assignmentToDelete, setAssignmentToDelete] = useState<string | null>(null)
 
   // Fetch assignments for this questionnaire
   const { data: assignmentsData, isLoading } = useQuery({
@@ -63,6 +66,7 @@ export function ViewAssignments({
       QuestionnairesService.deleteAssignment({ assignmentId }),
     onSuccess: () => {
       showSuccessToast("Assignment removed successfully")
+      setAssignmentToDelete(null)
       queryClient.invalidateQueries({ queryKey: ["questionnaire-assignments"] })
       queryClient.invalidateQueries({ queryKey: ["all-assignments"] })
     },
@@ -72,8 +76,12 @@ export function ViewAssignments({
   })
 
   const handleRemoveAssignment = (assignmentId: string) => {
-    if (confirm("Are you sure you want to remove this assignment?")) {
-      deleteAssignmentMutation.mutate(assignmentId)
+    setAssignmentToDelete(assignmentId)
+  }
+
+  const confirmRemoveAssignment = () => {
+    if (assignmentToDelete) {
+      deleteAssignmentMutation.mutate(assignmentToDelete)
     }
   }
 
@@ -237,6 +245,7 @@ export function ViewAssignments({
                                   <IconButton
                                     size="small"
                                     aria-label="delete"
+                                    color="error"
                                     onClick={() =>
                                       handleRemoveAssignment(assignment.id)
                                     }
@@ -373,6 +382,15 @@ export function ViewAssignments({
       <DialogActions>
         <Button onClick={onClose}>Close</Button>
       </DialogActions>
+
+      <DeleteConfirmation
+        open={!!assignmentToDelete}
+        onClose={() => setAssignmentToDelete(null)}
+        onConfirm={confirmRemoveAssignment}
+        title="Remove Assignment"
+        description="Are you sure you want to remove this assignment? This action cannot be undone."
+        isPending={deleteAssignmentMutation.isPending}
+      />
     </Dialog>
   )
 }

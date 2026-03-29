@@ -222,6 +222,7 @@ export function AddQuestionnaire({
 
   const handleDrop = (e: React.DragEvent, targetId: string) => {
     e.preventDefault()
+    setDraggedSectionId(null)  // reset drag id to remove opacity on unmoved section.
     if (!draggedSectionId || draggedSectionId === targetId) return
 
     const newSections = [...sections]
@@ -649,6 +650,7 @@ export function AddQuestionnaire({
                   onDragStart={(e) => handleDragStart(e, section.id)}
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, section.id)}
+                  onDragEnd={() => setDraggedSectionId(null)}
                   sx={{
                     mb: 2,
                     opacity: draggedSectionId === section.id ? 0.5 : 1,

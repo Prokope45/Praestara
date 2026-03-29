@@ -46,9 +46,10 @@ export default function AdminQuestionnaires() {
   return (
     <Box>
       <Stack
-        direction="row"
+        direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
-        alignItems="center"
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        spacing={2}
         sx={{ mb: 4 }}
       >
         <Box>
@@ -68,6 +69,7 @@ export default function AdminQuestionnaires() {
           variant="contained"
           startIcon={<FiPlus />}
           onClick={() => setShowAddDialog(true)}
+          sx={{ alignSelf: { xs: "stretch", sm: "auto" } }}
         >
           Create Questionnaire
         </Button>
@@ -80,9 +82,10 @@ export default function AdminQuestionnaires() {
               <Card key={questionnaire.id} variant="outlined">
                 <CardContent>
                   <Stack
-                    direction="row"
+                    direction={{ xs: "column", md: "row" }}
                     justifyContent="space-between"
-                    alignItems="flex-start"
+                    alignItems={{ xs: "stretch", md: "flex-start" }}
+                    spacing={2}
                   >
                     <Box sx={{ flex: 1 }}>
                       <Stack
@@ -90,6 +93,8 @@ export default function AdminQuestionnaires() {
                         spacing={2}
                         alignItems="center"
                         sx={{ mb: 1 }}
+                        flexWrap="wrap"
+                        useFlexGap
                       >
                         <Typography variant="h6" component="h3">
                           {questionnaire.title}
@@ -113,7 +118,7 @@ export default function AdminQuestionnaires() {
                           {questionnaire.description}
                         </Typography>
                       )}
-                      <Stack direction="row" spacing={3}>
+                      <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 1, sm: 3 }}>
                         <Typography variant="caption" color="text.secondary">
                           <strong>Questions:</strong>{" "}
                           {questionnaire.questions?.length || 0}
@@ -126,7 +131,7 @@ export default function AdminQuestionnaires() {
                         </Typography>
                       </Stack>
                     </Box>
-                    <Stack direction="row" spacing={1}>
+                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: { xs: 2, md: 0 } }}>
                       <Button
                         size="small"
                         variant="outlined"
