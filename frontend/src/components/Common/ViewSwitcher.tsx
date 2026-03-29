@@ -1,6 +1,6 @@
-import { IconButton, Box, Tooltip } from "@mui/material"
-import { FiGrid, FiList } from "react-icons/fi"
+import { Box, IconButton, Tooltip } from "@mui/material"
 import { useState } from "react"
+import { FiGrid, FiList } from "react-icons/fi"
 
 export type ViewMode = "card" | "table"
 
@@ -9,7 +9,10 @@ interface ViewSwitcherProps {
   onViewChange?: (view: ViewMode) => void
 }
 
-const ViewSwitcher = ({ defaultView = "card", onViewChange }: ViewSwitcherProps) => {
+const ViewSwitcher = ({
+  defaultView = "card",
+  onViewChange,
+}: ViewSwitcherProps) => {
   const [view, setView] = useState<ViewMode>(defaultView)
 
   const handleViewChange = (newView: ViewMode) => {
@@ -20,16 +23,26 @@ const ViewSwitcher = ({ defaultView = "card", onViewChange }: ViewSwitcherProps)
   }
 
   return (
-    <Box sx={{ display: "flex", gap: 0.5, border: "1px solid", borderColor: "divider", borderRadius: 1 }}>
+    <Box
+      sx={{
+        display: "flex",
+        gap: 0.5,
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 1,
+      }}
+    >
       <Tooltip title="Card View">
         <IconButton
           size="small"
           onClick={() => handleViewChange("card")}
           sx={{
             borderRadius: 0,
-            backgroundColor: view === "card" ? "action.selected" : "transparent",
+            backgroundColor:
+              view === "card" ? "action.selected" : "transparent",
             "&:hover": {
-              backgroundColor: view === "card" ? "action.selected" : "action.hover",
+              backgroundColor:
+                view === "card" ? "action.selected" : "action.hover",
             },
           }}
         >
@@ -42,9 +55,11 @@ const ViewSwitcher = ({ defaultView = "card", onViewChange }: ViewSwitcherProps)
           onClick={() => handleViewChange("table")}
           sx={{
             borderRadius: 0,
-            backgroundColor: view === "table" ? "action.selected" : "transparent",
+            backgroundColor:
+              view === "table" ? "action.selected" : "transparent",
             "&:hover": {
-              backgroundColor: view === "table" ? "action.selected" : "action.hover",
+              backgroundColor:
+                view === "table" ? "action.selected" : "action.hover",
             },
           }}
         >

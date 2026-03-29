@@ -1,24 +1,24 @@
-import { useSnackbar } from 'notistack'
+import { useSnackbar } from "notistack"
 
 const useCustomToast = () => {
   const { enqueueSnackbar } = useSnackbar()
 
   const showSuccessToast = (description: string) => {
     enqueueSnackbar(description, {
-      variant: 'success',
+      variant: "success",
       anchorOrigin: {
-        vertical: 'top',
-        horizontal: 'right',
+        vertical: "top",
+        horizontal: "right",
       },
     })
   }
 
   const showErrorToast = (description: string) => {
     enqueueSnackbar(description, {
-      variant: 'error',
+      variant: "error",
       anchorOrigin: {
-        vertical: 'top',
-        horizontal: 'right',
+        vertical: "top",
+        horizontal: "right",
       },
     })
   }

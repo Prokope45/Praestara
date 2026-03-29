@@ -7,10 +7,10 @@ import { FiLogOut } from "react-icons/fi"
 import type { UserPublic } from "@/client"
 import useAuth from "@/hooks/useAuth"
 import {
-  DrawerRoot,
-  DrawerContent,
   DrawerBody,
   DrawerCloseTrigger,
+  DrawerContent,
+  DrawerRoot,
 } from "../ui/drawer"
 import SidebarItems from "./SidebarItems"
 
@@ -27,31 +27,34 @@ const Sidebar = () => {
   return (
     <>
       {/* Mobile */}
-      <DrawerRoot
-        placement="left"
-        open={open}
-        onOpenChange={setOpen}
-      >
+      <DrawerRoot placement="left" open={open} onOpenChange={setOpen}>
         <DrawerContent>
           <DrawerCloseTrigger />
           <DrawerBody>
-            <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '100%' }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                height: "100%",
+              }}
+            >
               <Box>
                 <SidebarItems />
                 <Box
                   component="button"
                   onClick={handleLogout}
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
+                    display: "flex",
+                    alignItems: "center",
                     gap: 4,
                     px: 4,
                     py: 2,
-                    border: 'none',
-                    background: 'none',
-                    cursor: 'pointer',
-                    width: '100%',
-                    textAlign: 'left',
+                    border: "none",
+                    background: "none",
+                    cursor: "pointer",
+                    width: "100%",
+                    textAlign: "left",
                   }}
                 >
                   <FiLogOut />
@@ -71,8 +74,8 @@ const Sidebar = () => {
       <IconButton
         onClick={() => setOpen(true)}
         sx={{
-          display: { xs: 'flex', md: 'none' },
-          position: 'absolute',
+          display: { xs: "flex", md: "none" },
+          position: "absolute",
           zIndex: 100,
           m: 4,
         }}
@@ -84,16 +87,16 @@ const Sidebar = () => {
       {/* Desktop */}
       <Box
         sx={{
-          display: { xs: 'none', md: 'flex' },
-          position: 'sticky',
-          bgcolor: 'background.default',
+          display: { xs: "none", md: "flex" },
+          position: "sticky",
+          bgcolor: "background.default",
           top: 0,
           minWidth: 280,
-          height: '100vh',
+          height: "100vh",
           p: 4,
         }}
       >
-        <Box sx={{ width: '100%' }}>
+        <Box sx={{ width: "100%" }}>
           <SidebarItems />
         </Box>
       </Box>

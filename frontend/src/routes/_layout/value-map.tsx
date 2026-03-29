@@ -11,7 +11,10 @@ import ReactFlow, {
 } from "reactflow"
 import "reactflow/dist/style.css"
 
-import { demoValueMapEdges, demoValueMapNodes } from "@/components/ValueMap/valueMapData"
+import {
+  demoValueMapEdges,
+  demoValueMapNodes,
+} from "@/components/ValueMap/valueMapData"
 
 export const Route = createFileRoute("/_layout/value-map")({
   component: ValueMap,
@@ -79,7 +82,10 @@ const ValueNode = ({ data, type }: NodeProps) => {
       {data.text && (
         <Typography
           variant="caption"
-          sx={{ color: type === "user_core" ? "rgba(248,250,252,0.8)" : "text.secondary" }}
+          sx={{
+            color:
+              type === "user_core" ? "rgba(248,250,252,0.8)" : "text.secondary",
+          }}
         >
           {data.text}
         </Typography>
@@ -90,8 +96,15 @@ const ValueNode = ({ data, type }: NodeProps) => {
 
 const UserCoreNode = ({ data }: NodeProps) => {
   return (
-    <Box sx={{ ...baseNodeStyles, ...typeStyles.user_core, position: "relative" }}>
-      <Handle id="top" type="source" position={Position.Top} style={{ top: 8, left: "50%" }} />
+    <Box
+      sx={{ ...baseNodeStyles, ...typeStyles.user_core, position: "relative" }}
+    >
+      <Handle
+        id="top"
+        type="source"
+        position={Position.Top}
+        style={{ top: 8, left: "50%" }}
+      />
       <Handle
         id="topRight"
         type="source"
@@ -134,7 +147,10 @@ const UserCoreNode = ({ data }: NodeProps) => {
         position={Position.Top}
         style={{ top: 18, left: "18%" }}
       />
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: data.text ? 0.5 : 0 }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ fontWeight: 700, mb: data.text ? 0.5 : 0 }}
+      >
         {data.label}
       </Typography>
       {data.text && (

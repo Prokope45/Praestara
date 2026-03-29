@@ -1,5 +1,5 @@
+import { IconButton, type IconButtonProps } from "@mui/material"
 import * as React from "react"
-import { IconButton, IconButtonProps } from "@mui/material"
 import { LuX } from "react-icons/lu"
 
 export type CloseButtonProps = IconButtonProps

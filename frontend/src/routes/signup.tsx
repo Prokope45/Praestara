@@ -1,4 +1,4 @@
-import { Container, Box, TextField, Typography, Stack } from "@mui/material"
+import { Box, Container, Stack, TextField, Typography } from "@mui/material"
 import {
   Link as RouterLink,
   createFileRoute,
@@ -55,11 +55,11 @@ function SignUp() {
   return (
     <Box
       sx={{
-        display: 'flex',
-        flexDirection: { xs: 'column', md: 'row' },
-        justifyContent: 'center',
-        minHeight: '100vh',
-        alignItems: 'center',
+        display: "flex",
+        flexDirection: { xs: "column", md: "row" },
+        justifyContent: "center",
+        minHeight: "100vh",
+        alignItems: "center",
       }}
     >
       <Container
@@ -67,27 +67,27 @@ function SignUp() {
         onSubmit={handleSubmit(onSubmit)}
         maxWidth="sm"
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
           gap: 2,
           py: 4,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
           <Box
             component="img"
             src={Logo}
             alt="Logo"
-            sx={{ width: 125, maxWidth: 'md' }}
+            sx={{ width: 125, maxWidth: "md" }}
           />
           <Typography variant="h3" fontWeight="bold">
             Praestara
           </Typography>
         </Box>
 
-        <Stack spacing={2} sx={{ width: '100%' }}>
+        <Stack spacing={2} sx={{ width: "100%" }}>
           <InputGroup startElement={<FiUser />}>
             <TextField
               id="full_name"
@@ -138,9 +138,12 @@ function SignUp() {
             Sign Up
           </Button>
 
-          <Typography sx={{ textAlign: 'center' }}>
+          <Typography sx={{ textAlign: "center" }}>
             Already have an account?{" "}
-            <RouterLink to="/login" style={{ color: 'inherit', fontWeight: 'bold' }}>
+            <RouterLink
+              to="/login"
+              style={{ color: "inherit", fontWeight: "bold" }}
+            >
               Log In
             </RouterLink>
           </Typography>

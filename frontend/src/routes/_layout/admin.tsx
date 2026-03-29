@@ -1,22 +1,22 @@
 import {
-  Container,
-  Typography,
   Box,
+  Chip,
+  Container,
+  Paper,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Chip,
   Tabs,
-  Tab,
+  Typography,
 } from "@mui/material"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { z } from "zod"
 import * as React from "react"
+import { z } from "zod"
 
 import { type UserPublic, UsersService } from "@/client"
 import AddUser from "@/components/Admin/AddUser"
@@ -87,17 +87,19 @@ function UsersTable() {
           </TableHead>
           <TableBody>
             {users?.map((user) => (
-              <TableRow 
-                key={user.id} 
+              <TableRow
+                key={user.id}
                 sx={{ opacity: isPlaceholderData ? 0.5 : 1 }}
               >
-                <TableCell sx={{ color: !user.full_name ? "text.secondary" : "inherit" }}>
+                <TableCell
+                  sx={{ color: !user.full_name ? "text.secondary" : "inherit" }}
+                >
                   {user.full_name || "N/A"}
                   {currentUser?.id === user.id && (
-                    <Chip 
-                      label="You" 
-                      color="primary" 
-                      size="small" 
+                    <Chip
+                      label="You"
+                      color="primary"
+                      size="small"
                       sx={{ ml: 1 }}
                     />
                   )}
@@ -106,9 +108,7 @@ function UsersTable() {
                 <TableCell>
                   {user.is_superuser ? "Superuser" : "User"}
                 </TableCell>
-                <TableCell>
-                  {user.is_active ? "Active" : "Inactive"}
-                </TableCell>
+                <TableCell>{user.is_active ? "Active" : "Inactive"}</TableCell>
                 <TableCell>
                   <UserActionsMenu
                     user={user}
@@ -173,7 +173,7 @@ function Admin() {
         Admin Panel
       </Typography>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
         <Tabs value={value} onChange={handleChange} aria-label="admin tabs">
           <Tab label="Users" id="admin-tab-0" />
           <Tab label="Questionnaires" id="admin-tab-1" />

@@ -1,25 +1,29 @@
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Box,
-  Typography,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
   List,
   ListItem,
   ListItemText,
-  IconButton,
-  Chip,
   Stack,
-  CircularProgress,
+  Typography,
 } from "@mui/material"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { FiTrash2, FiUsers } from "react-icons/fi"
 
-import { QuestionnairesService, UsersService, type QuestionnaireTemplatePublic } from "../../client"
-import { Button } from "../ui/button"
-import { AnimatedProgressBar } from "../Common/AnimatedProgressBar"
+import {
+  type QuestionnaireTemplatePublic,
+  QuestionnairesService,
+  UsersService,
+} from "../../client"
 import useCustomToast from "../../hooks/useCustomToast"
+import { AnimatedProgressBar } from "../Common/AnimatedProgressBar"
+import { Button } from "../ui/button"
 
 interface ViewAssignmentsProps {
   open: boolean
@@ -27,7 +31,11 @@ interface ViewAssignmentsProps {
   questionnaire: QuestionnaireTemplatePublic
 }
 
-export function ViewAssignments({ open, onClose, questionnaire }: ViewAssignmentsProps) {
+export function ViewAssignments({
+  open,
+  onClose,
+  questionnaire,
+}: ViewAssignmentsProps) {
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
@@ -94,25 +102,31 @@ export function ViewAssignments({ open, onClose, questionnaire }: ViewAssignment
 
   const getAssignmentProgress = (assignment: any) => {
     const totalQuestions = questionnaire.questions?.length || 0
-    if (totalQuestions === 0) return { answeredCount: 0, totalQuestions: 0, progress: 0 }
-    
+    if (totalQuestions === 0)
+      return { answeredCount: 0, totalQuestions: 0, progress: 0 }
+
     let answeredCount = 0
     if (assignment.saved_progress?.answers) {
       answeredCount = Object.keys(assignment.saved_progress.answers).length
-    } else if (assignment.saved_progress && !assignment.saved_progress.answers) {
+    } else if (
+      assignment.saved_progress &&
+      !assignment.saved_progress.answers
+    ) {
       // Backwards compatibility: old format was just the answers object
       answeredCount = Object.keys(assignment.saved_progress).length
     }
-    
+
     return {
       answeredCount,
       totalQuestions,
-      progress: (answeredCount / totalQuestions) * 100
+      progress: (answeredCount / totalQuestions) * 100,
     }
   }
 
-  const pendingAssignments = assignmentsData?.data?.filter((a: any) => a.status === "PENDING") || []
-  const completedAssignments = assignmentsData?.data?.filter((a: any) => a.status === "COMPLETED") || []
+  const pendingAssignments =
+    assignmentsData?.data?.filter((a: any) => a.status === "PENDING") || []
+  const completedAssignments =
+    assignmentsData?.data?.filter((a: any) => a.status === "COMPLETED") || []
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -141,7 +155,11 @@ export function ViewAssignments({ open, onClose, questionnaire }: ViewAssignment
                 {questionnaire.title}
               </Typography>
               {questionnaire.description && (
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 0.5 }}
+                >
                   {questionnaire.description}
                 </Typography>
               )}
@@ -156,75 +174,125 @@ export function ViewAssignments({ open, onClose, questionnaire }: ViewAssignment
             <>
               {/* Pending Assignments */}
               <Box>
-                <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="medium"
+                  gutterBottom
+                >
                   Pending Assignments ({pendingAssignments.length})
                 </Typography>
                 {pendingAssignments.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ py: 2 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ py: 2 }}
+                  >
                     No pending assignments
                   </Typography>
                 ) : (
-                  <List sx={{ bgcolor: "background.paper", borderRadius: 1, border: "1px solid", borderColor: "divider" }}>
-                    {pendingAssignments.map((assignment: any, index: number) => {
-                      const { answeredCount, totalQuestions, progress } = getAssignmentProgress(assignment)
-                      const hasProgress = answeredCount > 0
-                      
-                      return (
-                        <ListItem
-                          key={assignment.id}
-                          divider={index < pendingAssignments.length - 1}
-                          sx={{ alignItems: "flex-start", py: 2 }}
-                        >
-                          <ListItemText
-                            primary={
-                              <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-                                <Stack direction="row" alignItems="center" spacing={1}>
-                                  <Typography variant="body1">{getUserName(assignment.user_id)}</Typography>
-                                  <Chip
-                                    label={assignment.status}
-                                    size="small"
-                                    color={getStatusColor(assignment.status) as any}
-                                  />
-                                </Stack>
-                                <IconButton
-                                  size="small"
-                                  aria-label="delete"
-                                  onClick={() => handleRemoveAssignment(assignment.id)}
-                                  disabled={deleteAssignmentMutation.isPending}
+                  <List
+                    sx={{
+                      bgcolor: "background.paper",
+                      borderRadius: 1,
+                      border: "1px solid",
+                      borderColor: "divider",
+                    }}
+                  >
+                    {pendingAssignments.map(
+                      (assignment: any, index: number) => {
+                        const { answeredCount, totalQuestions, progress } =
+                          getAssignmentProgress(assignment)
+                        const hasProgress = answeredCount > 0
+
+                        return (
+                          <ListItem
+                            key={assignment.id}
+                            divider={index < pendingAssignments.length - 1}
+                            sx={{ alignItems: "flex-start", py: 2 }}
+                          >
+                            <ListItemText
+                              primary={
+                                <Stack
+                                  direction="row"
+                                  alignItems="center"
+                                  justifyContent="space-between"
+                                  spacing={1}
                                 >
-                                  <FiTrash2 />
-                                </IconButton>
-                              </Stack>
-                            }
-                            secondary={
-                              <Stack spacing={1} sx={{ mt: 0.5 }}>
-                                <Typography variant="caption" color="text.secondary">
-                                  {getUserEmail(assignment.user_id)}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  Assigned: {new Date(assignment.assigned_at).toLocaleDateString()}
-                                  {assignment.due_date && ` • Due: ${new Date(assignment.due_date).toLocaleDateString()}`}
-                                </Typography>
-                                {hasProgress ? (
-                                  <Box sx={{ mt: 1 }}>
-                                    <AnimatedProgressBar
-                                      current={answeredCount}
-                                      total={totalQuestions}
-                                      percentage={progress}
-                                      label="Progress"
+                                  <Stack
+                                    direction="row"
+                                    alignItems="center"
+                                    spacing={1}
+                                  >
+                                    <Typography variant="body1">
+                                      {getUserName(assignment.user_id)}
+                                    </Typography>
+                                    <Chip
+                                      label={assignment.status}
+                                      size="small"
+                                      color={
+                                        getStatusColor(assignment.status) as any
+                                      }
                                     />
-                                  </Box>
-                                ) : (
-                                  <Typography variant="body2" color="text.secondary">
-                                    User has not started questionnaire yet.
+                                  </Stack>
+                                  <IconButton
+                                    size="small"
+                                    aria-label="delete"
+                                    onClick={() =>
+                                      handleRemoveAssignment(assignment.id)
+                                    }
+                                    disabled={
+                                      deleteAssignmentMutation.isPending
+                                    }
+                                  >
+                                    <FiTrash2 />
+                                  </IconButton>
+                                </Stack>
+                              }
+                              secondary={
+                                <Stack spacing={1} sx={{ mt: 0.5 }}>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
+                                    {getUserEmail(assignment.user_id)}
                                   </Typography>
-                                )}
-                              </Stack>
-                            }
-                          />
-                        </ListItem>
-                      )
-                    })}
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                  >
+                                    Assigned:{" "}
+                                    {new Date(
+                                      assignment.assigned_at,
+                                    ).toLocaleDateString()}
+                                    {assignment.due_date &&
+                                      ` • Due: ${new Date(
+                                        assignment.due_date,
+                                      ).toLocaleDateString()}`}
+                                  </Typography>
+                                  {hasProgress ? (
+                                    <Box sx={{ mt: 1 }}>
+                                      <AnimatedProgressBar
+                                        current={answeredCount}
+                                        total={totalQuestions}
+                                        percentage={progress}
+                                        label="Progress"
+                                      />
+                                    </Box>
+                                  ) : (
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                    >
+                                      User has not started questionnaire yet.
+                                    </Typography>
+                                  )}
+                                </Stack>
+                              }
+                            />
+                          </ListItem>
+                        )
+                      },
+                    )}
                   </List>
                 )}
               </Box>
@@ -232,39 +300,69 @@ export function ViewAssignments({ open, onClose, questionnaire }: ViewAssignment
               {/* Completed Assignments */}
               {completedAssignments.length > 0 && (
                 <Box>
-                  <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="medium"
+                    gutterBottom
+                  >
                     Completed Assignments ({completedAssignments.length})
                   </Typography>
-                  <List sx={{ bgcolor: "background.paper", borderRadius: 1, border: "1px solid", borderColor: "divider" }}>
-                    {completedAssignments.map((assignment: any, index: number) => (
-                      <ListItem
-                        key={assignment.id}
-                        divider={index < completedAssignments.length - 1}
-                      >
-                        <ListItemText
-                          primary={
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <Typography variant="body1">{getUserName(assignment.user_id)}</Typography>
-                              <Chip
-                                label={assignment.status}
-                                size="small"
-                                color={getStatusColor(assignment.status) as any}
-                              />
-                            </Stack>
-                          }
-                          secondary={
-                            <Stack spacing={0.5} sx={{ mt: 0.5 }}>
-                              <Typography variant="caption" color="text.secondary">
-                                {getUserEmail(assignment.user_id)}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                Assigned: {new Date(assignment.assigned_at).toLocaleDateString()}
-                              </Typography>
-                            </Stack>
-                          }
-                        />
-                      </ListItem>
-                    ))}
+                  <List
+                    sx={{
+                      bgcolor: "background.paper",
+                      borderRadius: 1,
+                      border: "1px solid",
+                      borderColor: "divider",
+                    }}
+                  >
+                    {completedAssignments.map(
+                      (assignment: any, index: number) => (
+                        <ListItem
+                          key={assignment.id}
+                          divider={index < completedAssignments.length - 1}
+                        >
+                          <ListItemText
+                            primary={
+                              <Stack
+                                direction="row"
+                                alignItems="center"
+                                spacing={1}
+                              >
+                                <Typography variant="body1">
+                                  {getUserName(assignment.user_id)}
+                                </Typography>
+                                <Chip
+                                  label={assignment.status}
+                                  size="small"
+                                  color={
+                                    getStatusColor(assignment.status) as any
+                                  }
+                                />
+                              </Stack>
+                            }
+                            secondary={
+                              <Stack spacing={0.5} sx={{ mt: 0.5 }}>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  {getUserEmail(assignment.user_id)}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  Assigned:{" "}
+                                  {new Date(
+                                    assignment.assigned_at,
+                                  ).toLocaleDateString()}
+                                </Typography>
+                              </Stack>
+                            }
+                          />
+                        </ListItem>
+                      ),
+                    )}
                   </List>
                 </Box>
               )}

@@ -5,6 +5,7 @@ from sqlmodel import Session, func, select
 
 from app.models import (
     Question,
+    QuestionSection,
     QuestionnaireTemplate,
     QuestionnaireTemplateCreate,
     QuestionnaireTemplatesPublic,
@@ -54,12 +55,19 @@ class Template:
         self, *, session: Session, questionnaire_in: QuestionnaireTemplateCreate, created_by_id: uuid.UUID
     ) -> QuestionnaireTemplate:
         # Create the questionnaire template without questions first
-        questionnaire_data = questionnaire_in.model_dump(exclude={"questions"})
+        questionnaire_data = questionnaire_in.model_dump(exclude={"questions", "sections"})
         db_questionnaire = QuestionnaireTemplate.model_validate(
             questionnaire_data, update={"created_by_id": created_by_id}
         )
         session.add(db_questionnaire)
         session.flush()  # Flush to get the questionnaire ID
+
+        # Create the sections
+        for section_data in questionnaire_in.sections:
+            db_section = QuestionSection.model_validate(
+                section_data, update={"questionnaire_id": db_questionnaire.id}
+            )
+            session.add(db_section)
 
         # Create the questions
         for question_data in questionnaire_in.questions:
@@ -75,9 +83,22 @@ class Template:
     def update_template(
         self, *, session: Session, db_questionnaire: QuestionnaireTemplate, questionnaire_in: QuestionnaireTemplateUpdate
     ) -> QuestionnaireTemplate:
-        questionnaire_data = questionnaire_in.model_dump(exclude_unset=True, exclude={"questions"})
+        questionnaire_data = questionnaire_in.model_dump(exclude_unset=True, exclude={"questions", "sections"})
         questionnaire_data["updated_at"] = datetime.utcnow()
         db_questionnaire.sqlmodel_update(questionnaire_data)
+
+        # Update sections
+        if questionnaire_in.sections is not None:
+            for section in list(db_questionnaire.sections):
+                session.delete(section)
+            db_questionnaire.sections = []
+            session.flush()
+            for section_data in questionnaire_in.sections:
+                db_section = QuestionSection.model_validate(
+                    section_data, update={"questionnaire_id": db_questionnaire.id}
+                )
+                session.add(db_section)
+            session.flush()
 
         # If questions are provided, replace all existing questions
         if questionnaire_in.questions is not None:

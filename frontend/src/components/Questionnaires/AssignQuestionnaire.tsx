@@ -1,26 +1,31 @@
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Box,
-  Stack,
-  Typography,
-  Chip,
   Checkbox,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  FormControlLabel,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Typography,
 } from "@mui/material"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
-import { FiUser, FiCalendar } from "react-icons/fi"
+import { FiCalendar, FiUser } from "react-icons/fi"
 
-import { QuestionnairesService, UsersService, type QuestionnaireTemplatePublic } from "../../client"
-import { Button } from "../ui/button"
+import {
+  type QuestionnaireTemplatePublic,
+  QuestionnairesService,
+  UsersService,
+} from "../../client"
 import useCustomToast from "../../hooks/useCustomToast"
+import { Button } from "../ui/button"
 
 interface AssignQuestionnaireProps {
   open: boolean
@@ -28,12 +33,18 @@ interface AssignQuestionnaireProps {
   questionnaire: QuestionnaireTemplatePublic
 }
 
-export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQuestionnaireProps) {
+export function AssignQuestionnaire({
+  open,
+  onClose,
+  questionnaire,
+}: AssignQuestionnaireProps) {
+  const isDevEnvironment = import.meta.env.VITE_DEV === 'true'
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([])
   const [dueDate, setDueDate] = useState("")
+  const [prefill, setPrefill] = useState(false)
 
   // Fetch all users
   const { data: usersData } = useQuery({
@@ -46,10 +57,10 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
   const { data: existingAssignments } = useQuery({
     queryKey: ["all-assignments", questionnaire.id],
     queryFn: async () => {
-      const response = await QuestionnairesService.readAllAssignments({ 
+      const response = await QuestionnairesService.readAllAssignments({
         questionnaireId: questionnaire.id,
-        skip: 0, 
-        limit: 1000 
+        skip: 0,
+        limit: 1000,
       })
       return response.data.filter((a: any) => a.status === "PENDING")
     },
@@ -58,7 +69,7 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
 
   // Create a Set of user IDs who already have pending assignments
   const assignedUserIds = new Set(
-    existingAssignments?.map((assignment: any) => assignment.user_id) || []
+    existingAssignments?.map((assignment: any) => assignment.user_id) || [],
   )
 
   // Check if a user is already assigned
@@ -69,7 +80,9 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
       QuestionnairesService.createBulkAssignments({ requestBody: data }),
     onSuccess: (data: any) => {
       const count = data.count || selectedUserIds.length
-      showSuccessToast(`Questionnaire assigned to ${count} user(s) successfully`)
+      showSuccessToast(
+        `Questionnaire assigned to ${count} user(s) successfully`,
+      )
       queryClient.invalidateQueries({ queryKey: ["questionnaire-assignments"] })
       handleClose()
     },
@@ -81,6 +94,7 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
   const handleClose = () => {
     setSelectedUserIds([])
     setDueDate("")
+    setPrefill(false)
     onClose()
   }
 
@@ -94,6 +108,7 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
       questionnaire_id: questionnaire.id,
       user_ids: selectedUserIds,
       due_date: dueDate || null,
+      prefill: isDevEnvironment ? prefill : false,
     })
   }
 
@@ -132,7 +147,11 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
                 {questionnaire.title}
               </Typography>
               {questionnaire.description && (
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 0.5 }}
+                >
                   {questionnaire.description}
                 </Typography>
               )}
@@ -147,7 +166,12 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
           </Box>
 
           <Box>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ mb: 1 }}
+            >
               <Typography variant="subtitle2" color="text.secondary">
                 Select Users *
               </Typography>
@@ -170,17 +194,25 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
                 </Button>
               </Stack>
             </Stack>
-            
+
             <FormControl fullWidth required>
               <InputLabel>Select Users</InputLabel>
               <Select
                 multiple
                 value={selectedUserIds}
                 label="Select Users"
-                onChange={(e) => setSelectedUserIds(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
-                startAdornment={<FiUser style={{ marginRight: 8, color: "#666" }} />}
+                onChange={(e) =>
+                  setSelectedUserIds(
+                    typeof e.target.value === "string"
+                      ? e.target.value.split(",")
+                      : e.target.value,
+                  )
+                }
+                startAdornment={
+                  <FiUser style={{ marginRight: 8, color: "#666" }} />
+                }
                 renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                     {selected.map((value) => {
                       const user = usersData?.data?.find((u) => u.id === value)
                       return (
@@ -198,8 +230,18 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
                   const alreadyAssigned = isUserAssigned(user.id)
                   return (
                     <MenuItem key={user.id} value={user.id}>
-                      <Checkbox checked={selectedUserIds.indexOf(user.id) > -1} />
-                      <Box sx={{ ml: 1, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Checkbox
+                        checked={selectedUserIds.indexOf(user.id) > -1}
+                      />
+                      <Box
+                        sx={{
+                          ml: 1,
+                          flex: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                        }}
+                      >
                         <Box>
                           <Typography variant="body2">
                             {user.full_name || "No name"}
@@ -222,15 +264,25 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
                 })}
               </Select>
             </FormControl>
-            
+
             {selectedUserIds.length > 0 && (
               <Box sx={{ mt: 1 }}>
-                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ display: "block" }}
+                >
                   {selectedUserIds.length} user(s) selected
                 </Typography>
-                {selectedUserIds.some(id => isUserAssigned(id)) && (
-                  <Typography variant="caption" color="warning.main" sx={{ display: 'block', mt: 0.5 }}>
-                    ⚠️ Warning: {selectedUserIds.filter(id => isUserAssigned(id)).length} selected user(s) already have pending assignments
+                {selectedUserIds.some((id) => isUserAssigned(id)) && (
+                  <Typography
+                    variant="caption"
+                    color="warning.main"
+                    sx={{ display: "block", mt: 0.5 }}
+                  >
+                    ⚠️ Warning:{" "}
+                    {selectedUserIds.filter((id) => isUserAssigned(id)).length}{" "}
+                    selected user(s) already have pending assignments
                   </Typography>
                 )}
               </Box>
@@ -249,11 +301,27 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
               min: today,
             }}
             InputProps={{
-              startAdornment: <FiCalendar style={{ marginRight: 8, color: "#666" }} />,
+              startAdornment: (
+                <FiCalendar style={{ marginRight: 8, color: "#666" }} />
+              ),
             }}
             helperText="Leave empty for no due date"
             fullWidth
           />
+
+          {isDevEnvironment && (
+            <Box>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={prefill}
+                    onChange={(e) => setPrefill(e.target.checked)}
+                  />
+                }
+                label="Pre-fill questionnaire with random values?"
+              />
+            </Box>
+          )}
 
           <Box
             sx={{
@@ -265,8 +333,8 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
             }}
           >
             <Typography variant="caption" color="info.dark">
-              <strong>Note:</strong> The user will be notified and can access the questionnaire
-              from their Questionnaires page.
+              <strong>Note:</strong> The user will be notified and can access
+              the questionnaire from their Questionnaires page.
             </Typography>
           </Box>
         </Stack>
@@ -281,7 +349,8 @@ export function AssignQuestionnaire({ open, onClose, questionnaire }: AssignQues
           loading={assignMutation.isPending}
           disabled={assignMutation.isPending || selectedUserIds.length === 0}
         >
-          Assign to {selectedUserIds.length} User{selectedUserIds.length !== 1 ? 's' : ''}
+          Assign to {selectedUserIds.length} User
+          {selectedUserIds.length !== 1 ? "s" : ""}
         </Button>
       </DialogActions>
     </Dialog>

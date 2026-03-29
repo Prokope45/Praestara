@@ -1,21 +1,28 @@
+import {
+  Box,
+  FormControlLabel,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Controller, type SubmitHandler, useForm } from "react-hook-form"
-import { Box, Stack, TextField, Typography, MenuItem, FormControlLabel } from '@mui/material'
 import { useState } from "react"
+import { Controller, type SubmitHandler, useForm } from "react-hook-form"
 import { FaExchangeAlt } from "react-icons/fa"
 
 import { type UserPublic, type UserUpdate, UsersService } from "@/client"
 import type { ApiError } from "@/client/core/ApiError"
 import useCustomToast from "@/hooks/useCustomToast"
 import { emailPattern, handleError } from "@/utils"
+import { Button } from "../ui/button"
 import { Checkbox } from "../ui/checkbox"
 import {
-  DialogRoot,
-  DialogTitle,
   DialogContent,
   DialogFooter,
+  DialogRoot,
+  DialogTitle,
 } from "../ui/dialog"
-import { Button } from "../ui/button"
 
 interface EditUserProps {
   user: UserPublic
@@ -141,7 +148,7 @@ const EditUser = ({ user }: EditUserProps) => {
                 placeholder="Password"
               />
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <Controller
                   control={control}
                   name="is_superuser"
@@ -199,11 +206,7 @@ const EditUser = ({ user }: EditUserProps) => {
             >
               Cancel
             </Button>
-            <Button
-              variant="contained"
-              type="submit"
-              loading={isSubmitting}
-            >
+            <Button variant="contained" type="submit" loading={isSubmitting}>
               Save
             </Button>
           </DialogFooter>

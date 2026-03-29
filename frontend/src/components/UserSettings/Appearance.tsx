@@ -1,6 +1,6 @@
-import { Container, Typography, Stack } from "@mui/material"
 import { useColorMode } from "@/components/ui/color-mode"
 import { Radio, RadioGroup } from "@/components/ui/radio"
+import { Container, Stack, Typography } from "@mui/material"
 
 const Appearance = () => {
   const { colorMode, setColorMode } = useColorMode()

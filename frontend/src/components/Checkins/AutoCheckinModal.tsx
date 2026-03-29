@@ -1,4 +1,14 @@
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, TextField, Typography } from "@mui/material"
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useEffect, useMemo, useState } from "react"
 
@@ -27,22 +37,24 @@ function AutoCheckinModal() {
 
   const { data: morningHistory } = useQuery({
     queryKey: ["checkins", "morning", "latest"],
-    queryFn: () =>
-      CheckinsService.readCheckins({ type: "morning", limit: 20 }),
+    queryFn: () => CheckinsService.readCheckins({ type: "morning", limit: 20 }),
   })
 
   const { data: eveningHistory } = useQuery({
     queryKey: ["checkins", "evening", "latest"],
-    queryFn: () =>
-      CheckinsService.readCheckins({ type: "evening", limit: 20 }),
+    queryFn: () => CheckinsService.readCheckins({ type: "evening", limit: 20 }),
   })
 
   const morningDone = useMemo(() => {
-    return (morningHistory?.data ?? []).some((entry) => isSameDay(entry.created_at))
+    return (morningHistory?.data ?? []).some((entry) =>
+      isSameDay(entry.created_at),
+    )
   }, [morningHistory])
 
   const eveningDone = useMemo(() => {
-    return (eveningHistory?.data ?? []).some((entry) => isSameDay(entry.created_at))
+    return (eveningHistory?.data ?? []).some((entry) =>
+      isSameDay(entry.created_at),
+    )
   }, [eveningHistory])
 
   useEffect(() => {
@@ -66,7 +78,8 @@ function AutoCheckinModal() {
 
     handleTrigger()
     window.addEventListener("praestara_checkin_trigger", handleTrigger)
-    return () => window.removeEventListener("praestara_checkin_trigger", handleTrigger)
+    return () =>
+      window.removeEventListener("praestara_checkin_trigger", handleTrigger)
   }, [openType])
 
   useEffect(() => {
@@ -74,8 +87,12 @@ function AutoCheckinModal() {
     if (openType) return
 
     const dayKey = getDayKey()
-    const dismissedMorning = localStorage.getItem(getDismissKey("morning", dayKey))
-    const dismissedEvening = localStorage.getItem(getDismissKey("evening", dayKey))
+    const dismissedMorning = localStorage.getItem(
+      getDismissKey("morning", dayKey),
+    )
+    const dismissedEvening = localStorage.getItem(
+      getDismissKey("evening", dayKey),
+    )
 
     if (!morningDone && !dismissedMorning) {
       setOpenType("morning")
@@ -117,7 +134,9 @@ function AutoCheckinModal() {
   return (
     <Dialog open fullWidth maxWidth="sm">
       <DialogTitle>
-        {isMorning ? "Good morning. Who are you going to be today?" : "Good evening. Who were you today?"}
+        {isMorning
+          ? "Good morning. Who are you going to be today?"
+          : "Good evening. Who were you today?"}
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>

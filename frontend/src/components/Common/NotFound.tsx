@@ -1,36 +1,36 @@
+import { Button } from "@/components/ui/button"
 import { Box, Typography } from "@mui/material"
 import { Link } from "@tanstack/react-router"
-import { Button } from "@/components/ui/button"
 
 const NotFound = () => {
   return (
     <Box
       sx={{
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
+        height: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
         p: 4,
       }}
       data-testid="not-found"
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', zIndex: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", zIndex: 1 }}>
         <Box
           sx={{
-            display: 'flex',
-            flexDirection: 'column',
+            display: "flex",
+            flexDirection: "column",
             ml: 4,
-            alignItems: 'center',
-            justifyContent: 'center',
+            alignItems: "center",
+            justifyContent: "center",
             p: 4,
           }}
         >
           <Typography
             variant="h1"
             sx={{
-              fontSize: { xs: '6rem', md: '8rem' },
-              fontWeight: 'bold',
+              fontSize: { xs: "6rem", md: "8rem" },
+              fontWeight: "bold",
               lineHeight: 1,
               mb: 4,
             }}
@@ -46,7 +46,7 @@ const NotFound = () => {
       <Typography
         variant="h6"
         color="text.secondary"
-        sx={{ mb: 4, textAlign: 'center', zIndex: 1 }}
+        sx={{ mb: 4, textAlign: "center", zIndex: 1 }}
       >
         The page you are looking for was not found.
       </Typography>

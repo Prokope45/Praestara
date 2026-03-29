@@ -1,19 +1,30 @@
-import { Typography, List, ListItem, ListItemButton, ListItemIcon, ListItemText } from "@mui/material"
+import {
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+} from "@mui/material"
 import { Link as RouterLink } from "@tanstack/react-router"
 
+import { FiMap } from "react-icons/fi"
+import { FiHome } from "react-icons/fi"
+import { FiClipboard } from "react-icons/fi"
+import { FiSettings } from "react-icons/fi"
+import { FiUsers } from "react-icons/fi"
+import { HiOutlineChatAlt2 } from "react-icons/hi"
 import type { IconType } from "react-icons/lib"
-import { FiMap } from "react-icons/fi";
-import { FiHome } from "react-icons/fi";
-import { FiClipboard } from "react-icons/fi";
-import { FiSettings } from "react-icons/fi";
-import { FiUsers } from "react-icons/fi";
-import { HiOutlineChatAlt2 } from "react-icons/hi";
 
 import useAuth from "@/hooks/useAuth"
 
 const items = [
   { icon: FiHome as IconType, title: "Dashboard", path: "/" },
-  { icon: FiClipboard as IconType, title: "Questionnaires", path: "/questionnaires" },
+  {
+    icon: FiClipboard as IconType,
+    title: "Questionnaires",
+    path: "/questionnaires",
+  },
   { icon: FiMap as IconType, title: "Value Map", path: "/value-map" },
   { icon: HiOutlineChatAlt2 as IconType, title: "Chat", path: "/chat" },
   { icon: FiSettings as IconType, title: "User Settings", path: "/settings" },
@@ -38,9 +49,9 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
 
   return (
     <>
-      <Typography 
-        variant="caption" 
-        sx={{ px: 4, py: 2, fontWeight: 'bold', display: 'block' }}
+      <Typography
+        variant="caption"
+        sx={{ px: 4, py: 2, fontWeight: "bold", display: "block" }}
       >
         Menu
       </Typography>
@@ -55,18 +66,18 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
                 gap: 2,
                 px: 4,
                 py: 2,
-                '&:hover': {
-                  bgcolor: 'secondary.main',
-                  color: 'secondary.contrastText',
+                "&:hover": {
+                  bgcolor: "secondary.main",
+                  color: "secondary.contrastText",
                 },
               }}
             >
-              <ListItemIcon sx={{ minWidth: 'auto', color: 'inherit' }}>
+              <ListItemIcon sx={{ minWidth: "auto", color: "inherit" }}>
                 <Icon />
               </ListItemIcon>
-              <ListItemText 
-                primary={title} 
-                primaryTypographyProps={{ fontSize: 'small' }}
+              <ListItemText
+                primary={title}
+                primaryTypographyProps={{ fontSize: "small" }}
               />
             </ListItemButton>
           </ListItem>

@@ -1,4 +1,11 @@
-import { Alert, Container, Typography, TextField, Stack, Box } from "@mui/material"
+import {
+  Alert,
+  Box,
+  Container,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material"
 import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, redirect } from "@tanstack/react-router"
 import { type SubmitHandler, useForm } from "react-hook-form"
@@ -55,10 +62,10 @@ function RecoverPassword() {
   return (
     <Box
       sx={{
-        display: 'flex',
-        minHeight: '100vh',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: "flex",
+        minHeight: "100vh",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <Container
@@ -66,23 +73,28 @@ function RecoverPassword() {
         onSubmit={handleSubmit(onSubmit)}
         maxWidth="sm"
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'stretch',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "stretch",
           gap: 2,
           py: 4,
         }}
       >
-        <Typography variant="h4" color="primary" sx={{ textAlign: 'center', mb: 1 }}>
+        <Typography
+          variant="h4"
+          color="primary"
+          sx={{ textAlign: "center", mb: 1 }}
+        >
           Password Recovery
         </Typography>
-        <Typography sx={{ textAlign: 'center', mb: 2 }}>
+        <Typography sx={{ textAlign: "center", mb: 2 }}>
           A password recovery email will be sent to the registered account.
         </Typography>
-        
+
         {mutation.isSuccess && (
           <Alert severity="success" sx={{ mb: 2 }}>
-            If an account exists with this email, a password recovery link has been sent.
+            If an account exists with this email, a password recovery link has
+            been sent.
           </Alert>
         )}
 

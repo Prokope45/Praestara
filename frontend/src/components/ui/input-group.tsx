@@ -1,7 +1,8 @@
+import { InputAdornment, TextField, type TextFieldProps } from "@mui/material"
 import * as React from "react"
-import { TextField, TextFieldProps, InputAdornment } from "@mui/material"
 
-export interface InputGroupProps extends Omit<TextFieldProps, 'startElement' | 'endElement'> {
+export interface InputGroupProps
+  extends Omit<TextFieldProps, "startElement" | "endElement"> {
   startElement?: React.ReactNode
   endElement?: React.ReactNode
   startOffset?: string

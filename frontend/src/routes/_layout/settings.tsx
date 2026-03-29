@@ -1,4 +1,4 @@
-import { Container, Typography, Tabs, Tab, Box } from "@mui/material"
+import { Box, Container, Tab, Tabs, Typography } from "@mui/material"
 import { createFileRoute } from "@tanstack/react-router"
 import * as React from "react"
 
@@ -62,21 +62,29 @@ function UserSettings() {
 
   return (
     <Container maxWidth={false}>
-      <Typography 
-        variant="h4" 
-        component="h1" 
-        sx={{ 
-          pt: 6, 
-          textAlign: { xs: "center", md: "left" } 
+      <Typography
+        variant="h4"
+        component="h1"
+        sx={{
+          pt: 6,
+          textAlign: { xs: "center", md: "left" },
         }}
       >
         User Settings
       </Typography>
 
       <Box sx={{ borderBottom: 1, borderColor: "divider", mt: 3 }}>
-        <Tabs value={value} onChange={handleChange} aria-label="user settings tabs">
+        <Tabs
+          value={value}
+          onChange={handleChange}
+          aria-label="user settings tabs"
+        >
           {finalTabs.map((tab, index) => (
-            <Tab key={tab.value} label={tab.title} id={`settings-tab-${index}`} />
+            <Tab
+              key={tab.value}
+              label={tab.title}
+              id={`settings-tab-${index}`}
+            />
           ))}
         </Tabs>
       </Box>

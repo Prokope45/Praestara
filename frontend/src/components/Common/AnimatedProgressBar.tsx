@@ -1,5 +1,5 @@
 import { Box, LinearProgress, Stack, Typography } from "@mui/material"
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 
 interface AnimatedProgressBarProps {
   current: number
@@ -8,9 +8,14 @@ interface AnimatedProgressBarProps {
   label?: string
 }
 
-export function AnimatedProgressBar({ current, total, percentage, label = "Progress" }: AnimatedProgressBarProps) {
+export function AnimatedProgressBar({
+  current,
+  total,
+  percentage,
+  label = "Progress",
+}: AnimatedProgressBarProps) {
   const [animatedProgress, setAnimatedProgress] = useState(0)
-  
+
   // Animate progress bar on mount or when percentage changes
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -29,12 +34,12 @@ export function AnimatedProgressBar({ current, total, percentage, label = "Progr
           {Math.round(percentage)}%
         </Typography>
       </Stack>
-      <LinearProgress 
-        variant="determinate" 
+      <LinearProgress
+        variant="determinate"
         value={animatedProgress}
         sx={{
-          '& .MuiLinearProgress-bar': {
-            transition: 'transform 0.8s ease-in-out',
+          "& .MuiLinearProgress-bar": {
+            transition: "transform 0.8s ease-in-out",
           },
         }}
       />

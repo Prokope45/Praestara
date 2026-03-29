@@ -525,6 +525,7 @@ export type QuestionCreate = {
   question_text: string
   order: number
   is_required?: boolean
+  section_id?: string | null
   scale_type?: ScaleType
   custom_min_value?: number | null
   custom_max_value?: number | null
@@ -536,6 +537,7 @@ export type QuestionnaireAssignmentBulkCreate = {
   user_ids: Array<string>
   appointment_id?: string | null
   due_date?: string | null
+  prefill?: boolean
 }
 
 export type QuestionnaireAssignmentCreate = {
@@ -593,6 +595,7 @@ export type QuestionnaireTemplateCreate = {
   title: string
   description?: string | null
   is_active?: boolean
+  sections?: Array<QuestionSectionCreate>
   questions?: Array<QuestionCreate>
 }
 
@@ -604,6 +607,7 @@ export type QuestionnaireTemplatePublic = {
   created_by_id: string
   created_at: string
   updated_at: string
+  sections?: Array<QuestionSectionPublic>
   questions?: Array<QuestionPublic>
 }
 
@@ -616,6 +620,7 @@ export type QuestionnaireTemplateUpdate = {
   title?: string | null
   description?: string | null
   is_active?: boolean
+  sections?: Array<QuestionSectionCreate> | null
   questions?: Array<QuestionCreate> | null
 }
 
@@ -623,10 +628,26 @@ export type QuestionPublic = {
   question_text: string
   order: number
   is_required?: boolean
+  section_id?: string | null
   scale_type?: ScaleType
   custom_min_value?: number | null
   custom_max_value?: number | null
   custom_unit_label?: string | null
+  id: string
+  questionnaire_id: string
+}
+
+export type QuestionSectionCreate = {
+  name: string
+  description?: string | null
+  order?: number
+  id?: string | null
+}
+
+export type QuestionSectionPublic = {
+  name: string
+  description?: string | null
+  order?: number
   id: string
   questionnaire_id: string
 }

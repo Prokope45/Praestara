@@ -1,19 +1,22 @@
 import {
-  Container,
-  Typography,
   Box,
   Card,
-  CardContent,
   CardActions,
+  CardContent,
   Chip,
-  Stack,
+  Container,
   LinearProgress,
+  Stack,
+  Typography,
 } from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { FiClock, FiCheckCircle, FiAlertCircle } from "react-icons/fi"
+import { FiAlertCircle, FiCheckCircle, FiClock } from "react-icons/fi"
 
-import { QuestionnairesService, type QuestionnaireAssignmentPublic } from "../../client"
+import {
+  type QuestionnaireAssignmentPublic,
+  QuestionnairesService,
+} from "../../client"
 import { Button } from "../../components/ui/button"
 
 export const Route = createFileRoute("/_layout/questionnaires/")({
@@ -24,14 +27,15 @@ function Questionnaires() {
   const navigate = useNavigate()
   const { data: assignments, isLoading } = useQuery({
     queryKey: ["questionnaire-assignments"],
-    queryFn: () => QuestionnairesService.readMyAssignments({ skip: 0, limit: 100 }),
+    queryFn: () =>
+      QuestionnairesService.readMyAssignments({ skip: 0, limit: 100 }),
   })
 
   const pendingAssignments = assignments?.data?.filter(
-    (a: QuestionnaireAssignmentPublic) => a.status === "PENDING"
+    (a: QuestionnaireAssignmentPublic) => a.status === "PENDING",
   )
   const completedAssignments = assignments?.data?.filter(
-    (a: QuestionnaireAssignmentPublic) => a.status === "COMPLETED"
+    (a: QuestionnaireAssignmentPublic) => a.status === "COMPLETED",
   )
 
   const getStatusColor = (status: string | undefined) => {
@@ -95,66 +99,70 @@ function Questionnaires() {
         </Typography>
         {pendingAssignments && pendingAssignments.length > 0 ? (
           <Stack spacing={2}>
-            {pendingAssignments.map((assignment: QuestionnaireAssignmentPublic) => (
-              <Card key={assignment.id} variant="outlined">
-                <CardContent>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="flex-start"
-                    sx={{ mb: 2 }}
-                  >
-                    <Box>
-                      <Typography variant="h6" component="h3">
-                        {assignment.questionnaire.title}
+            {pendingAssignments.map(
+              (assignment: QuestionnaireAssignmentPublic) => (
+                <Card key={assignment.id} variant="outlined">
+                  <CardContent>
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="flex-start"
+                      sx={{ mb: 2 }}
+                    >
+                      <Box>
+                        <Typography variant="h6" component="h3">
+                          {assignment.questionnaire.title}
+                        </Typography>
+                        {assignment.questionnaire.description && (
+                          <Typography variant="body2" color="text.secondary">
+                            {assignment.questionnaire.description}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Chip
+                        label={assignment.status}
+                        color={getStatusColor(assignment.status) as any}
+                        icon={getStatusIcon(assignment.status) as any}
+                        size="small"
+                      />
+                    </Stack>
+                    <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+                      <Typography variant="caption" color="text.secondary">
+                        <strong>Assigned:</strong>{" "}
+                        {formatDate(assignment.assigned_at)}
                       </Typography>
-                      {assignment.questionnaire.description && (
-                        <Typography variant="body2" color="text.secondary">
-                          {assignment.questionnaire.description}
+                      {assignment.due_date && (
+                        <Typography variant="caption" color="text.secondary">
+                          <strong>Due:</strong>{" "}
+                          {formatDate(assignment.due_date)}
                         </Typography>
                       )}
-                    </Box>
-                    <Chip
-                      label={assignment.status}
-                      color={getStatusColor(assignment.status) as any}
-                      icon={getStatusIcon(assignment.status) as any}
-                      size="small"
-                    />
-                  </Stack>
-                  <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      <strong>Assigned:</strong>{" "}
-                      {formatDate(assignment.assigned_at)}
-                    </Typography>
-                    {assignment.due_date && (
                       <Typography variant="caption" color="text.secondary">
-                        <strong>Due:</strong> {formatDate(assignment.due_date)}
+                        <strong>Questions:</strong>{" "}
+                        {assignment.questionnaire.questions?.length || 0}
                       </Typography>
-                    )}
-                    <Typography variant="caption" color="text.secondary">
-                      <strong>Questions:</strong>{" "}
-                      {assignment.questionnaire.questions?.length || 0}
-                    </Typography>
-                  </Stack>
-                </CardContent>
-                <CardActions>
-                  <Button 
-                    variant="contained" 
-                    size="small"
-                    onClick={() => {
-                      navigate({
-                        to: "/questionnaires/$assignmentId/take",
-                        params: { assignmentId: assignment.id }
-                      })
-                    }}
-                  >
-                    {assignment.saved_progress && Object.keys(assignment.saved_progress).length > 0
-                      ? "Resume Questionnaire"
-                      : "Take Questionnaire"}
-                  </Button>
-                </CardActions>
-              </Card>
-            ))}
+                    </Stack>
+                  </CardContent>
+                  <CardActions>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => {
+                        navigate({
+                          to: "/questionnaires/$assignmentId/take",
+                          params: { assignmentId: assignment.id },
+                        })
+                      }}
+                    >
+                      {assignment.saved_progress &&
+                      Object.keys(assignment.saved_progress).length > 0
+                        ? "Resume Questionnaire"
+                        : "Take Questionnaire"}
+                    </Button>
+                  </CardActions>
+                </Card>
+              ),
+            )}
           </Stack>
         ) : (
           <Card variant="outlined">
@@ -174,37 +182,44 @@ function Questionnaires() {
         </Typography>
         {completedAssignments && completedAssignments.length > 0 ? (
           <Stack spacing={2}>
-            {completedAssignments.map((assignment: QuestionnaireAssignmentPublic) => (
-              <Card key={assignment.id} variant="outlined">
-                <CardContent>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="flex-start"
-                  >
-                    <Box>
-                      <Typography variant="h6" component="h3">
-                        {assignment.questionnaire.title}
-                      </Typography>
-                      {assignment.questionnaire.description && (
-                        <Typography variant="body2" color="text.secondary">
-                          {assignment.questionnaire.description}
+            {completedAssignments.map(
+              (assignment: QuestionnaireAssignmentPublic) => (
+                <Card key={assignment.id} variant="outlined">
+                  <CardContent>
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="flex-start"
+                    >
+                      <Box>
+                        <Typography variant="h6" component="h3">
+                          {assignment.questionnaire.title}
                         </Typography>
-                      )}
-                    </Box>
-                    <Chip
-                      label={assignment.status}
-                      color={getStatusColor(assignment.status) as any}
-                      icon={getStatusIcon(assignment.status) as any}
-                      size="small"
-                    />
-                  </Stack>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: "block" }}>
-                    <strong>Completed:</strong> {formatDate(assignment.assigned_at)}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))}
+                        {assignment.questionnaire.description && (
+                          <Typography variant="body2" color="text.secondary">
+                            {assignment.questionnaire.description}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Chip
+                        label={assignment.status}
+                        color={getStatusColor(assignment.status) as any}
+                        icon={getStatusIcon(assignment.status) as any}
+                        size="small"
+                      />
+                    </Stack>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ mt: 2, display: "block" }}
+                    >
+                      <strong>Completed:</strong>{" "}
+                      {formatDate(assignment.assigned_at)}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              ),
+            )}
           </Stack>
         ) : (
           <Card variant="outlined">

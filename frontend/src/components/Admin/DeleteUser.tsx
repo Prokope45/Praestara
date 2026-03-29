@@ -1,17 +1,17 @@
-import { Typography, MenuItem } from '@mui/material'
+import { MenuItem, Typography } from "@mui/material"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { FiTrash2 } from "react-icons/fi"
 
 import { UsersService } from "@/client"
+import { Button } from "@/components/ui/button"
 import {
-  DialogRoot,
-  DialogTitle,
   DialogContent,
   DialogFooter,
+  DialogRoot,
+  DialogTitle,
 } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import useCustomToast from "@/hooks/useCustomToast"
 
 const DeleteUser = ({ id }: { id: string }) => {
@@ -47,7 +47,7 @@ const DeleteUser = ({ id }: { id: string }) => {
 
   return (
     <>
-      <MenuItem onClick={() => setIsOpen(true)} sx={{ color: 'error.main' }}>
+      <MenuItem onClick={() => setIsOpen(true)} sx={{ color: "error.main" }}>
         <FiTrash2 style={{ marginRight: 8 }} />
         Delete User
       </MenuItem>

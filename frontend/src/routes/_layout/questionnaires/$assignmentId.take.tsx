@@ -1,23 +1,25 @@
 import {
-  Container,
-  Typography,
-  Box,
-  LinearProgress,
   Alert,
+  Box,
+  Container,
+  LinearProgress,
   Paper,
   Stack,
+  Typography,
 } from "@mui/material"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
-import { QuestionnairesService, type AnswerCreate } from "../../../client"
-import { Button } from "../../../components/ui/button"
-import { LikertScaleQuestion } from "../../../components/Questionnaires/LikertScaleQuestion"
+import { type AnswerCreate, QuestionnairesService } from "../../../client"
 import { AnimatedProgressBar } from "../../../components/Common/AnimatedProgressBar"
+import { LikertScaleQuestion } from "../../../components/Questionnaires/LikertScaleQuestion"
+import { Button } from "../../../components/ui/button"
 import useCustomToast from "../../../hooks/useCustomToast"
 
-export const Route = createFileRoute("/_layout/questionnaires/$assignmentId/take")({
+export const Route = createFileRoute(
+  "/_layout/questionnaires/$assignmentId/take",
+)({
   component: TakeQuestionnaire,
 })
 
@@ -45,9 +47,12 @@ function TakeQuestionnaire() {
   useEffect(() => {
     if (assignment?.saved_progress) {
       // Handle both old format (just answers) and new format (with lastPage)
-      if (assignment.saved_progress.answers && typeof assignment.saved_progress.answers === 'object') {
+      if (
+        assignment.saved_progress.answers &&
+        typeof assignment.saved_progress.answers === "object"
+      ) {
         setAnswers(assignment.saved_progress.answers)
-        if (typeof assignment.saved_progress.lastPage === 'number') {
+        if (typeof assignment.saved_progress.lastPage === "number") {
           setCurrentPage(assignment.saved_progress.lastPage)
         }
       } else {
@@ -129,9 +134,14 @@ function TakeQuestionnaire() {
 
   const validateCurrentPage = () => {
     const questions = assignment?.questionnaire?.questions || []
-    const sortedQuestions = [...questions].sort((a, b) => a.order - b.order)
+    const sortedQuestions = [...questions].sort(
+      (a, b) => (a.order ?? 0) - (b.order ?? 0),
+    )
     const startIdx = currentPage * QUESTIONS_PER_PAGE
-    const endIdx = Math.min(startIdx + QUESTIONS_PER_PAGE, sortedQuestions.length)
+    const endIdx = Math.min(
+      startIdx + QUESTIONS_PER_PAGE,
+      sortedQuestions.length,
+    )
     const pageQuestions = sortedQuestions.slice(startIdx, endIdx)
 
     const newErrors: Record<string, string> = {}
@@ -196,7 +206,9 @@ function TakeQuestionnaire() {
       showErrorToast("Please answer all required questions")
       // Find the first page with errors
       const questions = assignment?.questionnaire?.questions || []
-      const sortedQuestions = [...questions].sort((a, b) => a.order - b.order)
+      const sortedQuestions = [...questions].sort(
+        (a, b) => (a.order ?? 0) - (b.order ?? 0),
+      )
       for (let i = 0; i < sortedQuestions.length; i++) {
         const question = sortedQuestions[i]
         if (question.is_required && !answers[question.id]) {
@@ -212,7 +224,7 @@ function TakeQuestionnaire() {
       ([questionId, value]) => {
         const question = questions.find((q) => q.id === questionId)
         const scaleType = question?.scale_type
-        
+
         // Handle different scale types
         if (scaleType === "TEXT") {
           return {
@@ -220,21 +232,21 @@ function TakeQuestionnaire() {
             likert_value: null,
             text_response: value,
           }
-        } else if (scaleType === "DOMAIN_RATING") {
+        }
+        if (scaleType === "DOMAIN_RATING") {
           return {
             question_id: questionId,
             likert_value: null,
             text_response: JSON.stringify(value),
           }
-        } else {
-          // LIKERT_5, LIKERT_7, YES_NO, CUSTOM_NUMERIC, FREQUENCY
-          return {
-            question_id: questionId,
-            likert_value: value,
-            text_response: null,
-          }
         }
-      }
+        // LIKERT_5, LIKERT_7, YES_NO, CUSTOM_NUMERIC, FREQUENCY
+        return {
+          question_id: questionId,
+          likert_value: value,
+          text_response: null,
+        }
+      },
     )
 
     submitMutation.mutate({
@@ -276,14 +288,102 @@ function TakeQuestionnaire() {
   }
 
   const questions = assignment.questionnaire?.questions || []
-  const sortedQuestions = [...questions].sort((a, b) => a.order - b.order)
-  const totalPages = Math.ceil(sortedQuestions.length / QUESTIONS_PER_PAGE)
-  const startIdx = currentPage * QUESTIONS_PER_PAGE
-  const endIdx = Math.min(startIdx + QUESTIONS_PER_PAGE, sortedQuestions.length)
-  const currentPageQuestions = sortedQuestions.slice(startIdx, endIdx)
-  
+  const sections = assignment.questionnaire?.sections || []
+
+  // Build pages based on sections
+  const buildPages = () => {
+    const sortedQuestions = [...questions].sort(
+      (a, b) => (a.order ?? 0) - (b.order ?? 0),
+    )
+    const sortedSections = [...sections].sort(
+      (a, b) => (a.order ?? 0) - (b.order ?? 0),
+    )
+
+    interface PageData {
+      section?: any
+      questions: any[]
+      startIndex: number
+      pageIndex: number
+    }
+
+    const pages: PageData[] = []
+    let globalQuestionIdx = 0
+
+    if (sortedSections.length > 0) {
+      // Group by section
+      sortedSections.forEach((section) => {
+        // @ts-ignore - section_id is injected via openapi client generation but may not be typed immediately
+        const sectionQuestions = sortedQuestions.filter(
+          (q) => q.section_id === section.id,
+        )
+        if (sectionQuestions.length > 0) {
+          for (
+            let i = 0;
+            i < sectionQuestions.length;
+            i += QUESTIONS_PER_PAGE
+          ) {
+            const pageQuestions = sectionQuestions.slice(
+              i,
+              i + QUESTIONS_PER_PAGE,
+            )
+            pages.push({
+              section,
+              questions: pageQuestions,
+              startIndex: globalQuestionIdx,
+              pageIndex: pages.length,
+            })
+            globalQuestionIdx += pageQuestions.length
+          }
+        }
+      })
+      // Unsectioned questions
+      // @ts-ignore
+      const unsectionedQuestions = sortedQuestions.filter((q) => !q.section_id)
+      if (unsectionedQuestions.length > 0) {
+        for (
+          let i = 0;
+          i < unsectionedQuestions.length;
+          i += QUESTIONS_PER_PAGE
+        ) {
+          const pageQuestions = unsectionedQuestions.slice(
+            i,
+            i + QUESTIONS_PER_PAGE,
+          )
+          pages.push({
+            questions: pageQuestions,
+            startIndex: globalQuestionIdx,
+            pageIndex: pages.length,
+          })
+          globalQuestionIdx += pageQuestions.length
+        }
+      }
+    } else {
+      for (let i = 0; i < sortedQuestions.length; i += QUESTIONS_PER_PAGE) {
+        const pageQuestions = sortedQuestions.slice(i, i + QUESTIONS_PER_PAGE)
+        pages.push({
+          questions: pageQuestions,
+          startIndex: globalQuestionIdx,
+          pageIndex: pages.length,
+        })
+        globalQuestionIdx += pageQuestions.length
+      }
+    }
+
+    return pages
+  }
+
+  const pages = buildPages()
+  const totalPages = pages.length
+  // Ensure current page is within bounds
+  const safeCurrentPage = Math.min(currentPage, Math.max(0, totalPages - 1))
+  const currentPageData =
+    pages[safeCurrentPage] || ({ questions: [], startIndex: 0 } as any)
+  const currentPageQuestions = currentPageData.questions
+  const startIdx = currentPageData.startIndex
+
   const answeredCount = Object.keys(answers).length
-  const progress = questions.length > 0 ? (answeredCount / questions.length) * 100 : 0
+  const progress =
+    questions.length > 0 ? (answeredCount / questions.length) * 100 : 0
 
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
@@ -298,7 +398,8 @@ function TakeQuestionnaire() {
         )}
 
         <Alert severity="info" sx={{ mb: 3 }}>
-          Your progress is saved automatically. You can pause and return to this questionnaire at any time.
+          Your progress is saved automatically. You can pause and return to this
+          questionnaire at any time.
         </Alert>
 
         {assignment.due_date && (
@@ -323,9 +424,13 @@ function TakeQuestionnaire() {
           />
         </Box>
 
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+        >
           <Typography variant="body2" color="text.secondary">
-            Page {currentPage + 1} of {totalPages}
+            Page {safeCurrentPage + 1} of {totalPages || 1}
           </Typography>
           {hasUnsavedChanges && (
             <Typography variant="caption" color="warning.main">
@@ -335,13 +440,49 @@ function TakeQuestionnaire() {
         </Stack>
       </Paper>
 
-      <Box component="form" onSubmit={(e) => { e.preventDefault(); }}>
+      {(currentPageData as any).section && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            mb: 4,
+            bgcolor: "primary.50",
+            borderLeft: "4px solid",
+            borderColor: "primary.main",
+          }}
+        >
+          <Typography variant="h6" fontWeight="bold">
+            {(currentPageData as any).section.name}
+          </Typography>
+          {(currentPageData as any).section.description && (
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              {(currentPageData as any).section.description}
+            </Typography>
+          )}
+        </Paper>
+      )}
+
+      <Box
+        component="form"
+        onSubmit={(e) => {
+          e.preventDefault()
+        }}
+      >
         {currentPageQuestions.map((question, index) => (
           <LikertScaleQuestion
             key={question.id}
             questionText={question.question_text}
             questionNumber={startIdx + index + 1}
-            scaleType={question.scale_type as "LIKERT_5" | "LIKERT_7" | "YES_NO" | "CUSTOM_NUMERIC"}
+            scaleType={
+              question.scale_type as
+                | "LIKERT_5"
+                | "LIKERT_7"
+                | "YES_NO"
+                | "CUSTOM_NUMERIC"
+                | "TEXT"
+                | "FREQUENCY"
+                | "DOMAIN_RATING"
+            }
             isRequired={question.is_required || false}
             value={answers[question.id] || null}
             onChange={(value) => handleAnswerChange(question.id, value)}
@@ -357,14 +498,16 @@ function TakeQuestionnaire() {
             <Button
               variant="outlined"
               onClick={handleSaveAndExit}
-              disabled={submitMutation.isPending || saveProgressMutation.isPending}
+              disabled={
+                submitMutation.isPending || saveProgressMutation.isPending
+              }
               loading={saveProgressMutation.isPending}
             >
               Save & Exit
             </Button>
-            
+
             <Stack direction="row" spacing={2}>
-              {currentPage > 0 && (
+              {safeCurrentPage > 0 && (
                 <Button
                   variant="outlined"
                   onClick={handlePreviousPage}
@@ -373,8 +516,8 @@ function TakeQuestionnaire() {
                   Previous
                 </Button>
               )}
-              
-              {currentPage < totalPages - 1 ? (
+
+              {safeCurrentPage < totalPages - 1 ? (
                 <Button
                   variant="contained"
                   onClick={handleNextPage}

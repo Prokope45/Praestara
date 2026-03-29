@@ -2,13 +2,13 @@ import {
   Avatar,
   Box,
   Container,
-  Typography,
-  TextField,
-  Stack,
   IconButton,
+  Stack,
+  TextField,
+  Typography,
 } from "@mui/material"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState, useRef } from "react"
+import { useRef, useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import { FaCamera, FaTrash } from "react-icons/fa"
 
@@ -90,12 +90,14 @@ const UserInformation = () => {
     fileInputRef.current?.click()
   }
 
-  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0]
     if (!file) return
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith("image/")) {
       showErrorToast("Please select an image file")
       return
     }
@@ -122,7 +124,8 @@ const UserInformation = () => {
     toggleEditMode()
   }
 
-  const profileImage = currentUser?.profile_image || "/assets/images/default-avatar.svg"
+  const profileImage =
+    currentUser?.profile_image || "/assets/images/default-avatar.svg"
 
   return (
     <Container maxWidth="lg">
@@ -132,7 +135,7 @@ const UserInformation = () => {
       <Box
         component="form"
         onSubmit={handleSubmit(onSubmit)}
-        sx={{ maxWidth: { xs: '100%', md: '50%' } }}
+        sx={{ maxWidth: { xs: "100%", md: "50%" } }}
       >
         <Stack spacing={3}>
           {/* Profile Image Section */}
@@ -140,7 +143,7 @@ const UserInformation = () => {
             <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
               Profile Image
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Avatar
                 src={profileImage}
                 alt={currentUser?.full_name || "User"}
@@ -152,15 +155,15 @@ const UserInformation = () => {
                   ref={fileInputRef}
                   onChange={handleImageChange}
                   accept="image/*"
-                  style={{ display: 'none' }}
+                  style={{ display: "none" }}
                 />
                 <IconButton
                   onClick={handleImageClick}
                   disabled={uploadImageMutation.isPending}
                   sx={{
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    '&:hover': { bgcolor: 'primary.dark' },
+                    bgcolor: "primary.main",
+                    color: "white",
+                    "&:hover": { bgcolor: "primary.dark" },
                   }}
                 >
                   <FaCamera />
@@ -170,9 +173,9 @@ const UserInformation = () => {
                     onClick={handleDeleteImage}
                     disabled={deleteImageMutation.isPending}
                     sx={{
-                      bgcolor: 'error.main',
-                      color: 'white',
-                      '&:hover': { bgcolor: 'error.dark' },
+                      bgcolor: "error.main",
+                      color: "white",
+                      "&:hover": { bgcolor: "error.dark" },
                     }}
                   >
                     <FaTrash />
@@ -180,7 +183,11 @@ const UserInformation = () => {
                 )}
               </Stack>
             </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mt: 1, display: "block" }}
+            >
               Click the camera icon to upload a new image (max 5MB)
             </Typography>
           </Box>
@@ -199,10 +206,10 @@ const UserInformation = () => {
               <Typography
                 sx={{
                   py: 1,
-                  color: !currentUser?.full_name ? 'text.secondary' : 'inherit',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: '250px',
+                  color: !currentUser?.full_name ? "text.secondary" : "inherit",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: "250px",
                 }}
               >
                 {currentUser?.full_name || "N/A"}
@@ -230,9 +237,9 @@ const UserInformation = () => {
               <Typography
                 sx={{
                   py: 1,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  maxWidth: '250px',
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  maxWidth: "250px",
                 }}
               >
                 {currentUser?.email}

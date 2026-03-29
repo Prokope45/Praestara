@@ -1,21 +1,27 @@
+import {
+  Box,
+  FormControlLabel,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Controller, type SubmitHandler, useForm } from "react-hook-form"
-import { Box, Stack, TextField, Typography, FormControlLabel } from '@mui/material'
 import { useState } from "react"
+import { Controller, type SubmitHandler, useForm } from "react-hook-form"
 import { FaPlus } from "react-icons/fa"
 
 import { type UserCreate, UsersService } from "@/client"
 import type { ApiError } from "@/client/core/ApiError"
 import useCustomToast from "@/hooks/useCustomToast"
 import { emailPattern, handleError } from "@/utils"
+import { Button } from "../ui/button"
 import { Checkbox } from "../ui/checkbox"
 import {
-  DialogRoot,
-  DialogTitle,
   DialogContent,
   DialogFooter,
+  DialogRoot,
+  DialogTitle,
 } from "../ui/dialog"
-import { Button } from "../ui/button"
 
 interface UserCreateForm extends UserCreate {
   confirm_password: string
@@ -150,7 +156,7 @@ const AddUser = () => {
                 placeholder="Password"
               />
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <Controller
                   control={control}
                   name="is_superuser"

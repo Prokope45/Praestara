@@ -1,8 +1,8 @@
 import { Avatar, Box, Button, Menu, MenuItem, Typography } from "@mui/material"
 import { Link } from "@tanstack/react-router"
+import { useState } from "react"
 import { FaUserCircle } from "react-icons/fa"
 import { FiLogOut, FiUser } from "react-icons/fi"
-import { useState } from "react"
 
 import useAuth from "@/hooks/useAuth"
 
@@ -24,7 +24,8 @@ const UserMenu = () => {
     logout()
   }
 
-  const profileImage = user?.profile_image || "/assets/images/default-avatar.svg"
+  const profileImage =
+    user?.profile_image || "/assets/images/default-avatar.svg"
 
   return (
     <Box>
@@ -33,27 +34,23 @@ const UserMenu = () => {
         variant="contained"
         onClick={handleClick}
         startIcon={
-          <Avatar 
-            src={profileImage} 
+          <Avatar
+            src={profileImage}
             alt={user?.full_name || "User"}
             sx={{ width: 32, height: 32 }}
           >
             <FaUserCircle />
           </Avatar>
         }
-        sx={{ maxWidth: 200, textTransform: 'none', pl: 1 }}
+        sx={{ maxWidth: 200, textTransform: "none", pl: 1 }}
       >
         <Typography noWrap>{user?.full_name || "User"}</Typography>
       </Button>
 
-      <Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-      >
-        <MenuItem 
-          component={Link} 
-          to="/settings" 
+      <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
+        <MenuItem
+          component={Link}
+          to="/settings"
           onClick={handleClose}
           sx={{ gap: 2, py: 2 }}
         >
@@ -61,10 +58,7 @@ const UserMenu = () => {
           <Box flex="1">My Profile</Box>
         </MenuItem>
 
-        <MenuItem
-          onClick={handleLogout}
-          sx={{ gap: 2, py: 2 }}
-        >
+        <MenuItem onClick={handleLogout} sx={{ gap: 2, py: 2 }}>
           <FiLogOut />
           Log Out
         </MenuItem>

@@ -1,11 +1,11 @@
 import {
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
 } from "@mui/material"
 import { Skeleton } from "../ui/skeleton"
 

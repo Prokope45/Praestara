@@ -73,7 +73,11 @@ test("Log in with invalid username", async ({ page }) => {
   await fillForm(page, "invalidusername", firstSuperuserPassword)
   await page.getByRole("button", { name: "Log In" }).click()
 
-  await expect(page.getByText("Incorrect username or password. If you need to recover your password, please use your full email address.")).toBeVisible()
+  await expect(
+    page.getByText(
+      "Incorrect username or password. If you need to recover your password, please use your full email address.",
+    ),
+  ).toBeVisible()
 })
 
 test("Log in with invalid password", async ({ page }) => {
