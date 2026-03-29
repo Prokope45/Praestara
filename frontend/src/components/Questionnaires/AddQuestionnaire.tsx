@@ -153,6 +153,8 @@ export function AddQuestionnaire({
   }
 
   const handleRemoveSection = (id: string) => {
+    // Nested modal with focused background triggers warning; blur active element.
+    (document.activeElement as HTMLElement)?.blur()
     setDeleteDialog({ open: true, type: "section", id })
   }
 
@@ -190,6 +192,8 @@ export function AddQuestionnaire({
   }
 
   const handleRemoveQuestion = (tempId: string) => {
+    // Nested modal with focused background triggers warning; blur active element.
+    (document.activeElement as HTMLElement)?.blur()
     setDeleteDialog({ open: true, type: "question", id: tempId })
   }
 
@@ -275,6 +279,8 @@ export function AddQuestionnaire({
   }
 
   const handleBulkDelete = () => {
+    // Nested modal with focused background triggers warning; blur active element.
+    (document.activeElement as HTMLElement)?.blur()
     setDeleteDialog({ open: true, type: "bulk" })
   }
 
@@ -609,7 +615,7 @@ export function AddQuestionnaire({
               <>
                 <Button
                   variant="outlined"
-                  color="warning"
+                  color="error"
                   startIcon={<FiTrash2 />}
                   onClick={handleBulkDelete}
                 >
