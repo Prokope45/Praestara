@@ -1,4 +1,7 @@
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Checkbox,
   Dialog,
@@ -9,6 +12,7 @@ import {
   FormControlLabel,
   IconButton,
   InputLabel,
+  Menu,
   MenuItem,
   Select,
   Stack,
@@ -16,8 +20,8 @@ import {
   Typography,
 } from "@mui/material"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useEffect, useState } from "react"
-import { FiPlus, FiTrash2 } from "react-icons/fi"
+import React, { useEffect, useState } from "react"
+import { FiChevronDown, FiMove, FiPlus, FiTrash2 } from "react-icons/fi"
 
 import {
   type QuestionCreate,
@@ -26,6 +30,7 @@ import {
   QuestionnairesService,
 } from "../../client"
 import useCustomToast from "../../hooks/useCustomToast"
+import { DeleteConfirmation } from "../Common/DeleteConfirmation"
 import { Button } from "../ui/button"
 
 interface AddQuestionnaireProps {
@@ -56,6 +61,24 @@ export function AddQuestionnaire({
   const [isActive, setIsActive] = useState(true)
   const [sections, setSections] = useState<SectionForm[]>([])
   const [questions, setQuestions] = useState<QuestionForm[]>([])
+
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({})
+  const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null)
+
+  const [selectedQuestions, setSelectedQuestions] = useState<string[]>([])
+  const [selectedSections, setSelectedSections] = useState<string[]>([])
+
+  const [addAnchorEl, setAddAnchorEl] = useState<null | HTMLElement>(null)
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean
+    type: "section" | "question" | "bulk"
+    id?: string
+  }>({ open: false, type: "section" })
+
+  const [moveAnchorEl, setMoveAnchorEl] = useState<null | HTMLElement>(null)
+  const [questionToMove, setQuestionToMove] = useState<string | null>(null)
 
   useEffect(() => {
     if (questionnaire) {
@@ -107,31 +130,40 @@ export function AddQuestionnaire({
     setIsActive(true)
     setSections([])
     setQuestions([])
+    setExpandedSections({})
+    setSelectedQuestions([])
+    setSelectedSections([])
     onClose()
   }
 
   const addSection = () => {
+    const newId = crypto.randomUUID
+      ? crypto.randomUUID()
+      : `sec-${Date.now()}-${Math.random()}`
     setSections([
       ...sections,
       {
-        id: crypto.randomUUID
-          ? crypto.randomUUID()
-          : `sec-${Date.now()}-${Math.random()}`,
-        name: "",
+        id: newId,
+        name: "New Section",
         description: "",
         order: sections.length,
       },
     ])
+    setExpandedSections((prev) => ({ ...prev, [newId]: true }))
+  }
+
+  const handleRemoveSection = (id: string) => {
+    setDeleteDialog({ open: true, type: "section", id })
   }
 
   const removeSection = (id: string) => {
     setSections(sections.filter((s) => s.id !== id))
-    // Also remove section_id from questions that used it
     setQuestions(
       questions.map((q) =>
         q.section_id === id ? { ...q, section_id: null } : q,
       ),
     )
+    setSelectedSections((prev) => prev.filter((secId) => secId !== id))
   }
 
   const updateSection = (id: string, field: string, value: any) => {
@@ -140,7 +172,7 @@ export function AddQuestionnaire({
     )
   }
 
-  const addQuestion = () => {
+  const addQuestion = (sectionId: string | null = null) => {
     setQuestions([
       ...questions,
       {
@@ -148,17 +180,22 @@ export function AddQuestionnaire({
         order: questions.length,
         is_required: true,
         scale_type: "LIKERT_5",
-        section_id: null,
+        section_id: sectionId,
         custom_min_value: null,
         custom_max_value: null,
         custom_unit_label: null,
-        tempId: `new-${Date.now()}`,
+        tempId: `new-${Date.now()}-${Math.random()}`,
       },
     ])
   }
 
+  const handleRemoveQuestion = (tempId: string) => {
+    setDeleteDialog({ open: true, type: "question", id: tempId })
+  }
+
   const removeQuestion = (tempId: string) => {
     setQuestions(questions.filter((q) => q.tempId !== tempId))
+    setSelectedQuestions((prev) => prev.filter((id) => id !== tempId))
   }
 
   const updateQuestion = (tempId: string, field: string, value: any) => {
@@ -167,6 +204,105 @@ export function AddQuestionnaire({
         q.tempId === tempId ? { ...q, [field]: value } : q,
       ),
     )
+  }
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedSectionId(id)
+    e.dataTransfer.effectAllowed = "move"
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+  }
+
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault()
+    if (!draggedSectionId || draggedSectionId === targetId) return
+
+    const newSections = [...sections]
+    const draggedIndex = newSections.findIndex((s) => s.id === draggedSectionId)
+    const targetIndex = newSections.findIndex((s) => s.id === targetId)
+
+    const [draggedSection] = newSections.splice(draggedIndex, 1)
+    newSections.splice(targetIndex, 0, draggedSection)
+
+    const updatedSections = newSections.map((s, idx) => ({ ...s, order: idx }))
+    setSections(updatedSections)
+    setDraggedSectionId(null)
+  }
+
+  const openMoveMenu = (
+    event: React.MouseEvent<HTMLElement>,
+    questionTempId: string | null = null,
+  ) => {
+    setMoveAnchorEl(event.currentTarget)
+    setQuestionToMove(questionTempId)
+  }
+
+  const closeMoveMenu = () => {
+    setMoveAnchorEl(null)
+    setQuestionToMove(null)
+  }
+
+  const moveQuestion = (sectionId: string | null) => {
+    if (questionToMove) {
+      updateQuestion(questionToMove, "section_id", sectionId)
+    } else if (selectedQuestions.length > 0) {
+      setQuestions(
+        questions.map((q) =>
+          selectedQuestions.includes(q.tempId)
+            ? { ...q, section_id: sectionId }
+            : q,
+        ),
+      )
+    }
+    closeMoveMenu()
+  }
+
+  const toggleQuestionSelection = (tempId: string) => {
+    setSelectedQuestions((prev) =>
+      prev.includes(tempId)
+        ? prev.filter((id) => id !== tempId)
+        : [...prev, tempId],
+    )
+  }
+
+  const toggleSectionSelection = (id: string) => {
+    setSelectedSections((prev) =>
+      prev.includes(id) ? prev.filter((secId) => secId !== id) : [...prev, id],
+    )
+  }
+
+  const handleBulkDelete = () => {
+    setDeleteDialog({ open: true, type: "bulk" })
+  }
+
+  const confirmDelete = () => {
+    if (deleteDialog.type === "section" && deleteDialog.id) {
+      removeSection(deleteDialog.id)
+    } else if (deleteDialog.type === "question" && deleteDialog.id) {
+      removeQuestion(deleteDialog.id)
+    } else if (deleteDialog.type === "bulk") {
+      if (selectedSections.length > 0) {
+        setSections(sections.filter((s) => !selectedSections.includes(s.id)))
+        setQuestions(
+          questions.map((q) =>
+            q.section_id && selectedSections.includes(q.section_id)
+              ? { ...q, section_id: null }
+              : q,
+          ),
+        )
+      }
+      if (selectedQuestions.length > 0) {
+        setQuestions((prev) =>
+          prev.filter((q) => !selectedQuestions.includes(q.tempId)),
+        )
+      }
+      setSelectedSections([])
+      setSelectedQuestions([])
+    }
+    setDeleteDialog({ open: false, type: "section" })
   }
 
   const handleSubmit = () => {
@@ -186,7 +322,6 @@ export function AddQuestionnaire({
       return
     }
 
-    // Validate custom numeric questions
     const customQuestions = questions.filter(
       (q) => q.scale_type === "CUSTOM_NUMERIC",
     )
@@ -236,6 +371,174 @@ export function AddQuestionnaire({
     })
   }
 
+  const renderQuestion = (question: QuestionForm, index: number) => (
+    <Box
+      key={question.tempId}
+      sx={{
+        p: 2,
+        mb: 2,
+        border: "1px solid",
+        borderColor: "divider",
+        borderRadius: 1,
+        bgcolor: selectedQuestions.includes(question.tempId)
+          ? "action.selected"
+          : "background.paper",
+      }}
+    >
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="flex-start"
+        spacing={2}
+      >
+        <Checkbox
+          checked={selectedQuestions.includes(question.tempId)}
+          onChange={() => toggleQuestionSelection(question.tempId)}
+          size="small"
+        />
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+          #{index + 1}
+        </Typography>
+        <Box sx={{ flex: 1 }}>
+          <TextField
+            label="Question Text"
+            value={question.question_text}
+            onChange={(e) =>
+              updateQuestion(question.tempId, "question_text", e.target.value)
+            }
+            fullWidth
+            size="small"
+            sx={{ mb: 2 }}
+          />
+          <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>Scale Type</InputLabel>
+              <Select
+                value={question.scale_type}
+                label="Scale Type"
+                onChange={(e) =>
+                  updateQuestion(question.tempId, "scale_type", e.target.value)
+                }
+              >
+                <MenuItem value="LIKERT_5">Likert 5-Point</MenuItem>
+                <MenuItem value="LIKERT_7">Likert 7-Point</MenuItem>
+                <MenuItem value="YES_NO">Yes/No</MenuItem>
+                <MenuItem value="CUSTOM_NUMERIC">Custom Numeric</MenuItem>
+                <MenuItem value="TEXT">Text Response</MenuItem>
+                <MenuItem value="FREQUENCY">Frequency (0-3)</MenuItem>
+                <MenuItem value="DOMAIN_RATING">Domain Rating</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={question.is_required}
+                  onChange={(e) =>
+                    updateQuestion(
+                      question.tempId,
+                      "is_required",
+                      e.target.checked,
+                    )
+                  }
+                  size="small"
+                />
+              }
+              label="Required"
+            />
+          </Stack>
+
+          {question.scale_type === "CUSTOM_NUMERIC" && (
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: "background.default",
+                border: "1px solid",
+                borderColor: "divider",
+                borderRadius: 1,
+              }}
+            >
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mb: 1, display: "block" }}
+              >
+                Custom Scale Configuration
+              </Typography>
+              <Stack direction="row" spacing={2}>
+                <TextField
+                  label="Min Value"
+                  type="number"
+                  value={question.custom_min_value ?? ""}
+                  onChange={(e) =>
+                    updateQuestion(
+                      question.tempId,
+                      "custom_min_value",
+                      e.target.value ? Number.parseInt(e.target.value) : null,
+                    )
+                  }
+                  size="small"
+                  required
+                  sx={{ width: 120 }}
+                />
+                <TextField
+                  label="Max Value"
+                  type="number"
+                  value={question.custom_max_value ?? ""}
+                  onChange={(e) =>
+                    updateQuestion(
+                      question.tempId,
+                      "custom_max_value",
+                      e.target.value ? Number.parseInt(e.target.value) : null,
+                    )
+                  }
+                  size="small"
+                  required
+                  sx={{ width: 120 }}
+                />
+                <TextField
+                  label="Unit Label (optional)"
+                  value={question.custom_unit_label ?? ""}
+                  onChange={(e) =>
+                    updateQuestion(
+                      question.tempId,
+                      "custom_unit_label",
+                      e.target.value || null,
+                    )
+                  }
+                  size="small"
+                  placeholder="e.g., hours, times, walks"
+                  sx={{ flex: 1 }}
+                />
+              </Stack>
+            </Box>
+          )}
+        </Box>
+        <Stack direction="row" spacing={1}>
+          <IconButton
+            size="small"
+            onClick={(e) => openMoveMenu(e, question.tempId)}
+            color="primary"
+            title="Move"
+          >
+            <FiMove />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => handleRemoveQuestion(question.tempId)}
+            color="error"
+            title="Delete"
+          >
+            <FiTrash2 />
+          </IconButton>
+        </Stack>
+      </Stack>
+    </Box>
+  )
+
+  const unsectionedQuestions = questions.filter((q) => q.section_id === null)
+  const isBulkActionsVisible =
+    selectedQuestions.length > 0 || selectedSections.length > 0
+
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
       <DialogTitle>
@@ -268,300 +571,213 @@ export function AddQuestionnaire({
             label="Active"
           />
 
-          <Box>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ mb: 2 }}
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{ mb: 2, alignItems: "center" }}
+          >
+            <Button
+              variant="outlined"
+              startIcon={<FiPlus />}
+              onClick={(e) => setAddAnchorEl(e.currentTarget)}
             >
-              <Typography variant="h6">Sections (Optional)</Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<FiPlus />}
-                onClick={addSection}
+              Add
+            </Button>
+            <Menu
+              anchorEl={addAnchorEl}
+              open={Boolean(addAnchorEl)}
+              onClose={() => setAddAnchorEl(null)}
+            >
+              <MenuItem
+                onClick={() => {
+                  addSection()
+                  setAddAnchorEl(null)
+                }}
               >
-                Add Section
-              </Button>
-            </Stack>
+                Section
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  addQuestion(null)
+                  setAddAnchorEl(null)
+                }}
+              >
+                Question
+              </MenuItem>
+            </Menu>
+            {isBulkActionsVisible && (
+              <>
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  startIcon={<FiTrash2 />}
+                  onClick={handleBulkDelete}
+                >
+                  Delete Selected
+                </Button>
+                {selectedQuestions.length > 0 && (
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<FiMove />}
+                    onClick={(e) => openMoveMenu(e as any)}
+                  >
+                    Move Selected Questions
+                  </Button>
+                )}
+              </>
+            )}
+          </Stack>
 
-            <Stack spacing={2} sx={{ mb: 4 }}>
-              {sections.map((section, index) => (
+          <Box>
+            {sections.map((section, index) => {
+              const sectionQuestions = questions.filter(
+                (q) => q.section_id === section.id,
+              )
+              const isSelected = selectedSections.includes(section.id)
+
+              return (
                 <Box
                   key={section.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, section.id)}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, section.id)}
                   sx={{
-                    p: 2,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    borderRadius: 1,
-                    bgcolor: "info.lighter",
-                  }}
-                >
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="flex-start"
-                    spacing={2}
-                  >
-                    <Typography
-                      variant="caption"
-                      color="info.main"
-                      sx={{ mt: 1 }}
-                    >
-                      Section {index + 1}
-                    </Typography>
-                    <Box sx={{ flex: 1 }}>
-                      <TextField
-                        label="Section Name"
-                        value={section.name}
-                        onChange={(e) =>
-                          updateSection(section.id, "name", e.target.value)
-                        }
-                        fullWidth
-                        size="small"
-                        required
-                        sx={{ mb: 2 }}
-                      />
-                      <TextField
-                        label="Description (Optional)"
-                        value={section.description || ""}
-                        onChange={(e) =>
-                          updateSection(
-                            section.id,
-                            "description",
-                            e.target.value,
-                          )
-                        }
-                        fullWidth
-                        size="small"
-                        multiline
-                        rows={2}
-                      />
-                    </Box>
-                    <IconButton
-                      size="small"
-                      onClick={() => removeSection(section.id)}
-                      color="error"
-                    >
-                      <FiTrash2 />
-                    </IconButton>
-                  </Stack>
-                </Box>
-              ))}
-            </Stack>
-          </Box>
-
-          <Box>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ mb: 2 }}
-            >
-              <Typography variant="h6">Questions</Typography>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<FiPlus />}
-                onClick={addQuestion}
-              >
-                Add Question
-              </Button>
-            </Stack>
-
-            <Stack spacing={2}>
-              {questions.map((question, index) => (
-                <Box
-                  key={question.tempId}
-                  sx={{
-                    p: 2,
-                    border: "1px solid",
-                    borderColor: "divider",
+                    mb: 2,
+                    opacity: draggedSectionId === section.id ? 0.5 : 1,
+                    border: isSelected ? "2px solid" : "none",
+                    borderColor: "primary.main",
                     borderRadius: 1,
                   }}
                 >
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="flex-start"
-                    spacing={2}
+                  <Accordion
+                    expanded={expandedSections[section.id] || false}
+                    onChange={(_, expanded) =>
+                      setExpandedSections((prev) => ({
+                        ...prev,
+                        [section.id]: expanded,
+                      }))
+                    }
+                    sx={{
+                      border: "1px solid",
+                      borderColor: "divider",
+                      boxShadow: "none",
+                    }}
                   >
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ mt: 1 }}
+                    <AccordionSummary
+                      expandIcon={<FiChevronDown />}
+                      sx={{ bgcolor: "info.lighter" }}
                     >
-                      #{index + 1}
-                    </Typography>
-                    <Box sx={{ flex: 1 }}>
-                      <TextField
-                        label="Question Text"
-                        value={question.question_text}
-                        onChange={(e) =>
-                          updateQuestion(
-                            question.tempId,
-                            "question_text",
-                            e.target.value,
-                          )
-                        }
-                        fullWidth
-                        size="small"
-                        sx={{ mb: 2 }}
-                      />
-                      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-                        {sections.length > 0 && (
-                          <FormControl size="small" sx={{ minWidth: 150 }}>
-                            <InputLabel>Section</InputLabel>
-                            <Select
-                              value={question.section_id || ""}
-                              label="Section"
-                              onChange={(e) =>
-                                updateQuestion(
-                                  question.tempId,
-                                  "section_id",
-                                  e.target.value || null,
-                                )
-                              }
-                            >
-                              <MenuItem value="">
-                                <em>None</em>
-                              </MenuItem>
-                              {sections.map((s, idx) => (
-                                <MenuItem key={s.id} value={s.id}>
-                                  {s.name || `Section ${idx + 1}`}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        )}
-                        <FormControl size="small" sx={{ minWidth: 150 }}>
-                          <InputLabel>Scale Type</InputLabel>
-                          <Select
-                            value={question.scale_type}
-                            label="Scale Type"
-                            onChange={(e) =>
-                              updateQuestion(
-                                question.tempId,
-                                "scale_type",
-                                e.target.value,
-                              )
-                            }
-                          >
-                            <MenuItem value="LIKERT_5">Likert 5-Point</MenuItem>
-                            <MenuItem value="LIKERT_7">Likert 7-Point</MenuItem>
-                            <MenuItem value="YES_NO">Yes/No</MenuItem>
-                            <MenuItem value="CUSTOM_NUMERIC">
-                              Custom Numeric
-                            </MenuItem>
-                            <MenuItem value="TEXT">Text Response</MenuItem>
-                            <MenuItem value="FREQUENCY">
-                              Frequency (0-3)
-                            </MenuItem>
-                            <MenuItem value="DOMAIN_RATING">
-                              Domain Rating
-                            </MenuItem>
-                          </Select>
-                        </FormControl>
-                        <FormControlLabel
-                          control={
-                            <Checkbox
-                              checked={question.is_required}
-                              onChange={(e) =>
-                                updateQuestion(
-                                  question.tempId,
-                                  "is_required",
-                                  e.target.checked,
-                                )
-                              }
-                              size="small"
-                            />
-                          }
-                          label="Required"
-                        />
-                      </Stack>
-
-                      {question.scale_type === "CUSTOM_NUMERIC" && (
-                        <Box
-                          sx={{
-                            p: 2,
-                            bgcolor: "background.paper",
-                            border: "1px solid",
-                            borderColor: "divider",
-                            borderRadius: 1,
+                      <Stack
+                        direction="row"
+                        spacing={2}
+                        alignItems="center"
+                        sx={{ width: "100%" }}
+                      >
+                        <Checkbox
+                          checked={isSelected}
+                          onChange={(e) => {
+                            e.stopPropagation()
+                            toggleSectionSelection(section.id)
                           }}
+                          onClick={(e) => e.stopPropagation()}
+                          size="small"
+                        />
+                        <div
+                          style={{ cursor: "grab", display: "flex" }}
+                          onClick={(e) => e.stopPropagation()}
                         >
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ mb: 1, display: "block" }}
-                          >
-                            Custom Scale Configuration
+                          <FiMove />
+                        </div>
+                        <Typography
+                          variant="subtitle1"
+                          sx={{ flex: 1, fontWeight: "bold" }}
+                        >
+                          {section.name || `Section ${index + 1}`}
+                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRemoveSection(section.id)
+                          }}
+                          color="error"
+                          sx={{ paddingRight: "8px" }}
+                        >
+                          <FiTrash2 />
+                        </IconButton>
+                      </Stack>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Stack spacing={2}>
+                        <TextField
+                          label="Section Name"
+                          value={section.name}
+                          onChange={(e) =>
+                            updateSection(section.id, "name", e.target.value)
+                          }
+                          fullWidth
+                          size="small"
+                          required
+                        />
+                        <TextField
+                          label="Description (Optional)"
+                          value={section.description || ""}
+                          onChange={(e) =>
+                            updateSection(
+                              section.id,
+                              "description",
+                              e.target.value,
+                            )
+                          }
+                          fullWidth
+                          size="small"
+                          multiline
+                          rows={2}
+                        />
+                        <Box sx={{ mt: 2 }}>
+                          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                            Questions in this Section
                           </Typography>
-                          <Stack direction="row" spacing={2}>
-                            <TextField
-                              label="Min Value"
-                              type="number"
-                              value={question.custom_min_value ?? ""}
-                              onChange={(e) =>
-                                updateQuestion(
-                                  question.tempId,
-                                  "custom_min_value",
-                                  e.target.value
-                                    ? Number.parseInt(e.target.value)
-                                    : null,
-                                )
-                              }
-                              size="small"
-                              required
-                              sx={{ width: 120 }}
-                            />
-                            <TextField
-                              label="Max Value"
-                              type="number"
-                              value={question.custom_max_value ?? ""}
-                              onChange={(e) =>
-                                updateQuestion(
-                                  question.tempId,
-                                  "custom_max_value",
-                                  e.target.value
-                                    ? Number.parseInt(e.target.value)
-                                    : null,
-                                )
-                              }
-                              size="small"
-                              required
-                              sx={{ width: 120 }}
-                            />
-                            <TextField
-                              label="Unit Label (optional)"
-                              value={question.custom_unit_label ?? ""}
-                              onChange={(e) =>
-                                updateQuestion(
-                                  question.tempId,
-                                  "custom_unit_label",
-                                  e.target.value || null,
-                                )
-                              }
-                              size="small"
-                              placeholder="e.g., hours, times, walks"
-                              sx={{ flex: 1 }}
-                            />
-                          </Stack>
+                          {sectionQuestions.map((q, idx) =>
+                            renderQuestion(q, idx),
+                          )}
+                          <Button
+                            variant="text"
+                            startIcon={<FiPlus />}
+                            onClick={() => addQuestion(section.id)}
+                            size="small"
+                          >
+                            Add Question to Section
+                          </Button>
                         </Box>
-                      )}
-                    </Box>
-                    <IconButton
-                      size="small"
-                      onClick={() => removeQuestion(question.tempId)}
-                      color="error"
-                    >
-                      <FiTrash2 />
-                    </IconButton>
-                  </Stack>
+                      </Stack>
+                    </AccordionDetails>
+                  </Accordion>
                 </Box>
-              ))}
-            </Stack>
+              )
+            })}
+
+            {/* General Questions (Unsectioned) */}
+            {(unsectionedQuestions.length > 0 || sections.length === 0) && (
+              <Box sx={{ mb: 2, mt: sections.length > 0 ? 4 : 0 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  {sections.length > 0 ? "General Questions" : "Questions"}
+                </Typography>
+                {unsectionedQuestions.map((q, idx) => renderQuestion(q, idx))}
+                {sections.length > 0 && (
+                  <Button
+                    variant="text"
+                    startIcon={<FiPlus />}
+                    onClick={() => addQuestion(null)}
+                    size="small"
+                  >
+                    Add General Question
+                  </Button>
+                )}
+              </Box>
+            )}
           </Box>
         </Stack>
       </DialogContent>
@@ -578,6 +794,44 @@ export function AddQuestionnaire({
           {isEditing ? "Update" : "Create"}
         </Button>
       </DialogActions>
+
+      {/* Move Question Menu */}
+      <Menu
+        anchorEl={moveAnchorEl}
+        open={Boolean(moveAnchorEl)}
+        onClose={closeMoveMenu}
+      >
+        <MenuItem onClick={() => moveQuestion(null)}>
+          <em>General Questions</em>
+        </MenuItem>
+        {sections.map((s) => (
+          <MenuItem key={s.id} onClick={() => moveQuestion(s.id)}>
+            {s.name || "Unnamed Section"}
+          </MenuItem>
+        ))}
+      </Menu>
+
+      <DeleteConfirmation
+        open={deleteDialog.open}
+        onClose={() => setDeleteDialog({ open: false, type: "section" })}
+        onConfirm={confirmDelete}
+        title={
+          deleteDialog.type === "bulk"
+            ? "Delete Selected"
+            : `Delete ${deleteDialog.type === "section" ? "Section" : "Question"}`
+        }
+        description={
+          deleteDialog.type === "bulk"
+            ? `Are you sure you want to delete ${
+                selectedSections.length > 0 && selectedQuestions.length > 0
+                  ? `${selectedSections.length} section(s) and ${selectedQuestions.length} question(s)`
+                  : selectedSections.length > 0
+                    ? `${selectedSections.length} section(s)`
+                    : `${selectedQuestions.length} question(s)`
+              }? This action cannot be undone.`
+            : `Are you sure you want to delete this ${deleteDialog.type}? This action cannot be undone.`
+        }
+      />
     </Dialog>
   )
 }

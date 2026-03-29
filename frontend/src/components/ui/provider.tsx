@@ -43,8 +43,9 @@ export function ColorModeProvider({
 export function CustomProvider(props: PropsWithChildren) {
   return (
     <ColorModeProvider defaultTheme="light">
-      {props.children}
-      <Toaster />
+      <Toaster>
+        {props.children}
+      </Toaster>
     </ColorModeProvider>
   )
 }

@@ -1,6 +1,6 @@
 import { SnackbarProvider } from "notistack"
 
-export const Toaster = () => {
+export const Toaster = ({ children }: { children?: React.ReactNode }) => {
   return (
     <SnackbarProvider
       maxSnack={3}
@@ -8,8 +8,11 @@ export const Toaster = () => {
         vertical: "top",
         horizontal: "right",
       }}
+      disableWindowBlurListener={true}
       autoHideDuration={5000}
-    />
+    >
+      {children}
+    </SnackbarProvider>
   )
 }
 
@@ -20,7 +23,6 @@ export const toaster = {
     description?: string
     type?: "success" | "error" | "warning" | "info"
   }) => {
-    // This will be handled by useCustomToast hook
     return { id: Date.now().toString() }
   },
 }

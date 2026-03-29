@@ -119,6 +119,99 @@ function TakeQuestionnaire() {
     }
   }, [hasUnsavedChanges, saveProgress])
 
+  const questions = assignment?.questionnaire?.questions || []
+  const sections = assignment?.questionnaire?.sections || []
+
+  // Build pages based on sections
+  const buildPages = () => {
+    const sortedQuestions = [...questions].sort(
+      (a, b) => (a.order ?? 0) - (b.order ?? 0),
+    )
+    const sortedSections = [...sections].sort(
+      (a, b) => (a.order ?? 0) - (b.order ?? 0),
+    )
+
+    interface PageData {
+      section?: any
+      questions: any[]
+      startIndex: number
+      pageIndex: number
+    }
+
+    const pages: PageData[] = []
+    let globalQuestionIdx = 0
+
+    if (sortedSections.length > 0) {
+      // Group by section
+      sortedSections.forEach((section) => {
+        // @ts-ignore - section_id is injected via openapi client generation but may not be typed immediately
+        const sectionQuestions = sortedQuestions.filter(
+          (q) => q.section_id === section.id,
+        )
+        if (sectionQuestions.length > 0) {
+          for (
+            let i = 0;
+            i < sectionQuestions.length;
+            i += QUESTIONS_PER_PAGE
+          ) {
+            const pageQuestions = sectionQuestions.slice(
+              i,
+              i + QUESTIONS_PER_PAGE,
+            )
+            pages.push({
+              section,
+              questions: pageQuestions,
+              startIndex: globalQuestionIdx,
+              pageIndex: pages.length,
+            })
+            globalQuestionIdx += pageQuestions.length
+          }
+        }
+      })
+      // Unsectioned questions
+      // @ts-ignore
+      const unsectionedQuestions = sortedQuestions.filter((q) => !q.section_id)
+      if (unsectionedQuestions.length > 0) {
+        for (
+          let i = 0;
+          i < unsectionedQuestions.length;
+          i += QUESTIONS_PER_PAGE
+        ) {
+          const pageQuestions = unsectionedQuestions.slice(
+            i,
+            i + QUESTIONS_PER_PAGE,
+          )
+          pages.push({
+            questions: pageQuestions,
+            startIndex: globalQuestionIdx,
+            pageIndex: pages.length,
+          })
+          globalQuestionIdx += pageQuestions.length
+        }
+      }
+    } else {
+      for (let i = 0; i < sortedQuestions.length; i += QUESTIONS_PER_PAGE) {
+        const pageQuestions = sortedQuestions.slice(i, i + QUESTIONS_PER_PAGE)
+        pages.push({
+          questions: pageQuestions,
+          startIndex: globalQuestionIdx,
+          pageIndex: pages.length,
+        })
+        globalQuestionIdx += pageQuestions.length
+      }
+    }
+
+    return pages
+  }
+
+  const pages = buildPages()
+  const totalPages = pages.length
+  // Ensure current page is within bounds
+  const safeCurrentPage = Math.min(currentPage, Math.max(0, totalPages - 1))
+  const currentPageData =
+    pages[safeCurrentPage] || ({ questions: [], startIndex: 0 } as any)
+  const currentPageQuestions = currentPageData.questions
+
   const handleAnswerChange = (questionId: string, value: number) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }))
     setHasUnsavedChanges(true)
@@ -133,24 +226,12 @@ function TakeQuestionnaire() {
   }
 
   const validateCurrentPage = () => {
-    const questions = assignment?.questionnaire?.questions || []
-    const sortedQuestions = [...questions].sort(
-      (a, b) => (a.order ?? 0) - (b.order ?? 0),
-    )
-    const startIdx = currentPage * QUESTIONS_PER_PAGE
-    const endIdx = Math.min(
-      startIdx + QUESTIONS_PER_PAGE,
-      sortedQuestions.length,
-    )
-    const pageQuestions = sortedQuestions.slice(startIdx, endIdx)
-
     const newErrors: Record<string, string> = {}
-    pageQuestions.forEach((question) => {
+    currentPageQuestions.forEach((question: any) => {
       if (question.is_required && !answers[question.id]) {
         newErrors[question.id] = "This question is required"
       }
     })
-
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -287,98 +368,6 @@ function TakeQuestionnaire() {
     )
   }
 
-  const questions = assignment.questionnaire?.questions || []
-  const sections = assignment.questionnaire?.sections || []
-
-  // Build pages based on sections
-  const buildPages = () => {
-    const sortedQuestions = [...questions].sort(
-      (a, b) => (a.order ?? 0) - (b.order ?? 0),
-    )
-    const sortedSections = [...sections].sort(
-      (a, b) => (a.order ?? 0) - (b.order ?? 0),
-    )
-
-    interface PageData {
-      section?: any
-      questions: any[]
-      startIndex: number
-      pageIndex: number
-    }
-
-    const pages: PageData[] = []
-    let globalQuestionIdx = 0
-
-    if (sortedSections.length > 0) {
-      // Group by section
-      sortedSections.forEach((section) => {
-        // @ts-ignore - section_id is injected via openapi client generation but may not be typed immediately
-        const sectionQuestions = sortedQuestions.filter(
-          (q) => q.section_id === section.id,
-        )
-        if (sectionQuestions.length > 0) {
-          for (
-            let i = 0;
-            i < sectionQuestions.length;
-            i += QUESTIONS_PER_PAGE
-          ) {
-            const pageQuestions = sectionQuestions.slice(
-              i,
-              i + QUESTIONS_PER_PAGE,
-            )
-            pages.push({
-              section,
-              questions: pageQuestions,
-              startIndex: globalQuestionIdx,
-              pageIndex: pages.length,
-            })
-            globalQuestionIdx += pageQuestions.length
-          }
-        }
-      })
-      // Unsectioned questions
-      // @ts-ignore
-      const unsectionedQuestions = sortedQuestions.filter((q) => !q.section_id)
-      if (unsectionedQuestions.length > 0) {
-        for (
-          let i = 0;
-          i < unsectionedQuestions.length;
-          i += QUESTIONS_PER_PAGE
-        ) {
-          const pageQuestions = unsectionedQuestions.slice(
-            i,
-            i + QUESTIONS_PER_PAGE,
-          )
-          pages.push({
-            questions: pageQuestions,
-            startIndex: globalQuestionIdx,
-            pageIndex: pages.length,
-          })
-          globalQuestionIdx += pageQuestions.length
-        }
-      }
-    } else {
-      for (let i = 0; i < sortedQuestions.length; i += QUESTIONS_PER_PAGE) {
-        const pageQuestions = sortedQuestions.slice(i, i + QUESTIONS_PER_PAGE)
-        pages.push({
-          questions: pageQuestions,
-          startIndex: globalQuestionIdx,
-          pageIndex: pages.length,
-        })
-        globalQuestionIdx += pageQuestions.length
-      }
-    }
-
-    return pages
-  }
-
-  const pages = buildPages()
-  const totalPages = pages.length
-  // Ensure current page is within bounds
-  const safeCurrentPage = Math.min(currentPage, Math.max(0, totalPages - 1))
-  const currentPageData =
-    pages[safeCurrentPage] || ({ questions: [], startIndex: 0 } as any)
-  const currentPageQuestions = currentPageData.questions
   const startIdx = currentPageData.startIndex
 
   const answeredCount = Object.keys(answers).length
