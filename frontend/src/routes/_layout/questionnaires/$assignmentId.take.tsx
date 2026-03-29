@@ -483,7 +483,11 @@ function TakeQuestionnaire() {
         ))}
 
         <Paper elevation={0} sx={{ p: 3, mt: 4, bgcolor: "background.paper" }}>
-          <Stack direction="row" spacing={2} justifyContent="space-between">
+          <Stack
+            direction={{ xs: "column-reverse", sm: "row" }}
+            spacing={2}
+            justifyContent="space-between"
+          >
             <Button
               variant="outlined"
               onClick={handleSaveAndExit}
@@ -491,16 +495,18 @@ function TakeQuestionnaire() {
                 submitMutation.isPending || saveProgressMutation.isPending
               }
               loading={saveProgressMutation.isPending}
+              sx={{ width: { xs: "100%", sm: "auto" } }}
             >
               Save & Exit
             </Button>
 
-            <Stack direction="row" spacing={2}>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
               {safeCurrentPage > 0 && (
                 <Button
                   variant="outlined"
                   onClick={handlePreviousPage}
                   disabled={submitMutation.isPending}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   Previous
                 </Button>
@@ -511,6 +517,7 @@ function TakeQuestionnaire() {
                   variant="contained"
                   onClick={handleNextPage}
                   disabled={submitMutation.isPending}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   Next
                 </Button>
@@ -520,6 +527,7 @@ function TakeQuestionnaire() {
                   onClick={handleSubmit}
                   loading={submitMutation.isPending}
                   disabled={submitMutation.isPending}
+                  sx={{ width: { xs: "100%", sm: "auto" } }}
                 >
                   Submit Questionnaire
                 </Button>

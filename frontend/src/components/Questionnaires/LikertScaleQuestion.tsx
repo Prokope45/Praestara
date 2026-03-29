@@ -123,7 +123,10 @@ export function LikertScaleQuestion({
             minRows={3}
             fullWidth
             placeholder="Type your answer here..."
-            sx={{ mt: 2 }}
+            sx={{
+              mt: 2,
+              "& textarea": { resize: "vertical" },
+            }}
           />
         </Field>
       </Box>
@@ -162,28 +165,25 @@ export function LikertScaleQuestion({
             <Box
               sx={{
                 display: "flex",
-                flexWrap: "wrap",
+                flexDirection: { xs: "column", md: "row" },
                 gap: 2,
                 mt: 2,
-                justifyContent: "center",
+                width: "100%",
               }}
             >
               {FREQUENCY_LABELS.map((label, index) => (
                 <Box
                   key={index}
-                  sx={{
-                    flex: "0 0 auto",
-                    width: "180px",
-                  }}
+                  sx={{ flex: 1 }}
                 >
                   <Box
                     sx={{
                       display: "flex",
-                      flexDirection: "column",
+                      flexDirection: { xs: "row", md: "column" },
                       alignItems: "center",
-                      justifyContent: "center",
+                      justifyContent: { xs: "flex-start", md: "center" },
                       p: 2,
-                      height: "120px",
+                      height: { xs: "auto", md: "120px" },
                       border: "1px solid",
                       borderColor: value === index ? "primary.main" : "divider",
                       borderRadius: 1,
@@ -198,25 +198,28 @@ export function LikertScaleQuestion({
                     }}
                     onClick={() => onChange(index)}
                   >
-                    <Radio value={index.toString()} sx={{ mb: 1 }} />
+                    <Radio value={index.toString()} sx={{ mb: { xs: 0, md: 1 }, mr: { xs: 2, md: 0 } }} />
                     <Typography
                       variant="body2"
-                      textAlign="center"
+                      textAlign={{ xs: "left", md: "center" }}
                       sx={{
                         fontWeight: value === index ? 600 : 400,
                         wordBreak: "break-word",
                         flex: 1,
                         display: "flex",
                         alignItems: "center",
-                        px: 1,
+                        px: { xs: 0, md: 1 },
                       }}
                     >
+                      <Box component="span" sx={{ display: { xs: "inline", md: "none" }, mr: 1 }}>
+                        {index} -
+                      </Box>
                       {label}
                     </Typography>
                     <Typography
                       variant="caption"
                       color="text.secondary"
-                      sx={{ mt: 0.5 }}
+                      sx={{ mt: 0.5, display: { xs: "none", md: "block" } }}
                     >
                       {index}
                     </Typography>
@@ -276,7 +279,7 @@ export function LikertScaleQuestion({
                     { value: 5, label: "5" },
                     { value: 10, label: "10" },
                   ]}
-                  valueLabelDisplay="on"
+                  valueLabelDisplay="auto"
                 />
               </Box>
               <Box>
@@ -299,7 +302,7 @@ export function LikertScaleQuestion({
                     { value: 5, label: "5" },
                     { value: 10, label: "10" },
                   ]}
-                  valueLabelDisplay="on"
+                  valueLabelDisplay="auto"
                 />
               </Box>
               <TextField
@@ -360,28 +363,25 @@ export function LikertScaleQuestion({
                   <Box
                     sx={{
                       display: "flex",
-                      flexWrap: "wrap",
+                      flexDirection: { xs: "column", md: "row" },
                       gap: 2,
                       mt: 2,
-                      justifyContent: "center",
+                      width: "100%",
                     }}
                   >
                     {options.map((optionValue) => (
                       <Box
                         key={optionValue}
-                        sx={{
-                          flex: "0 0 auto",
-                          width: "130px",
-                        }}
+                        sx={{ flex: 1 }}
                       >
                         <Box
                           sx={{
                             display: "flex",
-                            flexDirection: "column",
+                            flexDirection: { xs: "row", md: "column" },
                             alignItems: "center",
-                            justifyContent: "center",
+                            justifyContent: { xs: "flex-start", md: "center" },
                             p: 2,
-                            height: "120px",
+                            height: { xs: "auto", md: "120px" },
                             border: "1px solid",
                             borderColor:
                               value === optionValue
@@ -403,22 +403,28 @@ export function LikertScaleQuestion({
                         >
                           <Radio
                             value={optionValue.toString()}
-                            sx={{ mb: 1 }}
+                            sx={{ mb: { xs: 0, md: 1 }, mr: { xs: 2, md: 0 } }}
                           />
                           <Typography
                             variant="h6"
-                            textAlign="center"
+                            textAlign={{ xs: "left", md: "center" }}
                             sx={{
                               fontWeight: value === optionValue ? 600 : 400,
+                              flex: { xs: 1, md: "unset" },
                             }}
                           >
                             {optionValue}
+                            {customUnitLabel && (
+                              <Box component="span" sx={{ ml: 1, display: { xs: "inline", md: "none" } }}>
+                                {customUnitLabel}
+                              </Box>
+                            )}
                           </Typography>
                           {customUnitLabel && (
                             <Typography
                               variant="caption"
                               color="text.secondary"
-                              sx={{ mt: 0.5 }}
+                              sx={{ mt: 0.5, display: { xs: "none", md: "block" } }}
                             >
                               {customUnitLabel}
                             </Typography>
@@ -433,7 +439,7 @@ export function LikertScaleQuestion({
 
             // For ranges > 10, show number input
             return (
-              <Box sx={{ mt: 2, maxWidth: 400 }}>
+              <Box sx={{ mt: 2, maxWidth: "100%", width: { xs: "100%", sm: 400 } }}>
                 <TextField
                   type="number"
                   value={value ?? ""}
@@ -470,28 +476,25 @@ export function LikertScaleQuestion({
             <Box
               sx={{
                 display: "flex",
-                flexWrap: "wrap",
+                flexDirection: { xs: "column", md: "row" },
                 gap: 2,
                 mt: 2,
-                justifyContent: "center",
+                width: "100%",
               }}
             >
               {labels.map((label, index) => (
                 <Box
                   key={index}
-                  sx={{
-                    flex: "0 0 auto",
-                    width: "130px",
-                  }}
+                  sx={{ flex: 1 }}
                 >
                   <Box
                     sx={{
                       display: "flex",
-                      flexDirection: "column",
+                      flexDirection: { xs: "row", md: "column" },
                       alignItems: "center",
-                      justifyContent: "center",
+                      justifyContent: { xs: "flex-start", md: "center" },
                       p: 2,
-                      height: "120px",
+                      height: { xs: "auto", md: "120px" },
                       border: "1px solid",
                       borderColor:
                         value === index + 1 ? "primary.main" : "divider",
@@ -507,26 +510,31 @@ export function LikertScaleQuestion({
                     }}
                     onClick={() => onChange(index + 1)}
                   >
-                    <Radio value={(index + 1).toString()} sx={{ mb: 1 }} />
+                    <Radio value={(index + 1).toString()} sx={{ mb: { xs: 0, md: 1 }, mr: { xs: 2, md: 0 } }} />
                     <Typography
                       variant="body2"
-                      textAlign="center"
+                      textAlign={{ xs: "left", md: "center" }}
                       sx={{
                         fontWeight: value === index + 1 ? 600 : 400,
                         wordBreak: "break-word",
                         flex: 1,
                         display: "flex",
                         alignItems: "center",
-                        px: 1,
+                        px: { xs: 0, md: 1 },
                       }}
                     >
+                      {!isYesNo && (
+                        <Box component="span" sx={{ display: { xs: "inline", md: "none" }, mr: 1 }}>
+                          {index + 1} -
+                        </Box>
+                      )}
                       {label}
                     </Typography>
                     {!isYesNo && (
                       <Typography
                         variant="caption"
                         color="text.secondary"
-                        sx={{ mt: 0.5 }}
+                        sx={{ mt: 0.5, display: { xs: "none", md: "block" } }}
                       >
                         {index + 1}
                       </Typography>
