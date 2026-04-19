@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from app.api.deps import CurrentUser, SessionDep
 from app.checkin import checkin_logic
-from app.models import Message
+from app.models import Message, CheckinTrajectoryResponseCreate
 
 router = APIRouter(prefix="/checkins", tags=["checkins"])
 
@@ -15,6 +15,7 @@ router = APIRouter(prefix="/checkins", tags=["checkins"])
 class CheckinRequest(BaseModel):
     type: Literal["morning", "evening"]
     text: str
+    trajectory_responses: list[CheckinTrajectoryResponseCreate] | None = None
 
 
 class CheckinResponse(BaseModel):
@@ -46,11 +47,16 @@ class CheckinUpdate(BaseModel):
 def create_checkin(
     *, session: SessionDep, current_user: CurrentUser, payload: CheckinRequest
 ) -> CheckinResponse:
+    tr_responses = None
+    if payload.trajectory_responses:
+        tr_responses = [tr.model_dump() for tr in payload.trajectory_responses]
+        
     checkin = checkin_logic.create(
         session=session,
         user_id=current_user.id,
         checkin_type=payload.type,
         text=payload.text,
+        trajectory_responses=tr_responses
     )
     return CheckinResponse(reply=checkin.reply, checkin_id=str(checkin.id))
 

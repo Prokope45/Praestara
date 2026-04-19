@@ -14,7 +14,6 @@ import { FaCamera, FaTrash } from "react-icons/fa"
 
 import {
   type ApiError,
-  type UserPublic,
   type UserUpdateMe,
   UsersService,
 } from "@/client"
@@ -35,12 +34,13 @@ const UserInformation = () => {
     reset,
     getValues,
     formState: { isSubmitting, errors, isDirty },
-  } = useForm<UserPublic>({
+  } = useForm<UserUpdateMe>({
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
       full_name: currentUser?.full_name,
       email: currentUser?.email,
+      trajectory_update_day: currentUser?.trajectory_update_day ?? 6,
     },
   })
 
@@ -243,6 +243,33 @@ const UserInformation = () => {
                 }}
               >
                 {currentUser?.email}
+              </Typography>
+            )}
+          </Box>
+          
+          <Box>
+            <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+              Weekly Trajectory Update Day
+            </Typography>
+            {editMode ? (
+              <TextField
+                select
+                {...register("trajectory_update_day", { valueAsNumber: true })}
+                size="small"
+                fullWidth
+                SelectProps={{ native: true }}
+              >
+                <option value={0}>Monday</option>
+                <option value={1}>Tuesday</option>
+                <option value={2}>Wednesday</option>
+                <option value={3}>Thursday</option>
+                <option value={4}>Friday</option>
+                <option value={5}>Saturday</option>
+                <option value={6}>Sunday</option>
+              </TextField>
+            ) : (
+              <Typography sx={{ py: 1 }}>
+                {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][currentUser?.trajectory_update_day ?? 6]}
               </Typography>
             )}
           </Box>

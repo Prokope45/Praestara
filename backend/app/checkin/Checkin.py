@@ -190,7 +190,7 @@ class CheckinLogic:
         except Exception:
             return None
 
-    def create(self, *, session: Session, user_id: uuid.UUID, checkin_type: str, text: str) -> Checkin:
+    def create(self, *, session: Session, user_id: uuid.UUID, checkin_type: str, text: str, trajectory_responses: list[dict[str, Any]] | None = None) -> Checkin:
         onboarding_payload, onboarding_id = self._get_onboarding_payload(session, user_id)
 
         last_morning = None
@@ -227,6 +227,14 @@ class CheckinLogic:
             if domains:
                 mentioned = max(len(domains) - len(missing), 0)
                 alignment_score = min(100, 45 + mentioned * 8)
+                
+            # Bonus points for completed trajectory goals
+            if trajectory_responses:
+                completed_count = sum(1 for tr in trajectory_responses if tr.get("completed"))
+                total_count = len(trajectory_responses)
+                if total_count > 0:
+                    bonus = int((completed_count / total_count) * 20)  # Up to 20 bonus points
+                    alignment_score = min(100, (alignment_score or 0) + bonus)
 
         response = Checkin(
             type=checkin_type,
@@ -238,6 +246,18 @@ class CheckinLogic:
             morning_id=str(last_morning.id) if last_morning else None,
         )
         session.add(response)
+        
+        # Add trajectory responses
+        if trajectory_responses:
+            from app.models import CheckinTrajectoryResponse
+            for tr_data in trajectory_responses:
+                tr = CheckinTrajectoryResponse(
+                    trajectory_id=tr_data["trajectory_id"],
+                    completed=tr_data["completed"],
+                    checkin=response
+                )
+                session.add(tr)
+                
         session.commit()
         session.refresh(response)
 

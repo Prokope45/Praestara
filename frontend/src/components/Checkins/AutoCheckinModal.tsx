@@ -1,10 +1,13 @@
 import {
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
+  FormGroup,
   Stack,
   TextField,
   Typography,
@@ -12,7 +15,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { useEffect, useMemo, useState } from "react"
 
-import { CheckinsService } from "@/client"
+import { CheckinsService, TrajectoriesService, type CheckinTrajectoryResponseCreate } from "@/client"
 import useAuth from "@/hooks/useAuth"
 
 const isSameDay = (dateString: string) => {
@@ -34,6 +37,7 @@ function AutoCheckinModal() {
   const [openType, setOpenType] = useState<"morning" | "evening" | null>(null)
   const [text, setText] = useState("")
   const [reply, setReply] = useState<string | null>(null)
+  const [trajectoryAnswers, setTrajectoryAnswers] = useState<Record<string, boolean>>({})
 
   const { data: morningHistory } = useQuery({
     queryKey: ["checkins", "morning", "latest"],
@@ -43,6 +47,12 @@ function AutoCheckinModal() {
   const { data: eveningHistory } = useQuery({
     queryKey: ["checkins", "evening", "latest"],
     queryFn: () => CheckinsService.readCheckins({ type: "evening", limit: 20 }),
+  })
+
+  const { data: activeTrajectories } = useQuery({
+    queryKey: ["trajectories", "active"],
+    queryFn: () => TrajectoriesService.getActiveTrajectories(),
+    enabled: !!openType,
   })
 
   const morningDone = useMemo(() => {
@@ -68,6 +78,7 @@ function AutoCheckinModal() {
           setOpenType(parsed.type)
           setText("")
           setReply(null)
+          setTrajectoryAnswers({})
         }
       } catch {
         // ignore malformed payloads
@@ -83,6 +94,10 @@ function AutoCheckinModal() {
   }, [openType])
 
   useEffect(() => {
+    // If there's an active trajectory modal, don't show the checkin modal yet
+    const rawTrajectoryForce = localStorage.getItem("praestara_trajectory_force")
+    if (rawTrajectoryForce === "1") return
+
     if (!user?.onboarding_completed_at) return
     if (openType) return
 
@@ -106,7 +121,7 @@ function AutoCheckinModal() {
   }, [eveningDone, morningDone, openType, user])
 
   const mutation = useMutation({
-    mutationFn: (payload: { type: "morning" | "evening"; text: string }) =>
+    mutationFn: (payload: { type: "morning" | "evening"; text: string; trajectory_responses?: CheckinTrajectoryResponseCreate[] }) =>
       CheckinsService.createCheckin({ requestBody: payload }),
     onSuccess: (response) => {
       setReply(response.reply)
@@ -120,16 +135,23 @@ function AutoCheckinModal() {
     setOpenType(null)
     setText("")
     setReply(null)
+    setTrajectoryAnswers({})
   }
 
   const handleSubmit = () => {
     if (!openType || !text.trim()) return
-    mutation.mutate({ type: openType, text })
+    
+    const responses: CheckinTrajectoryResponseCreate[] = Object.entries(trajectoryAnswers).map(
+      ([id, completed]) => ({ trajectory_id: id, completed })
+    )
+    
+    mutation.mutate({ type: openType, text, trajectory_responses: responses })
   }
 
   if (!openType) return null
 
   const isMorning = openType === "morning"
+  const trajectories = activeTrajectories?.data ?? []
 
   return (
     <Dialog open fullWidth maxWidth="sm">
@@ -140,6 +162,28 @@ function AutoCheckinModal() {
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
+          {trajectories.length > 0 && !reply && (
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Weekly Trajectories
+              </Typography>
+              <FormGroup>
+                {trajectories.map((t) => (
+                  <FormControlLabel
+                    key={t.id}
+                    control={
+                      <Checkbox
+                        checked={trajectoryAnswers[t.id] || false}
+                        onChange={(e) => setTrajectoryAnswers({ ...trajectoryAnswers, [t.id]: e.target.checked })}
+                      />
+                    }
+                    label={t.rephrased_question || t.original_goal}
+                  />
+                ))}
+              </FormGroup>
+            </Box>
+          )}
+
           <Typography variant="body2" color="text.secondary">
             Describe today.
           </Typography>
