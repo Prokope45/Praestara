@@ -1,23 +1,26 @@
 import {
-  Container,
-  Typography,
   Box,
   Card,
   CardContent,
   Chip,
-  Stack,
-  LinearProgress,
+  Container,
   IconButton,
+  LinearProgress,
+  Stack,
+  Typography,
 } from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
-import { createFileRoute, Link } from "@tanstack/react-router"
-import { FiEdit, FiTrash2, FiPlus } from "react-icons/fi"
+import { Link, createFileRoute } from "@tanstack/react-router"
 import { useState } from "react"
+import { FiEdit, FiPlus, FiTrash2 } from "react-icons/fi"
 
-import { QuestionnairesService, type QuestionnaireTemplatePublic } from "../../client"
-import { Button } from "../../components/ui/button"
+import {
+  type QuestionnaireTemplatePublic,
+  QuestionnairesService,
+} from "../../client"
 import { AddQuestionnaire } from "../../components/Questionnaires/AddQuestionnaire"
 import { DeleteQuestionnaire } from "../../components/Questionnaires/DeleteQuestionnaire"
+import { Button } from "../../components/ui/button"
 
 export const Route = createFileRoute("/_layout/admin/questionnaires")({
   component: AdminQuestionnaires,
@@ -25,12 +28,15 @@ export const Route = createFileRoute("/_layout/admin/questionnaires")({
 
 function AdminQuestionnaires() {
   const [showAddDialog, setShowAddDialog] = useState(false)
-  const [editingQuestionnaire, setEditingQuestionnaire] = useState<QuestionnaireTemplatePublic | null>(null)
-  const [deletingQuestionnaire, setDeletingQuestionnaire] = useState<QuestionnaireTemplatePublic | null>(null)
+  const [editingQuestionnaire, setEditingQuestionnaire] =
+    useState<QuestionnaireTemplatePublic | null>(null)
+  const [deletingQuestionnaire, setDeletingQuestionnaire] =
+    useState<QuestionnaireTemplatePublic | null>(null)
 
   const { data: questionnaires, isLoading } = useQuery({
     queryKey: ["questionnaire-templates"],
-    queryFn: () => QuestionnairesService.readQuestionnaireTemplates({ skip: 0, limit: 100 }),
+    queryFn: () =>
+      QuestionnairesService.readQuestionnaireTemplates({ skip: 0, limit: 100 }),
   })
 
   if (isLoading) {
@@ -47,20 +53,17 @@ function AdminQuestionnaires() {
         Admin Panel
       </Typography>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 3 }}>
-          <Link
-            to="/admin"
-            style={{ textDecoration: 'none' }}
-          >
+      <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+        <Box sx={{ display: "flex", gap: 3 }}>
+          <Link to="/admin" style={{ textDecoration: "none" }}>
             <Typography
               variant="body1"
               sx={{
                 pb: 1,
                 fontWeight: 500,
-                color: 'text.secondary',
-                '&:hover': {
-                  color: 'primary.main',
+                color: "text.secondary",
+                "&:hover": {
+                  color: "primary.main",
                 },
               }}
             >
@@ -72,9 +75,9 @@ function AdminQuestionnaires() {
             sx={{
               pb: 1,
               borderBottom: 2,
-              borderColor: 'primary.main',
+              borderColor: "primary.main",
               fontWeight: 600,
-              color: 'primary.main',
+              color: "primary.main",
             }}
           >
             Questionnaires
@@ -82,9 +85,19 @@ function AdminQuestionnaires() {
         </Box>
       </Box>
 
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{ mb: 4 }}
+      >
         <Box>
-          <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">
+          <Typography
+            variant="h5"
+            component="h2"
+            gutterBottom
+            fontWeight="bold"
+          >
             Questionnaire Management
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -100,26 +113,33 @@ function AdminQuestionnaires() {
         </Button>
       </Stack>
 
-      {questionnaires && questionnaires.data && questionnaires.data.length > 0 ? (
+      {questionnaires?.data && questionnaires.data.length > 0 ? (
         <>
           {/* Separate Onboarding Questionnaire */}
           {(() => {
             const onboardingQuestionnaire = questionnaires.data.find(
-              (q: QuestionnaireTemplatePublic) => q.title === "Praestara Onboarding"
+              (q: QuestionnaireTemplatePublic) =>
+                q.title === "Praestara Onboarding",
             )
             const otherQuestionnaires = questionnaires.data.filter(
-              (q: QuestionnaireTemplatePublic) => q.title !== "Praestara Onboarding"
+              (q: QuestionnaireTemplatePublic) =>
+                q.title !== "Praestara Onboarding",
             )
 
             return (
               <>
                 {onboardingQuestionnaire && (
                   <Box sx={{ mb: 4 }}>
-                    <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 2 }}>
+                    <Typography
+                      variant="h6"
+                      component="h3"
+                      gutterBottom
+                      sx={{ mb: 2 }}
+                    >
                       Default Onboarding Questionnaire
                     </Typography>
-                    <Card 
-                      key={onboardingQuestionnaire.id} 
+                    <Card
+                      key={onboardingQuestionnaire.id}
                       variant="outlined"
                       sx={{
                         borderColor: "primary.main",
@@ -128,9 +148,18 @@ function AdminQuestionnaires() {
                       }}
                     >
                       <CardContent>
-                        <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                        <Stack
+                          direction="row"
+                          justifyContent="space-between"
+                          alignItems="flex-start"
+                        >
                           <Box sx={{ flex: 1 }}>
-                            <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
+                            <Stack
+                              direction="row"
+                              spacing={2}
+                              alignItems="center"
+                              sx={{ mb: 1 }}
+                            >
                               <Typography variant="h6" component="h3">
                                 {onboardingQuestionnaire.title}
                               </Typography>
@@ -140,30 +169,53 @@ function AdminQuestionnaires() {
                                 size="small"
                               />
                               <Chip
-                                label={onboardingQuestionnaire.is_active ? "Active" : "Inactive"}
-                                color={onboardingQuestionnaire.is_active ? "success" : "default"}
+                                label={
+                                  onboardingQuestionnaire.is_active
+                                    ? "Active"
+                                    : "Inactive"
+                                }
+                                color={
+                                  onboardingQuestionnaire.is_active
+                                    ? "success"
+                                    : "default"
+                                }
                                 size="small"
                               />
                             </Stack>
                             {onboardingQuestionnaire.description && (
-                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ mb: 2 }}
+                              >
                                 {onboardingQuestionnaire.description}
                               </Typography>
                             )}
                             <Stack direction="row" spacing={3}>
-                              <Typography variant="caption" color="text.secondary">
-                                <strong>Questions:</strong> {onboardingQuestionnaire.questions?.length || 0}
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                <strong>Questions:</strong>{" "}
+                                {onboardingQuestionnaire.questions?.length || 0}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
                                 <strong>Created:</strong>{" "}
-                                {new Date(onboardingQuestionnaire.created_at).toLocaleDateString()}
+                                {new Date(
+                                  onboardingQuestionnaire.created_at,
+                                ).toLocaleDateString()}
                               </Typography>
                             </Stack>
                           </Box>
                           <Stack direction="row" spacing={1}>
                             <IconButton
                               size="small"
-                              onClick={() => setEditingQuestionnaire(onboardingQuestionnaire)}
+                              onClick={() =>
+                                setEditingQuestionnaire(onboardingQuestionnaire)
+                              }
                               color="primary"
                             >
                               <FiEdit />
@@ -178,60 +230,101 @@ function AdminQuestionnaires() {
                 {/* Other Questionnaires */}
                 {otherQuestionnaires.length > 0 && (
                   <Box>
-                    <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 2 }}>
+                    <Typography
+                      variant="h6"
+                      component="h3"
+                      gutterBottom
+                      sx={{ mb: 2 }}
+                    >
                       Custom Questionnaires
                     </Typography>
                     <Stack spacing={2}>
-                      {otherQuestionnaires.map((questionnaire: QuestionnaireTemplatePublic) => (
-                        <Card key={questionnaire.id} variant="outlined">
-                          <CardContent>
-                            <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                              <Box sx={{ flex: 1 }}>
-                                <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
-                                  <Typography variant="h6" component="h3">
-                                    {questionnaire.title}
-                                  </Typography>
-                                  <Chip
-                                    label={questionnaire.is_active ? "Active" : "Inactive"}
-                                    color={questionnaire.is_active ? "success" : "default"}
+                      {otherQuestionnaires.map(
+                        (questionnaire: QuestionnaireTemplatePublic) => (
+                          <Card key={questionnaire.id} variant="outlined">
+                            <CardContent>
+                              <Stack
+                                direction="row"
+                                justifyContent="space-between"
+                                alignItems="flex-start"
+                              >
+                                <Box sx={{ flex: 1 }}>
+                                  <Stack
+                                    direction="row"
+                                    spacing={2}
+                                    alignItems="center"
+                                    sx={{ mb: 1 }}
+                                  >
+                                    <Typography variant="h6" component="h3">
+                                      {questionnaire.title}
+                                    </Typography>
+                                    <Chip
+                                      label={
+                                        questionnaire.is_active
+                                          ? "Active"
+                                          : "Inactive"
+                                      }
+                                      color={
+                                        questionnaire.is_active
+                                          ? "success"
+                                          : "default"
+                                      }
+                                      size="small"
+                                    />
+                                  </Stack>
+                                  {questionnaire.description && (
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                      sx={{ mb: 2 }}
+                                    >
+                                      {questionnaire.description}
+                                    </Typography>
+                                  )}
+                                  <Stack direction="row" spacing={3}>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                    >
+                                      <strong>Questions:</strong>{" "}
+                                      {questionnaire.questions?.length || 0}
+                                    </Typography>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                    >
+                                      <strong>Created:</strong>{" "}
+                                      {new Date(
+                                        questionnaire.created_at,
+                                      ).toLocaleDateString()}
+                                    </Typography>
+                                  </Stack>
+                                </Box>
+                                <Stack direction="row" spacing={1}>
+                                  <IconButton
                                     size="small"
-                                  />
+                                    onClick={() =>
+                                      setEditingQuestionnaire(questionnaire)
+                                    }
+                                    color="primary"
+                                  >
+                                    <FiEdit />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() =>
+                                      setDeletingQuestionnaire(questionnaire)
+                                    }
+                                    color="error"
+                                  >
+                                    <FiTrash2 />
+                                  </IconButton>
                                 </Stack>
-                                {questionnaire.description && (
-                                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                    {questionnaire.description}
-                                  </Typography>
-                                )}
-                                <Stack direction="row" spacing={3}>
-                                  <Typography variant="caption" color="text.secondary">
-                                    <strong>Questions:</strong> {questionnaire.questions?.length || 0}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary">
-                                    <strong>Created:</strong>{" "}
-                                    {new Date(questionnaire.created_at).toLocaleDateString()}
-                                  </Typography>
-                                </Stack>
-                              </Box>
-                              <Stack direction="row" spacing={1}>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => setEditingQuestionnaire(questionnaire)}
-                                  color="primary"
-                                >
-                                  <FiEdit />
-                                </IconButton>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => setDeletingQuestionnaire(questionnaire)}
-                                  color="error"
-                                >
-                                  <FiTrash2 />
-                                </IconButton>
                               </Stack>
-                            </Stack>
-                          </CardContent>
-                        </Card>
-                      ))}
+                            </CardContent>
+                          </Card>
+                        ),
+                      )}
                     </Stack>
                   </Box>
                 )}
@@ -242,8 +335,13 @@ function AdminQuestionnaires() {
       ) : (
         <Card variant="outlined">
           <CardContent>
-            <Typography color="text.secondary" textAlign="center" sx={{ py: 4 }}>
-              No questionnaires created yet. Click "Create Questionnaire" to get started.
+            <Typography
+              color="text.secondary"
+              textAlign="center"
+              sx={{ py: 4 }}
+            >
+              No questionnaires created yet. Click "Create Questionnaire" to get
+              started.
             </Typography>
           </CardContent>
         </Card>

@@ -82,7 +82,10 @@ const subschema = [
   },
 ]
 
-const primaryPositions = new Map<string, { x: number; y: number; angle: number }>()
+const primaryPositions = new Map<
+  string,
+  { x: number; y: number; angle: number }
+>()
 
 primarySchemas.forEach((schema) => {
   const rad = degToRad(schema.angle)
@@ -91,10 +94,13 @@ primarySchemas.forEach((schema) => {
   primaryPositions.set(schema.id, { x, y, angle: schema.angle })
 })
 
-const groupedSubschema = subschema.reduce<Record<string, typeof subschema>>((acc, node) => {
-  acc[node.parent] = acc[node.parent] ? [...acc[node.parent], node] : [node]
-  return acc
-}, {})
+const groupedSubschema = subschema.reduce<Record<string, typeof subschema>>(
+  (acc, node) => {
+    acc[node.parent] = acc[node.parent] ? [...acc[node.parent], node] : [node]
+    return acc
+  },
+  {},
+)
 
 const spacingDegrees = 36
 
@@ -137,29 +143,162 @@ export const demoValueMapNodes: Node[] = [
 ]
 
 export const demoValueMapEdges: Edge[] = [
-  { id: "e_user_virtue", source: "user_core", sourceHandle: "top", target: "domain_virtue", label: "anchors" },
-  { id: "e_user_strategy", source: "user_core", sourceHandle: "topLeft", target: "domain_strategy", label: "anchors" },
-  { id: "e_user_execution", source: "user_core", sourceHandle: "left", target: "domain_execution", label: "anchors" },
-  { id: "e_user_precision", source: "user_core", sourceHandle: "bottomLeft", target: "domain_precision", label: "anchors" },
-  { id: "e_user_health", source: "user_core", sourceHandle: "bottom", target: "domain_health", label: "anchors" },
-  { id: "e_user_proficiency", source: "user_core", sourceHandle: "bottomRight", target: "domain_proficiency", label: "anchors" },
-  { id: "e_user_faith", source: "user_core", sourceHandle: "right", target: "domain_faith", label: "anchors" },
-  { id: "e_user_philanthropy", source: "user_core", sourceHandle: "topRight", target: "domain_philanthropy", label: "anchors" },
-  { id: "e_virtue_strategy", source: "domain_virtue", target: "domain_strategy", label: "guides" },
-  { id: "e_virtue_execution", source: "domain_virtue", target: "domain_execution", label: "guides" },
-  { id: "e_virtue_precision", source: "domain_virtue", target: "domain_precision", label: "guides" },
-  { id: "e_virtue_health", source: "domain_virtue", target: "domain_health", label: "guides" },
-  { id: "e_virtue_proficiency", source: "domain_virtue", target: "domain_proficiency", label: "guides" },
-  { id: "e_virtue_faith", source: "domain_virtue", target: "domain_faith", label: "guides" },
-  { id: "e_virtue_philanthropy", source: "domain_virtue", target: "domain_philanthropy", label: "guides" },
-  { id: "e_strategy_org", source: "domain_strategy", target: "op_organization", label: "operationalizes" },
-  { id: "e_execution_deliberate", source: "domain_execution", target: "op_deliberate", label: "operationalizes" },
-  { id: "e_precision_creativity", source: "domain_precision", target: "op_creativity", label: "operationalizes" },
-  { id: "e_health_nutrition", source: "domain_health", target: "op_nutrition", label: "supports" },
-  { id: "e_health_fitness", source: "domain_health", target: "op_fitness", label: "supports" },
-  { id: "e_philanthropy_community", source: "domain_philanthropy", target: "op_community", label: "expresses" },
-  { id: "e_faith_prayer", source: "domain_faith", target: "op_prayer", label: "expresses" },
-  { id: "e_virtue_integrity", source: "domain_virtue", target: "op_integrity", label: "expresses" },
-  { id: "e_proficiency_skill", source: "domain_proficiency", target: "op_skill", label: "expresses" },
-  { id: "e_philanthropy_social", source: "domain_philanthropy", target: "op_social", label: "expresses" },
+  {
+    id: "e_user_virtue",
+    source: "user_core",
+    sourceHandle: "top",
+    target: "domain_virtue",
+    label: "anchors",
+  },
+  {
+    id: "e_user_strategy",
+    source: "user_core",
+    sourceHandle: "topLeft",
+    target: "domain_strategy",
+    label: "anchors",
+  },
+  {
+    id: "e_user_execution",
+    source: "user_core",
+    sourceHandle: "left",
+    target: "domain_execution",
+    label: "anchors",
+  },
+  {
+    id: "e_user_precision",
+    source: "user_core",
+    sourceHandle: "bottomLeft",
+    target: "domain_precision",
+    label: "anchors",
+  },
+  {
+    id: "e_user_health",
+    source: "user_core",
+    sourceHandle: "bottom",
+    target: "domain_health",
+    label: "anchors",
+  },
+  {
+    id: "e_user_proficiency",
+    source: "user_core",
+    sourceHandle: "bottomRight",
+    target: "domain_proficiency",
+    label: "anchors",
+  },
+  {
+    id: "e_user_faith",
+    source: "user_core",
+    sourceHandle: "right",
+    target: "domain_faith",
+    label: "anchors",
+  },
+  {
+    id: "e_user_philanthropy",
+    source: "user_core",
+    sourceHandle: "topRight",
+    target: "domain_philanthropy",
+    label: "anchors",
+  },
+  {
+    id: "e_virtue_strategy",
+    source: "domain_virtue",
+    target: "domain_strategy",
+    label: "guides",
+  },
+  {
+    id: "e_virtue_execution",
+    source: "domain_virtue",
+    target: "domain_execution",
+    label: "guides",
+  },
+  {
+    id: "e_virtue_precision",
+    source: "domain_virtue",
+    target: "domain_precision",
+    label: "guides",
+  },
+  {
+    id: "e_virtue_health",
+    source: "domain_virtue",
+    target: "domain_health",
+    label: "guides",
+  },
+  {
+    id: "e_virtue_proficiency",
+    source: "domain_virtue",
+    target: "domain_proficiency",
+    label: "guides",
+  },
+  {
+    id: "e_virtue_faith",
+    source: "domain_virtue",
+    target: "domain_faith",
+    label: "guides",
+  },
+  {
+    id: "e_virtue_philanthropy",
+    source: "domain_virtue",
+    target: "domain_philanthropy",
+    label: "guides",
+  },
+  {
+    id: "e_strategy_org",
+    source: "domain_strategy",
+    target: "op_organization",
+    label: "operationalizes",
+  },
+  {
+    id: "e_execution_deliberate",
+    source: "domain_execution",
+    target: "op_deliberate",
+    label: "operationalizes",
+  },
+  {
+    id: "e_precision_creativity",
+    source: "domain_precision",
+    target: "op_creativity",
+    label: "operationalizes",
+  },
+  {
+    id: "e_health_nutrition",
+    source: "domain_health",
+    target: "op_nutrition",
+    label: "supports",
+  },
+  {
+    id: "e_health_fitness",
+    source: "domain_health",
+    target: "op_fitness",
+    label: "supports",
+  },
+  {
+    id: "e_philanthropy_community",
+    source: "domain_philanthropy",
+    target: "op_community",
+    label: "expresses",
+  },
+  {
+    id: "e_faith_prayer",
+    source: "domain_faith",
+    target: "op_prayer",
+    label: "expresses",
+  },
+  {
+    id: "e_virtue_integrity",
+    source: "domain_virtue",
+    target: "op_integrity",
+    label: "expresses",
+  },
+  {
+    id: "e_proficiency_skill",
+    source: "domain_proficiency",
+    target: "op_skill",
+    label: "expresses",
+  },
+  {
+    id: "e_philanthropy_social",
+    source: "domain_philanthropy",
+    target: "op_social",
+    label: "expresses",
+  },
 ]

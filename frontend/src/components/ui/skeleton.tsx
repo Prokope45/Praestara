@@ -1,24 +1,25 @@
-import * as React from "react"
 import { Skeleton as MuiSkeleton, Stack } from "@mui/material"
+import * as React from "react"
 
 export interface SkeletonCircleProps {
   size?: string | number
 }
 
-export const SkeletonCircle = React.forwardRef<HTMLDivElement, SkeletonCircleProps>(
-  function SkeletonCircle(props, ref) {
-    const { size = 40, ...rest } = props
-    return (
-      <MuiSkeleton
-        ref={ref}
-        variant="circular"
-        width={size}
-        height={size}
-        {...rest}
-      />
-    )
-  }
-)
+export const SkeletonCircle = React.forwardRef<
+  HTMLDivElement,
+  SkeletonCircleProps
+>(function SkeletonCircle(props, ref) {
+  const { size = 40, ...rest } = props
+  return (
+    <MuiSkeleton
+      ref={ref}
+      variant="circular"
+      width={size}
+      height={size}
+      {...rest}
+    />
+  )
+})
 
 export interface SkeletonTextProps {
   noOfLines?: number
@@ -36,14 +37,14 @@ export const SkeletonText = React.forwardRef<HTMLDivElement, SkeletonTextProps>(
             variant="text"
             sx={{
               height: 16,
-              ...(index === noOfLines - 1 && { maxWidth: '80%' })
+              ...(index === noOfLines - 1 && { maxWidth: "80%" }),
             }}
             {...rest}
           />
         ))}
       </Stack>
     )
-  }
+  },
 )
 
 export interface SkeletonProps {
@@ -59,7 +60,7 @@ export const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
     const { h, height, w, width, variant = "rectangular", ...rest } = props
     const finalHeight = h || height
     const finalWidth = w || width
-    
+
     return (
       <MuiSkeleton
         ref={ref}
@@ -69,5 +70,5 @@ export const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
         {...rest}
       />
     )
-  }
+  },
 )

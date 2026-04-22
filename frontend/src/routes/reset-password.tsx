@@ -1,4 +1,4 @@
-import { Container, Typography, Stack, Box } from "@mui/material"
+import { Box, Container, Stack, Typography } from "@mui/material"
 import { useMutation } from "@tanstack/react-query"
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router"
 import { type SubmitHandler, useForm } from "react-hook-form"
@@ -70,10 +70,10 @@ function ResetPassword() {
   return (
     <Box
       sx={{
-        display: 'flex',
-        minHeight: '100vh',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: "flex",
+        minHeight: "100vh",
+        alignItems: "center",
+        justifyContent: "center",
       }}
     >
       <Container
@@ -81,17 +81,21 @@ function ResetPassword() {
         onSubmit={handleSubmit(onSubmit)}
         maxWidth="sm"
         sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'stretch',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "stretch",
           gap: 2,
           py: 4,
         }}
       >
-        <Typography variant="h4" color="primary" sx={{ textAlign: 'center', mb: 1 }}>
+        <Typography
+          variant="h4"
+          color="primary"
+          sx={{ textAlign: "center", mb: 1 }}
+        >
           Reset Password
         </Typography>
-        <Typography sx={{ textAlign: 'center', mb: 2 }}>
+        <Typography sx={{ textAlign: "center", mb: 2 }}>
           Please enter your new password and confirm it to reset your password.
         </Typography>
         <Stack spacing={2}>

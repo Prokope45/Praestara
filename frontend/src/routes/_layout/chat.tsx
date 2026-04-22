@@ -1,19 +1,19 @@
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
 import {
   Box,
   Button,
+  CircularProgress,
   Container,
   IconButton,
   Paper,
   Stack,
   TextField,
-  Typography,
-  CircularProgress,
   Tooltip,
+  Typography,
 } from "@mui/material"
-import { createFileRoute } from "@tanstack/react-router"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useState, useEffect, useRef } from "react"
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline"
+import { createFileRoute } from "@tanstack/react-router"
+import { useEffect, useRef, useState } from "react"
 
 import { AiService, CheckinsService } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
@@ -67,7 +67,7 @@ function Chat() {
         (msg: any) => ({
           role: msg.role as "user" | "assistant",
           content: msg.content,
-        })
+        }),
       )
       setMessages(loadedMessages)
     }

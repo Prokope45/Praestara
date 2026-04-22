@@ -1,24 +1,24 @@
-import { Box, Container, Typography, Paper, Button, Stack } from "@mui/material"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useMemo } from "react"
+import { Box, Button, Container, Paper, Stack, Typography } from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
-import { FiArrowRight, FiCheckCircle } from "react-icons/fi"
-import { Line, Radar } from "react-chartjs-2"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import {
-  Chart as ChartJS,
   CategoryScale,
+  Chart as ChartJS,
+  Filler,
+  Legend,
+  LineElement,
   LinearScale,
   PointElement,
-  LineElement,
   RadialLinearScale,
-  Filler,
   Tooltip,
-  Legend,
 } from "chart.js"
+import { useMemo } from "react"
+import { Line, Radar } from "react-chartjs-2"
+import { FiCheckCircle, FiArrowRight } from "react-icons/fi"
 
-import useAuth from "@/hooks/useAuth"
 import { CheckinsService, QuestionnairesService } from "@/client"
 import { PendingQuestionnaireWidget } from "@/components/Questionnaires/PendingQuestionnaireWidget"
+import useAuth from "@/hooks/useAuth"
 
 export const Route = createFileRoute("/_layout/")({
   component: Dashboard,
@@ -32,7 +32,7 @@ ChartJS.register(
   RadialLinearScale,
   Filler,
   Tooltip,
-  Legend
+  Legend,
 )
 
 function Dashboard() {
@@ -41,7 +41,7 @@ function Dashboard() {
   const triggerCheckin = (type: "morning" | "evening") => {
     localStorage.setItem(
       "praestara_checkin_force",
-      JSON.stringify({ type, ts: Date.now() })
+      JSON.stringify({ type, ts: Date.now() }),
     )
     window.dispatchEvent(new Event("praestara_checkin_trigger"))
   }
@@ -81,7 +81,8 @@ function Dashboard() {
   // Fetch user's questionnaire assignments
   const { data: assignmentsData } = useQuery({
     queryKey: ["questionnaire-assignments", "me"],
-    queryFn: () => QuestionnairesService.readMyAssignments({ skip: 0, limit: 100 }),
+    queryFn: () =>
+      QuestionnairesService.readMyAssignments({ skip: 0, limit: 100 }),
   })
 
   const adherenceSeries = useMemo(() => {
@@ -100,7 +101,8 @@ function Dashboard() {
       })
       .filter(Boolean)
 
-    if (normalized.length > 0) return normalized as { date: string; value: number }[]
+    if (normalized.length > 0)
+      return normalized as { date: string; value: number }[]
 
     return [
       { date: "Week 1", value: 42 },
@@ -176,7 +178,13 @@ function Dashboard() {
   }, [])
 
   const radarData = useMemo(() => {
-    const labels = ["Health", "Contribution", "Relationships", "Growth", "Meaning"]
+    const labels = [
+      "Health",
+      "Contribution",
+      "Relationships",
+      "Growth",
+      "Meaning",
+    ]
     return {
       labels,
       datasets: [
@@ -227,7 +235,11 @@ function Dashboard() {
             </Typography>
           </Box>
 
-          <Stack direction="row" spacing={2} sx={{ alignSelf: { md: "flex-start" } }}>
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{ alignSelf: { md: "flex-start" } }}
+          >
             <Paper
               onClick={() => triggerCheckin("morning")}
               sx={{
@@ -238,7 +250,8 @@ function Dashboard() {
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                background: "linear-gradient(135deg, #FDBA74 0%, #FDE68A 45%, #93C5FD 100%)",
+                background:
+                  "linear-gradient(135deg, #FDBA74 0%, #FDE68A 45%, #93C5FD 100%)",
                 color: "#1f2937",
                 border: morningDone ? "3px solid #10b981" : "3px solid transparent",
                 position: "relative",
@@ -264,7 +277,8 @@ function Dashboard() {
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                background: "linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #b45309 75%, #7f1d1d 100%)",
+                background:
+                  "linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #b45309 75%, #7f1d1d 100%)",
                 color: "#f8fafc",
                 border: eveningDone ? "3px solid #10b981" : "3px solid transparent",
                 position: "relative",
@@ -285,24 +299,29 @@ function Dashboard() {
 
         {(() => {
           // Find the first pending assignment (prioritize onboarding)
-          const pendingAssignments = assignmentsData?.data?.filter(
-            (assignment) => assignment.status === "PENDING"
-          ) || []
-          
+          const pendingAssignments =
+            assignmentsData?.data?.filter(
+              (assignment) => assignment.status === "PENDING",
+            ) || []
+
           const onboardingAssignment = pendingAssignments.find(
-            (assignment) => assignment.questionnaire.title === "Praestara Onboarding"
+            (assignment) =>
+              assignment.questionnaire.title === "Praestara Onboarding",
           )
-          
-          const firstPendingAssignment = onboardingAssignment || pendingAssignments[0]
-          
+
+          const firstPendingAssignment =
+            onboardingAssignment || pendingAssignments[0]
+
           if (firstPendingAssignment) {
             return (
               <Box sx={{ mb: 4 }}>
-                <PendingQuestionnaireWidget assignment={firstPendingAssignment} />
+                <PendingQuestionnaireWidget
+                  assignment={firstPendingAssignment}
+                />
               </Box>
             )
           }
-          
+
           return null
         })()}
 
@@ -335,7 +354,8 @@ function Dashboard() {
             Trajectory overview
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Longitudinal trends across key self-concept and value alignment axes.
+            Longitudinal trends across key self-concept and value alignment
+            axes.
           </Typography>
           <Box sx={{ height: 320 }}>
             <Line
@@ -352,7 +372,14 @@ function Dashboard() {
 
         {/* Value Map Snapshot */}
         <Paper sx={{ p: 3, mb: 3 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 3,
+            }}
+          >
             <Typography variant="h5" sx={{ fontWeight: "bold" }}>
               Value map snapshot
             </Typography>

@@ -1,15 +1,11 @@
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Typography,
-} from "@mui/material"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import { QuestionnairesService, type QuestionnaireTemplatePublic } from "../../client"
-import { Button } from "../ui/button"
+import {
+  type QuestionnaireTemplatePublic,
+  QuestionnairesService,
+} from "../../client"
 import useCustomToast from "../../hooks/useCustomToast"
+import { DeleteConfirmation } from "../Common/DeleteConfirmation"
 
 interface DeleteQuestionnaireProps {
   open: boolean
@@ -17,13 +13,19 @@ interface DeleteQuestionnaireProps {
   questionnaire: QuestionnaireTemplatePublic
 }
 
-export function DeleteQuestionnaire({ open, onClose, questionnaire }: DeleteQuestionnaireProps) {
+export function DeleteQuestionnaire({
+  open,
+  onClose,
+  questionnaire,
+}: DeleteQuestionnaireProps) {
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const deleteMutation = useMutation({
     mutationFn: () =>
-      QuestionnairesService.deleteQuestionnaireTemplate({ templateId: questionnaire.id }),
+      QuestionnairesService.deleteQuestionnaireTemplate({
+        templateId: questionnaire.id,
+      }),
     onSuccess: () => {
       showSuccessToast("Questionnaire deleted successfully")
       queryClient.invalidateQueries({ queryKey: ["questionnaire-templates"] })
@@ -35,32 +37,18 @@ export function DeleteQuestionnaire({ open, onClose, questionnaire }: DeleteQues
   })
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Delete Questionnaire</DialogTitle>
-      <DialogContent>
-        <Typography>
-          Are you sure you want to delete "{questionnaire.title}"? This action cannot be undone.
-        </Typography>
-        {questionnaire.questions && questionnaire.questions.length > 0 && (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            This will also delete {questionnaire.questions.length} question(s).
-          </Typography>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={deleteMutation.isPending}>
-          Cancel
-        </Button>
-        <Button
-          onClick={() => deleteMutation.mutate()}
-          variant="contained"
-          color="error"
-          loading={deleteMutation.isPending}
-          disabled={deleteMutation.isPending}
-        >
-          Delete
-        </Button>
-      </DialogActions>
-    </Dialog>
+    <DeleteConfirmation
+      open={open}
+      onClose={onClose}
+      onConfirm={() => deleteMutation.mutate()}
+      title="Delete Questionnaire"
+      description={`Are you sure you want to delete "${questionnaire.title}"? This action cannot be undone.`}
+      subDescription={
+        questionnaire.questions && questionnaire.questions.length > 0
+          ? `This will also delete ${questionnaire.questions.length} question(s).`
+          : undefined
+      }
+      isPending={deleteMutation.isPending}
+    />
   )
 }

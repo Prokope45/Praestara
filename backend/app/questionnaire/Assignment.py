@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
+import random
 
 from sqlmodel import Session, func, select
 
@@ -32,6 +33,32 @@ class Assignment:
             cls._instance = super().__new__(cls)
         return cls._instance
 
+    def __randomize_answers(self, session: Session, assignment_in: QuestionnaireAssignmentCreate):
+        questionnaire = session.get(QuestionnaireTemplate, assignment_in.questionnaire_id)
+
+        if not assignment_in.prefill or not questionnaire:
+            return None
+
+        answers = {}
+        for question in questionnaire.questions:
+            if question.scale_type == "LIKERT_5":
+                answers[str(question.id)] = random.randint(1, 5)
+            elif question.scale_type == "LIKERT_7":
+                answers[str(question.id)] = random.randint(1, 7)
+            elif question.scale_type == "YES_NO":
+                answers[str(question.id)] = random.randint(0, 1)
+            elif question.scale_type == "CUSTOM_NUMERIC":
+                min_val = question.custom_min_value or 0
+                max_val = question.custom_max_value or 100
+                answers[str(question.id)] = random.randint(min_val, max_val)
+            elif question.scale_type == "TEXT":
+                answers[str(question.id)] = "Random generated text answer for demo."
+            elif question.scale_type == "FREQUENCY":
+                answers[str(question.id)] = random.randint(0, 3)
+            elif question.scale_type == "DOMAIN_RATING":
+                answers[str(question.id)] = {"importance": random.randint(0, 10), "consistency": random.randint(0, 10), "note": "Random generated note"}
+        return answers
+
     # Questionnaire Assignment CRUD
     def create(
         self, *, session: Session, assignment_in: QuestionnaireAssignmentCreate
@@ -48,12 +75,19 @@ class Assignment:
         """Create multiple questionnaire assignments at once"""
         assignments = []
 
+        # questionnaire = session.get(QuestionnaireTemplate, assignment_in.questionnaire_id)
+        saved_progress = None
+
+        if answers := self.__randomize_answers(session=session, assignment_in=assignment_in):
+            saved_progress = {"answers": answers, "lastPage": 0}
+
         for user_id in assignment_in.user_ids:
             db_assignment = QuestionnaireAssignment(
                 questionnaire_id=assignment_in.questionnaire_id,
                 user_id=user_id,
                 appointment_id=assignment_in.appointment_id,
                 due_date=assignment_in.due_date,
+                saved_progress=saved_progress,
             )
             session.add(db_assignment)
             assignments.append(db_assignment)

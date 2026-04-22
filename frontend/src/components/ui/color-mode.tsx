@@ -1,5 +1,5 @@
+import { IconButton, type IconButtonProps } from "@mui/material"
 import React, { useContext } from "react"
-import { IconButton, IconButtonProps } from "@mui/material"
 import { LuMoon, LuSun } from "react-icons/lu"
 import { ColorModeContext } from "./provider"
 

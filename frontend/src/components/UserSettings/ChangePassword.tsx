@@ -1,4 +1,4 @@
-import { Box, Container, Typography, Stack } from "@mui/material"
+import { Box, Container, Stack, Typography } from "@mui/material"
 import { useMutation } from "@tanstack/react-query"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import { FiLock } from "react-icons/fi"
@@ -6,8 +6,8 @@ import { FiLock } from "react-icons/fi"
 import { type ApiError, type UpdatePassword, UsersService } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
 import { confirmPasswordRules, handleError, passwordRules } from "@/utils"
-import { PasswordInput } from "../ui/password-input"
 import { Button } from "../ui/button"
+import { PasswordInput } from "../ui/password-input"
 
 interface UpdatePasswordForm extends UpdatePassword {
   confirm_password: string
@@ -50,7 +50,7 @@ const ChangePassword = () => {
       <Box
         component="form"
         onSubmit={handleSubmit(onSubmit)}
-        sx={{ maxWidth: { xs: '100%', md: '300px' } }}
+        sx={{ maxWidth: { xs: "100%", md: "300px" } }}
       >
         <Stack spacing={2}>
           <PasswordInput

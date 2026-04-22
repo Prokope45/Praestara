@@ -134,10 +134,40 @@ class NewPassword(SQLModel):
 
 
 # Question models (defined before QuestionnaireTemplate to avoid forward reference issues)
+class QuestionSectionBase(SQLModel):
+    name: str = Field(max_length=255)
+    description: str | None = Field(default=None, max_length=1000)
+    order: int = Field(default=0, ge=0)
+
+
+class QuestionSectionCreate(QuestionSectionBase):
+    id: uuid.UUID | None = None
+
+
+class QuestionSectionUpdate(QuestionSectionBase):
+    name: str | None = Field(default=None, max_length=255)  # type: ignore
+    order: int | None = Field(default=None, ge=0)  # type: ignore
+
+
+class QuestionSection(QuestionSectionBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    questionnaire_id: uuid.UUID = Field(
+        foreign_key="questionnairetemplate.id", nullable=False, ondelete="CASCADE"
+    )
+    questionnaire: Optional["QuestionnaireTemplate"] = Relationship(back_populates="sections")
+    questions: list["Question"] = Relationship(back_populates="section", cascade_delete=True)
+
+
+class QuestionSectionPublic(QuestionSectionBase):
+    id: uuid.UUID
+    questionnaire_id: uuid.UUID
+
+
 class QuestionBase(SQLModel):
     question_text: str = Field(max_length=1000)
     order: int = Field(ge=0)
     is_required: bool = True
+    section_id: uuid.UUID | None = Field(default=None, foreign_key="questionsection.id", ondelete="SET NULL")
     scale_type: ScaleType = Field(default=ScaleType.LIKERT_5)
     # Custom numeric scale fields
     custom_min_value: int | None = Field(default=None)
@@ -160,6 +190,7 @@ class Question(QuestionBase, table=True):
         foreign_key="questionnairetemplate.id", nullable=False, ondelete="CASCADE"
     )
     questionnaire: Optional["QuestionnaireTemplate"] = Relationship(back_populates="questions")
+    section: Optional["QuestionSection"] = Relationship(back_populates="questions")
     answers: list["Answer"] = Relationship(back_populates="question", cascade_delete=True)
 
 
@@ -176,11 +207,13 @@ class QuestionnaireTemplateBase(SQLModel):
 
 
 class QuestionnaireTemplateCreate(QuestionnaireTemplateBase):
+    sections: list[QuestionSectionCreate] = []
     questions: list[QuestionCreate] = []
 
 
 class QuestionnaireTemplateUpdate(QuestionnaireTemplateBase):
     title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
+    sections: list[QuestionSectionCreate] | None = None
     questions: list[QuestionCreate] | None = None
 
 
@@ -193,6 +226,7 @@ class QuestionnaireTemplate(QuestionnaireTemplateBase, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     created_by: Optional["User"] = Relationship(back_populates="created_questionnaires")
     questions: list["Question"] = Relationship(back_populates="questionnaire", cascade_delete=True)
+    sections: list["QuestionSection"] = Relationship(back_populates="questionnaire", cascade_delete=True)
     assignments: list["QuestionnaireAssignment"] = Relationship(back_populates="questionnaire", cascade_delete=True)
 
 
@@ -201,6 +235,7 @@ class QuestionnaireTemplatePublic(QuestionnaireTemplateBase):
     created_by_id: uuid.UUID
     created_at: datetime
     updated_at: datetime
+    sections: list[QuestionSectionPublic] = []
     questions: list[QuestionPublic] = []
 
 
@@ -269,6 +304,7 @@ class QuestionnaireAssignmentBulkCreate(SQLModel):
     user_ids: list[uuid.UUID]
     appointment_id: uuid.UUID | None = None
     due_date: datetime | None = None
+    prefill: bool = False
 
 
 class QuestionnaireAssignmentUpdate(SQLModel):

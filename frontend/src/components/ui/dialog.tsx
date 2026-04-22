@@ -1,12 +1,12 @@
-import * as React from "react"
 import {
-  Dialog as MuiDialog,
-  DialogTitle as MuiDialogTitle,
-  DialogContent as MuiDialogContent,
-  DialogActions as MuiDialogActions,
-  DialogProps,
+  type DialogProps,
   IconButton,
+  Dialog as MuiDialog,
+  DialogActions as MuiDialogActions,
+  DialogContent as MuiDialogContent,
+  DialogTitle as MuiDialogTitle,
 } from "@mui/material"
+import * as React from "react"
 import { IoClose } from "react-icons/io5"
 
 interface DialogRootProps extends DialogProps {
@@ -25,7 +25,7 @@ export const DialogRoot = React.forwardRef<HTMLDivElement, DialogRootProps>(
         {children}
       </MuiDialog>
     )
-  }
+  },
 )
 
 export const DialogContent = MuiDialogContent
@@ -48,11 +48,7 @@ export const DialogDescription = React.forwardRef<
   React.HTMLAttributes<HTMLParagraphElement>
 >(function DialogDescription(props, ref) {
   return (
-    <p
-      ref={ref}
-      style={{ margin: 0, color: 'text.secondary' }}
-      {...props}
-    />
+    <p ref={ref} style={{ margin: 0, color: "text.secondary" }} {...props} />
   )
 })
 
@@ -65,7 +61,7 @@ export const DialogCloseTrigger = React.forwardRef<
       aria-label="close"
       ref={ref}
       sx={{
-        position: 'absolute',
+        position: "absolute",
         right: 8,
         top: 8,
       }}
@@ -79,17 +75,17 @@ export const DialogCloseTrigger = React.forwardRef<
 export const DialogBackdrop = React.forwardRef<HTMLDivElement, any>(
   function DialogBackdrop(props, ref) {
     return <div ref={ref} {...props} />
-  }
+  },
 )
 
 export const DialogTrigger = React.forwardRef<HTMLButtonElement, any>(
   function DialogTrigger(props, ref) {
     return <button ref={ref} {...props} />
-  }
+  },
 )
 
 export const DialogActionTrigger = React.forwardRef<HTMLButtonElement, any>(
   function DialogActionTrigger(props, ref) {
     return <button ref={ref} {...props} />
-  }
+  },
 )

@@ -1,4 +1,4 @@
-import { Alert, Container, Box, Typography } from "@mui/material"
+import { Alert, Box, Container, Typography } from "@mui/material"
 import {
   Link as RouterLink,
   createFileRoute,
@@ -60,20 +60,20 @@ function Login() {
       onSubmit={handleSubmit(onSubmit)}
       maxWidth="sm"
       sx={{
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
         gap: 2,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
         <Box
           component="img"
           src={Logo}
           alt="Logo"
-          sx={{ width: 125, maxWidth: 'md' }}
+          sx={{ width: 125, maxWidth: "md" }}
         />
         <Typography variant="h3" fontWeight="bold">
           Praestara
@@ -81,15 +81,15 @@ function Login() {
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ width: '100%' }}>
+        <Alert severity="error" sx={{ width: "100%" }}>
           {error}
         </Alert>
       )}
-      
+
       <Field
         invalid={!!errors.username}
         errorText={errors.username?.message}
-        sx={{ width: '100%' }}
+        sx={{ width: "100%" }}
       >
         <InputGroup
           startElement={<FiMail />}
@@ -100,7 +100,7 @@ function Login() {
                 return emailPattern.value.test(value) || emailPattern.message
               }
               return true
-            }
+            },
           })}
           placeholder="Email or Username"
           type="text"
@@ -116,17 +116,29 @@ function Login() {
         errors={errors}
       />
 
-      <RouterLink to="/recover-password" style={{ alignSelf: 'flex-start', color: 'inherit' }}>
+      <RouterLink
+        to="/recover-password"
+        style={{ alignSelf: "flex-start", color: "inherit" }}
+      >
         Forgot Password?
       </RouterLink>
 
-      <Button variant="contained" type="submit" loading={isSubmitting} size="medium" fullWidth>
+      <Button
+        variant="contained"
+        type="submit"
+        loading={isSubmitting}
+        size="medium"
+        fullWidth
+      >
         Log In
       </Button>
 
       <Typography>
         Don't have an account?{" "}
-        <RouterLink to="/signup" style={{ color: 'inherit', fontWeight: 'bold' }}>
+        <RouterLink
+          to="/signup"
+          style={{ color: "inherit", fontWeight: "bold" }}
+        >
           Sign Up
         </RouterLink>
       </Typography>

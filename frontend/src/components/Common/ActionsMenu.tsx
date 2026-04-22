@@ -1,7 +1,7 @@
 import { IconButton, ListItemIcon, ListItemText } from "@mui/material"
+import { useState } from "react"
 import { FiEdit, FiEye, FiMoreVertical, FiTrash } from "react-icons/fi"
 import { Menu, MenuItem } from "../ui/menu"
-import { useState } from "react"
 
 interface ActionsMenuProps {
   onView?: () => void
@@ -11,12 +11,12 @@ interface ActionsMenuProps {
   showView?: boolean
 }
 
-export const ActionsMenu = ({ 
-  onView, 
-  onEdit, 
-  onDelete, 
+export const ActionsMenu = ({
+  onView,
+  onEdit,
+  onDelete,
   isDeleting = false,
-  showView = false 
+  showView = false,
 }: ActionsMenuProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
@@ -57,11 +57,7 @@ export const ActionsMenu = ({
       >
         <FiMoreVertical />
       </IconButton>
-      <Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-      >
+      <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
         {showView && onView && (
           <MenuItem onClick={handleView}>
             <ListItemIcon>
@@ -76,7 +72,11 @@ export const ActionsMenu = ({
           </ListItemIcon>
           <ListItemText>Edit</ListItemText>
         </MenuItem>
-        <MenuItem onClick={handleDelete} sx={{ color: "error.main" }} disabled={isDeleting}>
+        <MenuItem
+          onClick={handleDelete}
+          sx={{ color: "error.main" }}
+          disabled={isDeleting}
+        >
           <ListItemIcon sx={{ color: "error.main" }}>
             <FiTrash />
           </ListItemIcon>

@@ -1,6 +1,14 @@
-import { Box, Button, Container, Paper, Stack, TextField, Typography } from "@mui/material"
-import { createFileRoute } from "@tanstack/react-router"
+import {
+  Box,
+  Button,
+  Container,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material"
 import { useMutation, useQuery } from "@tanstack/react-query"
+import { createFileRoute } from "@tanstack/react-router"
 import { useState } from "react"
 
 import { CheckinsService } from "@/client"
@@ -66,22 +74,32 @@ function Checkins() {
           <Typography variant="body2" color="text.secondary">
             Last 10 morning and evening check‑ins (demo data seeded).
           </Typography>
-          <Stack direction={{ xs: "column", md: "row" }} spacing={3} sx={{ mt: 2 }}>
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={3}
+            sx={{ mt: 2 }}
+          >
             <Box sx={{ flex: 1 }}>
               <Typography variant="subtitle1" sx={{ mb: 1 }}>
                 Morning
               </Typography>
               {morningHistory?.data?.map((entry) => (
                 <Box key={entry.id} sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
                     {new Date(entry.created_at).toLocaleDateString()}
                   </Typography>
                   <Stack spacing={0.5}>
-                    {splitIntoSentences(entry.text ?? "").map((sentence, idx) => (
-                      <Typography key={idx} variant="body2">
-                        {sentence}
-                      </Typography>
-                    ))}
+                    {splitIntoSentences(entry.text ?? "").map(
+                      (sentence, idx) => (
+                        <Typography key={idx} variant="body2">
+                          {sentence}
+                        </Typography>
+                      ),
+                    )}
                   </Stack>
                 </Box>
               ))}
@@ -92,15 +110,21 @@ function Checkins() {
               </Typography>
               {eveningHistory?.data?.map((entry) => (
                 <Box key={entry.id} sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 0.5 }}
+                  >
                     {new Date(entry.created_at).toLocaleDateString()}
                   </Typography>
                   <Stack spacing={0.5}>
-                    {splitIntoSentences(entry.text ?? "").map((sentence, idx) => (
-                      <Typography key={idx} variant="body2">
-                        {sentence}
-                      </Typography>
-                    ))}
+                    {splitIntoSentences(entry.text ?? "").map(
+                      (sentence, idx) => (
+                        <Typography key={idx} variant="body2">
+                          {sentence}
+                        </Typography>
+                      ),
+                    )}
                   </Stack>
                 </Box>
               ))}
@@ -128,7 +152,9 @@ function Checkins() {
               onClick={() => morningMutation.mutate(morningText)}
               disabled={morningMutation.isPending || !morningText.trim()}
             >
-              {morningMutation.isPending ? "Sending..." : "Submit morning check‑in"}
+              {morningMutation.isPending
+                ? "Sending..."
+                : "Submit morning check‑in"}
             </Button>
             {morningReply && (
               <Box sx={{ mt: 2, p: 2, bgcolor: "grey.100", borderRadius: 2 }}>
@@ -162,7 +188,9 @@ function Checkins() {
               onClick={() => eveningMutation.mutate(eveningText)}
               disabled={eveningMutation.isPending || !eveningText.trim()}
             >
-              {eveningMutation.isPending ? "Sending..." : "Submit evening check‑in"}
+              {eveningMutation.isPending
+                ? "Sending..."
+                : "Submit evening check‑in"}
             </Button>
             {eveningReply && (
               <Box sx={{ mt: 2, p: 2, bgcolor: "grey.100", borderRadius: 2 }}>

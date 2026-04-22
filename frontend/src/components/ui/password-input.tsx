@@ -1,5 +1,13 @@
-import * as React from "react"
-import { TextField, TextFieldProps, IconButton, InputAdornment, Box, Stack, Typography } from "@mui/material"
+import {
+  Box,
+  IconButton,
+  InputAdornment,
+  Stack,
+  TextField,
+  type TextFieldProps,
+  Typography,
+} from "@mui/material"
+import type * as React from "react"
 import { forwardRef, useState } from "react"
 import { FiEye, FiEyeOff } from "react-icons/fi"
 import { Field } from "./field"
@@ -11,8 +19,7 @@ export interface PasswordVisibilityProps {
   visibilityIcon?: { on: React.ReactNode; off: React.ReactNode }
 }
 
-export interface PasswordInputProps
-  extends Omit<TextFieldProps, 'type'> {
+export interface PasswordInputProps extends Omit<TextFieldProps, "type"> {
   rootProps?: any
   startElement?: React.ReactNode
   type: string
@@ -21,13 +28,7 @@ export interface PasswordInputProps
 
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   function PasswordInput(props, ref) {
-    const {
-      rootProps,
-      startElement,
-      type,
-      errors,
-      ...rest
-    } = props
+    const { rootProps, startElement, type, errors, ...rest } = props
 
     const [visible, setVisible] = useState(false)
 
@@ -35,7 +36,7 @@ export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
       <Field
         invalid={!!errors[type]}
         errorText={errors[type]?.message}
-        sx={{ alignSelf: 'start', width: '100%' }}
+        sx={{ alignSelf: "start", width: "100%" }}
       >
         <TextField
           {...rest}
@@ -82,7 +83,7 @@ export const PasswordStrengthMeter = forwardRef<
 
   return (
     <Stack spacing={1} alignItems="flex-end" ref={ref} {...rest}>
-      <Box sx={{ display: 'flex', width: '100%', gap: 0.5 }}>
+      <Box sx={{ display: "flex", width: "100%", gap: 0.5 }}>
         {Array.from({ length: max }).map((_, index) => (
           <Box
             key={index}
@@ -90,7 +91,7 @@ export const PasswordStrengthMeter = forwardRef<
               height: 4,
               flex: 1,
               borderRadius: 0.5,
-              bgcolor: index < value ? color : 'grey.300',
+              bgcolor: index < value ? color : "grey.300",
             }}
           />
         ))}
