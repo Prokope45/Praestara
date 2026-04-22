@@ -43,7 +43,7 @@ export default function AdminQuestionnaires() {
     return <LinearProgress />
   }
 
-  const isNotOnboardingQuestionnaire = (q: QuestionnaireTemplatePublic) => q.title != "Onboarding Questionnaire"
+  const isNotOnboardingQuestionnaire = (q: QuestionnaireTemplatePublic) => !q.title.includes("Onboarding")
 
   return (
     <Box>
