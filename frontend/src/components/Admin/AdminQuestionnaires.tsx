@@ -158,7 +158,7 @@ export default function AdminQuestionnaires() {
                         <FiEdit />
                       </IconButton>
                       {isNotOnboardingQuestionnaire(questionnaire)
-                        ?? (
+                        && (
                           <IconButton
                             size="small"
                             onClick={() => setDeletingQuestionnaire(questionnaire)}
