@@ -1,6 +1,7 @@
 import re
 import uuid
 from typing import Any
+from datetime import datetime, timedelta, timezone
 
 from sqlmodel import Session, desc, func, select
 
@@ -72,6 +73,7 @@ class CheckinLogic:
             "You are Praestara: non-moralizing, values-anchored, non-diagnostic.",
             "Your goal is to connect actions to values and self-concept, without accountability or judgment.",
             "If there are discrepancies between stated values and today's plan/summary, gently reflect them without questions.",
+            "Respond without stating 'Reflection: ...', just respond with the raw message."
         ]
 
         if checkin_type == "morning":
@@ -243,6 +245,21 @@ class CheckinLogic:
 
         return response
 
+    def read_timeline(
+        self, *, session: Session, user_id: uuid.UUID, days: int
+    ) -> list[Checkin]:
+        since = datetime.now(timezone.utc) - timedelta(days=days)
+        statement = (
+            select(Checkin)
+            .where(
+                Checkin.user_id == user_id,
+                Checkin.type.in_(["morning", "evening"]),
+                Checkin.created_at >= since
+            )
+            .order_by(desc(Checkin.created_at))
+        )
+        return session.exec(statement).all()
+
     def read_all(
         self, *, session: Session, user_id: uuid.UUID, skip: int, limit: int, type: str | None
     ) -> tuple[list[Checkin], int]:
@@ -294,6 +311,47 @@ class CheckinLogic:
 
     def update(self, *, session: Session, db_checkin: Checkin, text: str) -> Checkin:
         db_checkin.text = text
+        
+        onboarding_payload, _ = self._get_onboarding_payload(session, db_checkin.user_id)
+        
+        last_morning = None
+        if db_checkin.type == "evening":
+            last_morning = session.exec(
+                select(Checkin)
+                .where(
+                    Checkin.user_id == db_checkin.user_id,
+                    Checkin.type == "morning",
+                    Checkin.id != db_checkin.id
+                )
+                .order_by(desc(Checkin.created_at))
+            ).first()
+
+        prompt, details = self._build_analysis_payload(
+            checkin_type=db_checkin.type,
+            checkin_text=text,
+            onboarding_payload=onboarding_payload,
+            last_morning_text=(last_morning.text if last_morning else None),
+        )
+
+        reply = self._call_ai(db_checkin.user_id, prompt, details)
+        if reply is None:
+            reply = self._fallback_reply(
+                checkin_type=db_checkin.type,
+                checkin_text=text,
+                onboarding_payload=onboarding_payload,
+                last_morning_text=(last_morning.text if last_morning else None),
+            )
+
+        db_checkin.reply = reply
+
+        if db_checkin.type == "evening":
+            domains = self._extract_domains(onboarding_payload)
+            missing = self._missing_domains(text, domains, threshold=7)
+            if domains:
+                mentioned = max(len(domains) - len(missing), 0)
+                alignment_score = min(100, 45 + mentioned * 8)
+                db_checkin.alignment_score = alignment_score
+
         session.add(db_checkin)
         session.commit()
         session.refresh(db_checkin)

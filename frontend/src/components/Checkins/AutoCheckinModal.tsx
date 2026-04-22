@@ -9,7 +9,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient} from "@tanstack/react-query"
 import { useEffect, useMemo, useState } from "react"
 
 import { CheckinsService } from "@/client"
@@ -31,9 +31,11 @@ const FORCE_KEY = "praestara_checkin_force"
 
 function AutoCheckinModal() {
   const { user } = useAuth()
+  const queryClient = useQueryClient()
   const [openType, setOpenType] = useState<"morning" | "evening" | null>(null)
   const [text, setText] = useState("")
   const [reply, setReply] = useState<string | null>(null)
+  const [initialized, setInitialized] = useState(false)
 
   const { data: morningHistory } = useQuery({
     queryKey: ["checkins", "morning", "latest"],
@@ -45,17 +47,17 @@ function AutoCheckinModal() {
     queryFn: () => CheckinsService.readCheckins({ type: "evening", limit: 20 }),
   })
 
-  const morningDone = useMemo(() => {
-    return (morningHistory?.data ?? []).some((entry) =>
-      isSameDay(entry.created_at),
-    )
+  const todayMorningEntry = useMemo(() => {
+    return (morningHistory?.data ?? []).find((entry) => isSameDay(entry.created_at))
   }, [morningHistory])
 
-  const eveningDone = useMemo(() => {
-    return (eveningHistory?.data ?? []).some((entry) =>
-      isSameDay(entry.created_at),
-    )
+  const todayEveningEntry = useMemo(() => {
+    return (eveningHistory?.data ?? []).find((entry) => isSameDay(entry.created_at))
   }, [eveningHistory])
+
+  const morningDone = Boolean(todayMorningEntry)
+  const eveningDone = Boolean(todayEveningEntry)
+  const currentEntry = openType === "morning" ? todayMorningEntry : todayEveningEntry
 
   useEffect(() => {
     const handleTrigger = () => {
@@ -66,8 +68,6 @@ function AutoCheckinModal() {
         const parsed = JSON.parse(raw)
         if (parsed?.type === "morning" || parsed?.type === "evening") {
           setOpenType(parsed.type)
-          setText("")
-          setReply(null)
         }
       } catch {
         // ignore malformed payloads
@@ -81,6 +81,22 @@ function AutoCheckinModal() {
     return () =>
       window.removeEventListener("praestara_checkin_trigger", handleTrigger)
   }, [openType])
+
+  useEffect(() => {
+    if (openType && !initialized) {
+      if (currentEntry) {
+        setText(currentEntry.text)
+        setReply(currentEntry.reply)
+        setInitialized(true)
+      } else if (morningHistory && eveningHistory) {
+        setText("")
+        setReply(null)
+        setInitialized(true)
+      }
+    } else if (!openType) {
+      setInitialized(false)
+    }
+  }, [openType, currentEntry, initialized, morningHistory, eveningHistory])
 
   useEffect(() => {
     if (!user?.onboarding_completed_at) return
@@ -105,11 +121,24 @@ function AutoCheckinModal() {
     }
   }, [eveningDone, morningDone, openType, user])
 
-  const mutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: (payload: { type: "morning" | "evening"; text: string }) =>
       CheckinsService.createCheckin({ requestBody: payload }),
     onSuccess: (response) => {
       setReply(response.reply)
+      queryClient.invalidateQueries({ queryKey: ["checkins"] })
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: { checkinId: string; text: string }) =>
+      CheckinsService.updateCheckin({
+        checkinId: payload.checkinId,
+        requestBody: { text: payload.text },
+      }),
+    onSuccess: (response) => {
+      setReply(response.reply)
+      queryClient.invalidateQueries({ queryKey: ["checkins"] })
     },
   })
 
@@ -124,12 +153,18 @@ function AutoCheckinModal() {
 
   const handleSubmit = () => {
     if (!openType || !text.trim()) return
-    mutation.mutate({ type: openType, text })
+    if (currentEntry) {
+      updateMutation.mutate({ checkinId: currentEntry.id, text })
+    } else {
+      createMutation.mutate({ type: openType, text })
+    }
   }
 
   if (!openType) return null
 
   const isMorning = openType === "morning"
+  const isPending = createMutation.isPending || updateMutation.isPending
+  const isTextUnchanged = currentEntry ? text === currentEntry.text : false
 
   return (
     <Dialog open fullWidth maxWidth="sm">
@@ -168,9 +203,9 @@ function AutoCheckinModal() {
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={mutation.isPending || !text.trim() || Boolean(reply)}
+          disabled={isPending || !text.trim() || (Boolean(reply) && isTextUnchanged)}
         >
-          {mutation.isPending ? "Submitting..." : "Submit"}
+          {isPending ? "Submitting..." : (currentEntry ? "Update" : "Submit")}
         </Button>
         {reply && (
           <Button variant="contained" color="success" onClick={handleClose}>

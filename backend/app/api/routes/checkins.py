@@ -95,6 +95,40 @@ def read_checkins(
     return CheckinsPublic(data=data, count=count)
 
 
+@router.get("/timeline", response_model=CheckinsPublic)
+def read_checkin_timeline(
+    *,
+    session: SessionDep,
+    current_user: CurrentUser,
+    days: int = 7,
+) -> CheckinsPublic:
+    """
+    Retrieve checkins for the current user for the last `days`.
+    """
+    checkins = checkin_logic.read_timeline(
+        session=session,
+        user_id=current_user.id,
+        days=days,
+    )
+
+    data = []
+    for checkin in checkins:
+        data.append(
+            CheckinPublic(
+                id=checkin.id,
+                type=checkin.type,
+                text=checkin.text,
+                reply=checkin.reply,
+                created_at=checkin.created_at,
+                alignment_score=checkin.alignment_score,
+                onboarding_id=checkin.onboarding_id,
+                morning_id=checkin.morning_id,
+            )
+        )
+
+    return CheckinsPublic(data=data, count=len(data))
+
+
 @router.get("/{checkin_id}", response_model=CheckinPublic)
 def read_checkin(
     *, session: SessionDep, current_user: CurrentUser, checkin_id: uuid.UUID
@@ -131,7 +165,7 @@ def update_checkin(
     checkin_in: CheckinUpdate,
 ) -> CheckinPublic:
     """
-    Update a checkin's text. The AI reply is not regenerated.
+    Update a checkin's text. The AI reply is regenerated with the updated context.
     """
     checkin = checkin_logic.read(session=session, checkin_id=checkin_id)
     if not checkin:

@@ -219,6 +219,7 @@ export function ViewAssignments({
                             sx={{ alignItems: "flex-start", py: 2 }}
                           >
                             <ListItemText
+                              disableTypography
                               primary={
                                 <Stack
                                   direction="row"
@@ -331,6 +332,7 @@ export function ViewAssignments({
                           divider={index < completedAssignments.length - 1}
                         >
                           <ListItemText
+                            disableTypography
                             primary={
                               <Stack
                                 direction="row"

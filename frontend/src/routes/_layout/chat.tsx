@@ -15,8 +15,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute } from "@tanstack/react-router"
 import { useEffect, useRef, useState } from "react"
 
-import { AiService } from "@/client"
+import { AiService, CheckinsService } from "@/client"
 import useCustomToast from "@/hooks/useCustomToast"
+import CheckinTimeline from "@/components/Checkins/CheckinTimeline"
 
 export const Route = createFileRoute("/_layout/chat")({
   component: Chat,
@@ -30,9 +31,28 @@ interface ChatMessage {
 function Chat() {
   const [input, setInput] = useState("")
   const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [selectedCheckins, setSelectedCheckins] = useState<Set<string>>(new Set())
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const showToast = useCustomToast()
   const queryClient = useQueryClient()
+
+  // For constructing context
+  const { data: checkinsResponse } = useQuery({
+    queryKey: ["checkins", "timeline", 7],
+    queryFn: () => CheckinsService.readCheckinTimeline({ days: 7 }),
+  })
+
+  const toggleSelection = (id: string) => {
+    setSelectedCheckins((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
 
   // Fetch chat history on mount
   const { data: historyData, isLoading: isLoadingHistory } = useQuery({
@@ -55,7 +75,7 @@ function Chat() {
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })
   }, [messages])
 
   // Send message mutation
@@ -100,9 +120,25 @@ function Chat() {
     if (!trimmed || sendMessageMutation.isPending) {
       return
     }
-    setMessages((prev) => [...prev, { role: "user", content: trimmed }])
+
+    let finalMessage = trimmed
+    if (selectedCheckins.size > 0) {
+      const checkinsContext = Array.from(selectedCheckins)
+        .map((id) => {
+          const checkin = checkinsResponse?.data.find((c) => c.id === id)
+          if (!checkin) return ""
+          return `[${checkin.type.toUpperCase()} CHECK-IN - ${new Date(checkin.created_at).toLocaleDateString()}]\n${checkin.text}`
+        })
+        .filter(Boolean)
+        .join("\n\n")
+
+      finalMessage = `Context from selected check-ins:\n${checkinsContext}\n\nUser message:\n${trimmed}`
+    }
+
+    setMessages((prev) => [...prev, { role: "user", content: finalMessage }])
     setInput("")
-    sendMessageMutation.mutate(trimmed)
+    setSelectedCheckins(new Set())
+    sendMessageMutation.mutate(finalMessage)
   }
 
   const handleClearHistory = () => {
@@ -117,6 +153,7 @@ function Chat() {
           direction="row"
           justifyContent="space-between"
           alignItems="center"
+          sx={{ mb: 2}}
         >
           <Box>
             <Typography variant="h5" sx={{ mb: 1 }}>
@@ -144,6 +181,21 @@ function Chat() {
               </IconButton>
             </span>
           </Tooltip>
+        </Stack>
+
+        <hr />
+
+        <Stack>
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            Check-in Timeline
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Select past check-ins to include them as context for your conversation.
+          </Typography>
+
+          <Box sx={{ position: "relative", py: 2, overflowX: "auto" }}>
+            <CheckinTimeline selectedCheckins={selectedCheckins} toggleSelection={toggleSelection} />
+          </Box>
         </Stack>
       </Paper>
 
@@ -198,7 +250,9 @@ function Chat() {
                   wordBreak: "break-word",
                 }}
               >
-                <Typography variant="body2">{message.content}</Typography>
+                <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                  {message.content}
+                </Typography>
               </Box>
             ))}
             {sendMessageMutation.isPending && (
