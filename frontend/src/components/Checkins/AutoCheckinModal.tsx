@@ -56,6 +56,7 @@ function AutoCheckinModal() {
     queryFn: () => TrajectoriesService.getActiveTrajectories(),
     enabled: !!openType,
   })
+
   const todayMorningEntry = useMemo(() => {
     return (morningHistory?.data ?? []).find((entry) => isSameDay(entry.created_at))
   }, [morningHistory])

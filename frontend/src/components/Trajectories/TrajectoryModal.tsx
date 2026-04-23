@@ -16,6 +16,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { FaTrash, FaRobot } from "react-icons/fa"
+import { MdSubdirectoryArrowRight } from "react-icons/md";
 
 import { TrajectoriesService, UsersService, type TrajectoryPublic, type BrainstormResponse } from "@/client"
 import useAuth from "@/hooks/useAuth"
@@ -109,25 +110,6 @@ function TrajectoryModal({ open, onClose }: TrajectoryModalProps) {
             Set the goals you want to work on for the upcoming week. They will be framed as yes/no questions during your daily check-ins.
           </Typography>
 
-          <List>
-            {(activeTrajectories?.data ?? []).map((t: TrajectoryPublic) => (
-              <ListItem
-                key={t.id}
-                secondaryAction={
-                  <IconButton edge="end" onClick={() => deactivateMutation.mutate(t.id)} disabled={deactivateMutation.isPending}>
-                    <FaTrash size={14} />
-                  </IconButton>
-                }
-                sx={{ bgcolor: "grey.50", mb: 1, borderRadius: 1 }}
-              >
-                <ListItemText
-                  primary={t.original_goal}
-                  secondary={t.rephrased_question ? `↳ ${t.rephrased_question}` : "Rephrasing..."}
-                />
-              </ListItem>
-            ))}
-          </List>
-
           <Box sx={{ display: "flex", gap: 1 }}>
             <TextField
               value={newGoal}
@@ -148,6 +130,30 @@ function TrajectoryModal({ open, onClose }: TrajectoryModalProps) {
             </Button>
           </Box>
 
+          <List>
+            {(activeTrajectories?.data ?? []).map((t: TrajectoryPublic) => (
+              <ListItem
+                key={t.id}
+                secondaryAction={
+                  <IconButton edge="end" onClick={() => deactivateMutation.mutate(t.id)} disabled={deactivateMutation.isPending}>
+                    <FaTrash size={14} />
+                  </IconButton>
+                }
+                sx={{ bgcolor: "grey.50", mb: 1, borderRadius: 1 }}
+              >
+                <ListItemText
+                  primary={t.original_goal}
+                  secondary={
+                    <Box component="span" sx={{ display: "flex", alignItems: "flex-start", gap: 0.5, "& svg": { flexShrink: 0, mt: "2px" } }}>
+                      <MdSubdirectoryArrowRight />
+                      <Box component="span">{t.rephrased_question ? t.rephrased_question : "Rephrasing..."}</Box>
+                    </Box>
+                  }
+                />
+              </ListItem>
+            ))}
+          </List>
+
           <Box>
             <Button
               startIcon={<FaRobot />}
@@ -155,12 +161,11 @@ function TrajectoryModal({ open, onClose }: TrajectoryModalProps) {
               size="small"
               onClick={() => setBrainstormMode((prev) => !prev)}
             >
-              Ask Koios for ideas?
+              Brainstorm with Praestara
             </Button>
             
             {brainstormMode && (
               <Box sx={{ mt: 2, p: 2, bgcolor: "primary.50", borderRadius: 2 }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>Brainstorm with Praestara</Typography>
                 <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
                   <TextField
                     value={brainstormInput}
@@ -182,8 +187,8 @@ function TrajectoryModal({ open, onClose }: TrajectoryModalProps) {
                   </Button>
                 </Box>
                 {brainstormReply && (
-                  <Typography variant="body2" sx={{ fontStyle: "italic", bgcolor: "white", p: 1.5, borderRadius: 1 }}>
-                    {brainstormReply}
+                  <Typography variant="body2" sx={{ fontStyle: "italic", bgcolor: "white", p: 1.5, borderRadius: 1, whiteSpace: "pre-wrap" }}>
+                    {brainstormReply.split(" - ").join("\n- ")}
                   </Typography>
                 )}
               </Box>
