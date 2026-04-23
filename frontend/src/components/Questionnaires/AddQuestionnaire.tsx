@@ -90,26 +90,6 @@ export function AddQuestionnaire({
   const [moveAnchorEl, setMoveAnchorEl] = useState<null | HTMLElement>(null)
   const [questionToMove, setQuestionToMove] = useState<string | null>(null)
 
-  // useEffect(() => {
-  //   if (questionnaire) {
-  //     setTitle(questionnaire.title)
-  //     setDescription(questionnaire.description || "")
-  //     setIsActive(questionnaire.is_active ?? true)
-  //     setSections(
-  //       (questionnaire.sections || []).map((s, index) => ({
-  //         ...s,
-  //         id: s.id || `existing-sec-${index}`,
-  //       })) as SectionForm[],
-  //     )
-  //     setQuestions(
-  //       questionnaire.questions?.map((q, index) => ({
-  //         ...q,
-  //         tempId: `existing-${index}`,
-  //       })) || [],
-  //     )
-  //   }
-  // }, [questionnaire])
-
   const createMutation = useMutation({
     mutationFn: (data: any) =>
       isEditing

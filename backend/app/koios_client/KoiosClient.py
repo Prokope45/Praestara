@@ -453,7 +453,7 @@ class KoiosClient:
             '{"morning_question": "...", "evening_question": "..."}'
         )
         details = [
-            {"key": "goal", "value": goal, "description": "The goal to rephrase"}
+            {"key": "goal", "value": goal, "description": "The goal to rephrase into an actionable question"}
         ]
         return self.process_analysis(user_id=user_id, prompt=prompt, details=details, temperature=0.3)
 
@@ -470,6 +470,7 @@ class KoiosClient:
         prompt = (
             "You are Praestara. Help the user brainstorm actionable, yes/no trajectory goals "
             "to work on over the next week. Keep it brief, non-moralizing, and supportive."
+            "Respond ONLY with the actionable goals as a list."
         )
         details = [
             {"key": "user_message", "value": message, "description": "User's request or idea"}

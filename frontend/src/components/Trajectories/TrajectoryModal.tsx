@@ -109,6 +109,26 @@ function TrajectoryModal({ open, onClose }: TrajectoryModalProps) {
             Set the goals you want to work on for the upcoming week. They will be framed as yes/no questions during your daily check-ins.
           </Typography>
 
+          <Box sx={{ display: "flex", gap: 1 }}>
+            <TextField
+              value={newGoal}
+              onChange={(e) => setNewGoal(e.target.value)}
+              placeholder="e.g. Work out for 30 minutes"
+              size="small"
+              fullWidth
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleAddGoal()
+              }}
+            />
+            <Button
+              variant="contained"
+              onClick={handleAddGoal}
+              disabled={!newGoal.trim() || createMutation.isPending}
+            >
+              Add
+            </Button>
+          </Box>
+
           <List>
             {(activeTrajectories?.data ?? []).map((t: TrajectoryPublic) => (
               <ListItem
@@ -132,26 +152,6 @@ function TrajectoryModal({ open, onClose }: TrajectoryModalProps) {
             ))}
           </List>
 
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <TextField
-              value={newGoal}
-              onChange={(e) => setNewGoal(e.target.value)}
-              placeholder="e.g. Work out for 30 minutes"
-              size="small"
-              fullWidth
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddGoal()
-              }}
-            />
-            <Button
-              variant="contained"
-              onClick={handleAddGoal}
-              disabled={!newGoal.trim() || createMutation.isPending}
-            >
-              Add
-            </Button>
-          </Box>
-
           <Box>
             <Button
               startIcon={<FaRobot />}
@@ -159,12 +159,11 @@ function TrajectoryModal({ open, onClose }: TrajectoryModalProps) {
               size="small"
               onClick={() => setBrainstormMode((prev) => !prev)}
             >
-              Ask Koios for ideas?
+              Brainstorm with Praestara
             </Button>
             
             {brainstormMode && (
               <Box sx={{ mt: 2, p: 2, bgcolor: "primary.50", borderRadius: 2 }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>Brainstorm with Praestara</Typography>
                 <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
                   <TextField
                     value={brainstormInput}
@@ -186,8 +185,8 @@ function TrajectoryModal({ open, onClose }: TrajectoryModalProps) {
                   </Button>
                 </Box>
                 {brainstormReply && (
-                  <Typography variant="body2" sx={{ fontStyle: "italic", bgcolor: "white", p: 1.5, borderRadius: 1 }}>
-                    {brainstormReply}
+                  <Typography variant="body2" sx={{ fontStyle: "italic", bgcolor: "white", p: 1.5, borderRadius: 1, whiteSpace: "pre-wrap" }}>
+                    {brainstormReply.split(" - ").join("\n- ")}
                   </Typography>
                 )}
               </Box>
