@@ -20,7 +20,7 @@ import {
   Typography,
 } from "@mui/material"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import { FiChevronDown, FiMove, FiPlus, FiTrash2 } from "react-icons/fi"
 
 import {
@@ -56,11 +56,21 @@ export function AddQuestionnaire({
   const { showSuccessToast, showErrorToast } = useCustomToast()
   const isEditing = !!questionnaire
 
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [isActive, setIsActive] = useState(true)
-  const [sections, setSections] = useState<SectionForm[]>([])
-  const [questions, setQuestions] = useState<QuestionForm[]>([])
+  const [title, setTitle] = useState(questionnaire?.title || "")
+  const [description, setDescription] = useState(questionnaire?.description || "")
+  const [isActive, setIsActive] = useState(questionnaire?.is_active ?? true)
+  const [sections, setSections] = useState<SectionForm[]>(
+    (questionnaire?.sections || []).map((s, index) => ({
+      ...s,
+      id: s.id || `existing-sec-${index}`,
+    })) as SectionForm[],
+  )
+  const [questions, setQuestions] = useState<QuestionForm[]>(
+    questionnaire?.questions?.map((q, index) => ({
+      ...q,
+      tempId: `existing-${index}`,
+    })) || [],
+  )
 
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
@@ -79,26 +89,6 @@ export function AddQuestionnaire({
 
   const [moveAnchorEl, setMoveAnchorEl] = useState<null | HTMLElement>(null)
   const [questionToMove, setQuestionToMove] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (questionnaire) {
-      setTitle(questionnaire.title)
-      setDescription(questionnaire.description || "")
-      setIsActive(questionnaire.is_active ?? true)
-      setSections(
-        (questionnaire.sections || []).map((s, index) => ({
-          ...s,
-          id: s.id || `existing-sec-${index}`,
-        })) as SectionForm[],
-      )
-      setQuestions(
-        questionnaire.questions?.map((q, index) => ({
-          ...q,
-          tempId: `existing-${index}`,
-        })) || [],
-      )
-    }
-  }, [questionnaire])
 
   const createMutation = useMutation({
     mutationFn: (data: any) =>
@@ -523,14 +513,6 @@ export function AddQuestionnaire({
         <Stack direction="row" spacing={1}>
           <IconButton
             size="small"
-            onClick={(e) => openMoveMenu(e, question.tempId)}
-            color="primary"
-            title="Move"
-          >
-            <FiMove />
-          </IconButton>
-          <IconButton
-            size="small"
             onClick={() => handleRemoveQuestion(question.tempId)}
             color="error"
             title="Delete"
@@ -704,17 +686,19 @@ export function AddQuestionnaire({
                         >
                           {section.name || `Section ${index + 1}`}
                         </Typography>
-                        <IconButton
-                          size="small"
+                        <div
                           onClick={(e) => {
                             e.stopPropagation()
                             handleRemoveSection(section.id)
                           }}
-                          color="error"
-                          sx={{ paddingRight: "8px" }}
+                          style={{
+                            cursor: "pointer",
+                            color: "var(--mui-palette-error-main)",
+                            paddingRight: "8px"
+                          }}
                         >
-                          <FiTrash2 />
-                        </IconButton>
+                          <FiTrash2 style={{ height: "18px", width: "18px" }} />
+                        </div>
                       </Stack>
                     </AccordionSummary>
                     <AccordionDetails>

@@ -66,6 +66,13 @@ fi
 # Determine dump file type and restore accordingly
 echo "Restoring database from dump file..."
 
+# Always drop and recreate the public schema to ensure a clean slate
+echo "Dropping and recreating public schema..."
+docker compose --env-file .env -f build/docker-compose.yml exec -T db \
+  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "DROP SCHEMA public CASCADE;"
+docker compose --env-file .env -f build/docker-compose.yml exec -T db \
+  psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE SCHEMA public;"
+
 # Check if it's a custom format dump (pg_dump -Fc) or SQL dump
 if file "$DUMP_FILE" | grep -q "PostgreSQL custom database dump"; then
     # Custom format - use pg_restore

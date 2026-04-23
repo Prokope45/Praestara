@@ -12,7 +12,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient} from "@tanstack/react-query"
 import { useEffect, useMemo, useState } from "react"
 
 import { CheckinsService, TrajectoriesService, type CheckinTrajectoryResponseCreate } from "@/client"
@@ -34,10 +34,12 @@ const FORCE_KEY = "praestara_checkin_force"
 
 function AutoCheckinModal() {
   const { user } = useAuth()
+  const queryClient = useQueryClient()
   const [openType, setOpenType] = useState<"morning" | "evening" | null>(null)
   const [text, setText] = useState("")
   const [reply, setReply] = useState<string | null>(null)
   const [trajectoryAnswers, setTrajectoryAnswers] = useState<Record<string, boolean>>({})
+  const [initialized, setInitialized] = useState(false)
 
   const { data: morningHistory } = useQuery({
     queryKey: ["checkins", "morning", "latest"],
@@ -54,18 +56,17 @@ function AutoCheckinModal() {
     queryFn: () => TrajectoriesService.getActiveTrajectories(),
     enabled: !!openType,
   })
-
-  const morningDone = useMemo(() => {
-    return (morningHistory?.data ?? []).some((entry) =>
-      isSameDay(entry.created_at),
-    )
+  const todayMorningEntry = useMemo(() => {
+    return (morningHistory?.data ?? []).find((entry) => isSameDay(entry.created_at))
   }, [morningHistory])
 
-  const eveningDone = useMemo(() => {
-    return (eveningHistory?.data ?? []).some((entry) =>
-      isSameDay(entry.created_at),
-    )
+  const todayEveningEntry = useMemo(() => {
+    return (eveningHistory?.data ?? []).find((entry) => isSameDay(entry.created_at))
   }, [eveningHistory])
+
+  const morningDone = Boolean(todayMorningEntry)
+  const eveningDone = Boolean(todayEveningEntry)
+  const currentEntry = openType === "morning" ? todayMorningEntry : todayEveningEntry
 
   useEffect(() => {
     const handleTrigger = () => {
@@ -98,6 +99,22 @@ function AutoCheckinModal() {
     const rawTrajectoryForce = localStorage.getItem("praestara_trajectory_force")
     if (rawTrajectoryForce === "1") return
 
+    if (openType && !initialized) {
+      if (currentEntry) {
+        setText(currentEntry.text)
+        setReply(currentEntry.reply)
+        setInitialized(true)
+      } else if (morningHistory && eveningHistory) {
+        setText("")
+        setReply(null)
+        setInitialized(true)
+      }
+    } else if (!openType) {
+      setInitialized(false)
+    }
+  }, [openType, currentEntry, initialized, morningHistory, eveningHistory])
+
+  useEffect(() => {
     if (!user?.onboarding_completed_at) return
     if (openType) return
 
@@ -120,11 +137,24 @@ function AutoCheckinModal() {
     }
   }, [eveningDone, morningDone, openType, user])
 
-  const mutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: (payload: { type: "morning" | "evening"; text: string; trajectory_responses?: CheckinTrajectoryResponseCreate[] }) =>
       CheckinsService.createCheckin({ requestBody: payload }),
     onSuccess: (response) => {
       setReply(response.reply)
+      queryClient.invalidateQueries({ queryKey: ["checkins"] })
+    },
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: { checkinId: string; text: string }) =>
+      CheckinsService.updateCheckin({
+        checkinId: payload.checkinId,
+        requestBody: { text: payload.text },
+      }),
+    onSuccess: (response) => {
+      setReply(response.reply)
+      queryClient.invalidateQueries({ queryKey: ["checkins"] })
     },
   })
 
@@ -140,18 +170,22 @@ function AutoCheckinModal() {
 
   const handleSubmit = () => {
     if (!openType || !text.trim()) return
-    
-    const responses: CheckinTrajectoryResponseCreate[] = Object.entries(trajectoryAnswers).map(
-      ([id, completed]) => ({ trajectory_id: id, completed })
-    )
-    
-    mutation.mutate({ type: openType, text, trajectory_responses: responses })
+    if (currentEntry) {
+      updateMutation.mutate({ checkinId: currentEntry.id, text })
+    } else {
+      const responses: CheckinTrajectoryResponseCreate[] = Object.entries(trajectoryAnswers).map(
+        ([id, completed]) => ({ trajectory_id: id, completed })
+      )
+      createMutation.mutate({ type: openType, text, trajectory_responses: responses })
+    }
   }
 
   if (!openType) return null
 
   const isMorning = openType === "morning"
   const trajectories = activeTrajectories?.data ?? []
+  const isPending = createMutation.isPending || updateMutation.isPending
+  const isTextUnchanged = currentEntry ? text === currentEntry.text : false
 
   return (
     <Dialog open fullWidth maxWidth="sm">
@@ -212,9 +246,9 @@ function AutoCheckinModal() {
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={mutation.isPending || !text.trim() || Boolean(reply)}
+          disabled={isPending || !text.trim() || (Boolean(reply) && isTextUnchanged)}
         >
-          {mutation.isPending ? "Submitting..." : "Submit"}
+          {isPending ? "Submitting..." : (currentEntry ? "Update" : "Submit")}
         </Button>
         {reply && (
           <Button variant="contained" color="success" onClick={handleClose}>

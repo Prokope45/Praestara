@@ -912,6 +912,12 @@ export type CheckinsReadCheckinsData = {
 
 export type CheckinsReadCheckinsResponse = CheckinsPublic
 
+export type CheckinsReadCheckinTimelineData = {
+  days?: number
+}
+
+export type CheckinsReadCheckinTimelineResponse = CheckinsPublic
+
 export type CheckinsReadCheckinData = {
   checkinId: string
 }

@@ -43,6 +43,8 @@ export default function AdminQuestionnaires() {
     return <LinearProgress />
   }
 
+  const isNotOnboardingQuestionnaire = (q: QuestionnaireTemplatePublic) => !q.title.includes("Onboarding")
+
   return (
     <Box>
       <Stack
@@ -155,13 +157,17 @@ export default function AdminQuestionnaires() {
                       >
                         <FiEdit />
                       </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => setDeletingQuestionnaire(questionnaire)}
-                        color="error"
-                      >
-                        <FiTrash2 />
-                      </IconButton>
+                      {isNotOnboardingQuestionnaire(questionnaire)
+                        && (
+                          <IconButton
+                            size="small"
+                            onClick={() => setDeletingQuestionnaire(questionnaire)}
+                            color="error"
+                          >
+                            <FiTrash2 />
+                          </IconButton>
+                        )
+                      }
                     </Stack>
                   </Stack>
                 </CardContent>

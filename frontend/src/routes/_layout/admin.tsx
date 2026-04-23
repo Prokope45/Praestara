@@ -112,7 +112,7 @@ function UsersTable() {
                 <TableCell>
                   <UserActionsMenu
                     user={user}
-                    disabled={currentUser?.id === user.id}
+                    // disabled={currentUser?.id === user.id}  // FIXME: Should admin be allowed to edit their profile?
                   />
                 </TableCell>
               </TableRow>
