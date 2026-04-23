@@ -126,6 +126,7 @@ def update_trajectory(
         
         try:
             rephrased_json = ai_client.rephrase_trajectory_goal(str(current_user.id), update_data["original_goal"])
+            
             cleaned_json = rephrased_json.strip()
             if cleaned_json.startswith("```json"):
                 cleaned_json = cleaned_json[7:]

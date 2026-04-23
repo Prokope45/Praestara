@@ -1,4 +1,7 @@
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Dialog,
@@ -15,10 +18,15 @@ import {
 } from "@mui/material"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
-import { FaTrash, FaRobot } from "react-icons/fa"
+import { FaTrash, FaCopy, FaChevronDown } from "react-icons/fa"
+import { LuBrainCircuit } from "react-icons/lu";
+import { MdSubdirectoryArrowRight } from "react-icons/md";
+import { WiSunrise } from "react-icons/wi";
+import { WiSunset } from "react-icons/wi";
 
 import { TrajectoriesService, UsersService, type TrajectoryPublic, type BrainstormResponse } from "@/client"
 import useAuth from "@/hooks/useAuth"
+import { ValueMapDiagram } from "@/components/ValueMap/ValueMapDiagram"
 
 interface TrajectoryModalProps {
   open: boolean
@@ -32,6 +40,7 @@ function TrajectoryModal({ open, onClose }: TrajectoryModalProps) {
   const [brainstormMode, setBrainstormMode] = useState(false)
   const [brainstormInput, setBrainstormInput] = useState("")
   const [brainstormReply, setBrainstormReply] = useState<string | null>(null)
+  const [showValueMap, setShowValueMap] = useState(false)
 
   const { data: activeTrajectories } = useQuery({
     queryKey: ["trajectories", "active"],
@@ -101,97 +110,144 @@ function TrajectoryModal({ open, onClose }: TrajectoryModalProps) {
   }
 
   return (
-    <Dialog open={open} fullWidth maxWidth="sm">
-      <DialogTitle>Weekly Trajectory</DialogTitle>
+    <Dialog open={open} fullWidth maxWidth={showValueMap ? "lg" : "sm"}>
+      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        Weekly Trajectory
+        <Button variant="outlined" size="small" onClick={() => setShowValueMap(!showValueMap)}>
+          {showValueMap ? "Hide Value Map" : "Show Value Map"}
+        </Button>
+      </DialogTitle>
       <DialogContent>
-        <Stack spacing={3} sx={{ mt: 1 }}>
-          <Typography variant="body2" color="text.secondary">
-            Set the goals you want to work on for the upcoming week. They will be framed as yes/no questions during your daily check-ins.
-          </Typography>
+        <Stack direction="row" spacing={3}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Stack spacing={3} sx={{ mt: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Set the goals you want to work on for the upcoming week. They will be framed as yes/no questions during your daily check-ins.
+              </Typography>
 
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <TextField
-              value={newGoal}
-              onChange={(e) => setNewGoal(e.target.value)}
-              placeholder="e.g. Work out for 30 minutes"
-              size="small"
-              fullWidth
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddGoal()
-              }}
-            />
-            <Button
-              variant="contained"
-              onClick={handleAddGoal}
-              disabled={!newGoal.trim() || createMutation.isPending}
-            >
-              Add
-            </Button>
-          </Box>
-
-          <List>
-            {(activeTrajectories?.data ?? []).map((t: TrajectoryPublic) => (
-              <ListItem
-                key={t.id}
-                secondaryAction={
-                  <IconButton edge="end" onClick={() => deactivateMutation.mutate(t.id)} disabled={deactivateMutation.isPending}>
-                    <FaTrash size={14} />
-                  </IconButton>
-                }
-                sx={{ bgcolor: "grey.50", mb: 1, borderRadius: 1 }}
-              >
-                <ListItemText
-                  primary={t.original_goal}
-                  secondary={
-                    t.rephrased_morning_question && t.rephrased_evening_question
-                      ? `Morning: ${t.rephrased_morning_question} | Evening: ${t.rephrased_evening_question}`
-                      : "Rephrasing..."
-                  }
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <TextField
+                  value={newGoal}
+                  onChange={(e) => setNewGoal(e.target.value)}
+                  placeholder="e.g. Work out for 30 minutes"
+                  size="small"
+                  fullWidth
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleAddGoal()
+                  }}
                 />
-              </ListItem>
-            ))}
-          </List>
-
-          <Box>
-            <Button
-              startIcon={<FaRobot />}
-              variant="text"
-              size="small"
-              onClick={() => setBrainstormMode((prev) => !prev)}
-            >
-              Brainstorm with Praestara
-            </Button>
-            
-            {brainstormMode && (
-              <Box sx={{ mt: 2, p: 2, bgcolor: "primary.50", borderRadius: 2 }}>
-                <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
-                  <TextField
-                    value={brainstormInput}
-                    onChange={(e) => setBrainstormInput(e.target.value)}
-                    placeholder="I want to be more productive..."
-                    size="small"
-                    fullWidth
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleBrainstorm()
-                    }}
-                  />
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={handleBrainstorm}
-                    disabled={!brainstormInput.trim() || brainstormMutation.isPending}
-                  >
-                    Ask
-                  </Button>
-                </Box>
-                {brainstormReply && (
-                  <Typography variant="body2" sx={{ fontStyle: "italic", bgcolor: "white", p: 1.5, borderRadius: 1, whiteSpace: "pre-wrap" }}>
-                    {brainstormReply.split(" - ").join("\n- ")}
-                  </Typography>
-                )}
+                <Button
+                  variant="contained"
+                  onClick={handleAddGoal}
+                  disabled={!newGoal.trim() || createMutation.isPending}
+                >
+                  Add
+                </Button>
               </Box>
-            )}
+
+              <List sx={{ maxHeight: 400, overflowY: "auto", overflowX: "hidden", pr: 1 }}>
+                {(activeTrajectories?.data ?? []).map((t: TrajectoryPublic) => (
+                  <ListItem
+                    key={t.id}
+                    secondaryAction={
+                      <IconButton edge="end" onClick={() => deactivateMutation.mutate(t.id)} disabled={deactivateMutation.isPending}>
+                        <FaTrash size={14} />
+                      </IconButton>
+                    }
+                    sx={{ bgcolor: "grey.50", mb: 1, borderRadius: 1 }}
+                  >
+                    <ListItemText
+                      primary={t.original_goal}
+                      secondary={                    
+                        <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
+                          <MdSubdirectoryArrowRight size={22} />
+                          <Box component="span" sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                            <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <WiSunrise size={20} color="#FF8C00" /> { t.rephrased_morning_question }
+                            </Box>
+                            <Box component="span" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <WiSunset size={20} color="#4B0082" /> { t.rephrased_evening_question }
+                            </Box>
+                          </Box>
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+
+              <Accordion 
+                disableGutters 
+                elevation={0} 
+                sx={{ border: "1px solid", borderColor: "divider", "&:before": { display: "none" }, borderRadius: 1, overflow: "hidden" }} 
+                expanded={brainstormMode} 
+                onChange={() => setBrainstormMode((prev) => !prev)}
+              >
+                <AccordionSummary expandIcon={<FaChevronDown size={14} />}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <LuBrainCircuit />
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      Brainstorm with Praestara
+                    </Typography>
+                  </Box>
+                </AccordionSummary>
+                
+                <AccordionDetails sx={{ bgcolor: "primary.50", borderTop: "1px solid", borderColor: "divider", p: 2 }}>
+                  <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+                    <TextField
+                      value={brainstormInput}
+                      onChange={(e) => setBrainstormInput(e.target.value)}
+                      placeholder="I want to be more productive..."
+                      size="small"
+                      fullWidth
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleBrainstorm()
+                      }}
+                    />
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={handleBrainstorm}
+                      disabled={!brainstormInput.trim() || brainstormMutation.isPending}
+                    >
+                      Ask
+                    </Button>
+                  </Box>
+                  {brainstormReply && (
+                    <Box sx={{ bgcolor: "white", p: 1.5, borderRadius: 1 }}>
+                      {brainstormReply.split(/\n+/).filter(Boolean).map((option, idx) => (
+                        <Box key={idx} sx={{ display: "flex", alignItems: "flex-start", gap: 1, mb: 1, "&:last-child": { mb: 0 } }}>
+                          <Typography variant="body2" sx={{ fontStyle: "italic", flex: 1, mt: 0.5 }}>
+                            {option.replace(/^- /, "").trim()}
+                          </Typography>
+                          <IconButton 
+                            size="small" 
+                            onClick={() => {
+                              const textToCopy = option.replace(/^- /, "").replace(/^\d+\.\s*/, "").trim();
+                              navigator.clipboard.writeText(textToCopy)
+                              setNewGoal(textToCopy)
+                            }}
+                            title="Copy and use this goal"
+                          >
+                            <FaCopy size={14} />
+                          </IconButton>
+                        </Box>
+                      ))}
+                    </Box>
+                  )}
+                </AccordionDetails>
+              </Accordion>
+            </Stack>
           </Box>
+          
+          {showValueMap && (
+            <Box sx={{ flex: 1, minWidth: 0, borderLeft: "1px solid", borderColor: "divider", pl: 3, display: "flex", flexDirection: "column" }}>
+              <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>Value Map Context</Typography>
+              <Box sx={{ flex: 1, position: "relative", minHeight: 400, borderRadius: 1, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+                <ValueMapDiagram />
+              </Box>
+            </Box>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3 }}>

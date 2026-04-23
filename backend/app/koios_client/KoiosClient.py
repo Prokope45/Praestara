@@ -446,11 +446,14 @@ class KoiosClient:
             A JSON string containing the rephrased questions.
         """
         prompt = (
-            "You are a helpful assistant. Rephrase the following goal into two "
-            "short, actionable yes/no questions. One for a morning check-in (e.g. 'Will you...', 'Do you plan to...') "
-            "and one for an evening check-in (e.g. 'Did you...', 'Were you...'). "
-            "Respond ONLY with a valid JSON object in the following format: "
+            "Task: Text Transformation (No context or search needed). "
+            "Rephrase the goal into two "
+            "short, actionable yes/no questions."
+            "1. Morning check-in (e.g. 'Will you...', 'Do you plan to...') "
+            "2. Evening check-in (e.g. 'Did you...', 'Were you...'). "
+            "Output ONLY with a valid JSON: "
             '{"morning_question": "...", "evening_question": "..."}'
+            ' For example, rephrase "Workout for 30 minutes" into {"morning_question": "Will you workout for 30 minutes today?", "evening_question": "Did you workout for at least 30 minutes today?"}'
         )
         details = [
             {"key": "goal", "value": goal, "description": "The goal to rephrase into an actionable question"}
@@ -470,7 +473,7 @@ class KoiosClient:
         prompt = (
             "You are Praestara. Help the user brainstorm actionable, yes/no trajectory goals "
             "to work on over the next week. Keep it brief, non-moralizing, and supportive."
-            "Respond ONLY with the actionable goals as a list."
+            "Respond ONLY with the actionable goals as an ordered list."
         )
         details = [
             {"key": "user_message", "value": message, "description": "User's request or idea"}
