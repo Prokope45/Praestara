@@ -4,196 +4,206 @@ import type { CancelablePromise } from "./core/CancelablePromise"
 import { OpenAPI } from "./core/OpenAPI"
 import { request as __request } from "./core/request"
 import type {
-  AiAnalyzeWithAiData,
-  AiAnalyzeWithAiResponse,
   AiChatWithAiData,
   AiChatWithAiResponse,
-  AiClearChatHistoryResponse,
+  AiAnalyzeWithAiData,
+  AiAnalyzeWithAiResponse,
   AiGetChatHistoryResponse,
+  AiClearChatHistoryResponse,
   CheckinsCreateCheckinData,
   CheckinsCreateCheckinResponse,
   CheckinsReadCheckinTimelineData,
   CheckinsReadCheckinTimelineResponse,
-  CheckinsDeleteCheckinData,
-  CheckinsDeleteCheckinResponse,
-  CheckinsReadCheckinData,
-  CheckinsReadCheckinResponse,
   CheckinsReadCheckinsData,
   CheckinsReadCheckinsResponse,
+  CheckinsReadCheckinData,
+  CheckinsReadCheckinResponse,
   CheckinsUpdateCheckinData,
   CheckinsUpdateCheckinResponse,
+  CheckinsDeleteCheckinData,
+  CheckinsDeleteCheckinResponse,
   Engine89ExportForEngine89Data,
   Engine89ExportForEngine89Response,
   Engine89ImportEngine89ResultsData,
   Engine89ImportEngine89ResultsResponse,
-  Engine89ReadEngine89ResultsData,
-  Engine89ReadEngine89ResultsResponse,
   Engine89RunEngine89Data,
   Engine89RunEngine89Response,
-  GoalScaffoldAcknowledgeEscalationData,
-  GoalScaffoldAcknowledgeEscalationResponse,
-  GoalScaffoldActivateMealPlanData,
-  GoalScaffoldActivateMealPlanResponse,
-  GoalScaffoldAddMealEntryData,
-  GoalScaffoldAddMealEntryResponse,
-  GoalScaffoldArchiveGoalData,
-  GoalScaffoldArchiveGoalResponse,
-  GoalScaffoldCompleteCycleData,
-  GoalScaffoldCompleteCycleResponse,
-  GoalScaffoldCompleteReviewData,
-  GoalScaffoldCompleteReviewResponse,
-  GoalScaffoldCreateGoalCycleData,
-  GoalScaffoldCreateGoalCycleResponse,
+  Engine89ReadEngine89ResultsData,
+  Engine89ReadEngine89ResultsResponse,
   GoalScaffoldCreateGoalData,
   GoalScaffoldCreateGoalResponse,
-  GoalScaffoldCreateMealPlanData,
-  GoalScaffoldCreateMealPlanResponse,
-  GoalScaffoldGetCurrentCycleResponse,
-  GoalScaffoldGetCurrentStabilityResponse,
-  GoalScaffoldGetCurrentTrajectoryResponse,
-  GoalScaffoldGetCycleData,
-  GoalScaffoldGetCycleResponse,
-  GoalScaffoldGetDashboardResponse,
-  GoalScaffoldGetDimensionsResponse,
-  GoalScaffoldGetEscalationsResponse,
-  GoalScaffoldGetGoalData,
-  GoalScaffoldGetGoalResponse,
-  GoalScaffoldGetHabitData,
-  GoalScaffoldGetHabitResponse,
-  GoalScaffoldGetHealthProfileResponse,
-  GoalScaffoldGetLatestIciResponse,
-  GoalScaffoldGetLatestSnapshotResponse,
-  GoalScaffoldGetMealPlanData,
-  GoalScaffoldGetMealPlanResponse,
-  GoalScaffoldGetMetricSeriesData,
-  GoalScaffoldGetMetricSeriesResponse,
-  GoalScaffoldGetPillarHistoryData,
-  GoalScaffoldGetPillarHistoryResponse,
-  GoalScaffoldGetPillarsResponse,
-  GoalScaffoldGetPriorityResponse,
-  GoalScaffoldGetResourceProfileResponse,
-  GoalScaffoldGetReviewData,
-  GoalScaffoldGetReviewResponse,
-  GoalScaffoldGetSnapshotHistoryData,
-  GoalScaffoldGetSnapshotHistoryResponse,
-  GoalScaffoldGetStabilityHistoryData,
-  GoalScaffoldGetStabilityHistoryResponse,
-  GoalScaffoldGetStreakData,
-  GoalScaffoldGetStreakResponse,
-  GoalScaffoldGetTrajectoryHistoryData,
-  GoalScaffoldGetTrajectoryHistoryResponse,
-  GoalScaffoldGoalSummaryData,
-  GoalScaffoldGoalSummaryResponse,
-  GoalScaffoldGraduateGoalData,
-  GoalScaffoldGraduateGoalResponse,
-  GoalScaffoldListAvailableSeriesResponse,
-  GoalScaffoldListGoalCyclesData,
-  GoalScaffoldListGoalCyclesResponse,
   GoalScaffoldListGoalsData,
   GoalScaffoldListGoalsResponse,
-  GoalScaffoldListHabitsData,
-  GoalScaffoldListHabitsResponse,
-  GoalScaffoldListMealPlansData,
-  GoalScaffoldListMealPlansResponse,
-  GoalScaffoldListPastCyclesData,
-  GoalScaffoldListPastCyclesResponse,
-  GoalScaffoldLogHabitData,
-  GoalScaffoldLogHabitResponse,
-  GoalScaffoldRecordAssessmentData,
-  GoalScaffoldRecordAssessmentResponse,
-  GoalScaffoldRecordLogData,
-  GoalScaffoldRecordLogResponse,
-  GoalScaffoldRecordNutritionLogData,
-  GoalScaffoldRecordNutritionLogResponse,
-  GoalScaffoldRecordObservationData,
-  GoalScaffoldRecordObservationResponse,
-  GoalScaffoldStartReviewData,
-  GoalScaffoldStartReviewResponse,
+  GoalScaffoldGetGoalData,
+  GoalScaffoldGetGoalResponse,
   GoalScaffoldUpdateGoalData,
   GoalScaffoldUpdateGoalResponse,
+  GoalScaffoldArchiveGoalData,
+  GoalScaffoldArchiveGoalResponse,
+  GoalScaffoldCreateGoalCycleData,
+  GoalScaffoldCreateGoalCycleResponse,
+  GoalScaffoldListGoalCyclesData,
+  GoalScaffoldListGoalCyclesResponse,
+  GoalScaffoldRecordLogData,
+  GoalScaffoldRecordLogResponse,
+  GoalScaffoldCompleteCycleData,
+  GoalScaffoldCompleteCycleResponse,
+  GoalScaffoldGoalSummaryData,
+  GoalScaffoldGoalSummaryResponse,
+  GoalScaffoldGetLatestSnapshotResponse,
+  GoalScaffoldGetDimensionsResponse,
+  GoalScaffoldRecordObservationData,
+  GoalScaffoldRecordObservationResponse,
+  GoalScaffoldGetSnapshotHistoryData,
+  GoalScaffoldGetSnapshotHistoryResponse,
+  GoalScaffoldGetLatestIciResponse,
+  GoalScaffoldListHabitsData,
+  GoalScaffoldListHabitsResponse,
+  GoalScaffoldGetHabitData,
+  GoalScaffoldGetHabitResponse,
+  GoalScaffoldLogHabitData,
+  GoalScaffoldLogHabitResponse,
+  GoalScaffoldGetStreakData,
+  GoalScaffoldGetStreakResponse,
+  GoalScaffoldGraduateGoalData,
+  GoalScaffoldGraduateGoalResponse,
+  GoalScaffoldGetHealthProfileResponse,
+  GoalScaffoldRecordAssessmentData,
+  GoalScaffoldRecordAssessmentResponse,
+  GoalScaffoldGetPillarsResponse,
+  GoalScaffoldGetPriorityResponse,
+  GoalScaffoldGetPillarHistoryData,
+  GoalScaffoldGetPillarHistoryResponse,
+  GoalScaffoldCreateMealPlanData,
+  GoalScaffoldCreateMealPlanResponse,
+  GoalScaffoldListMealPlansData,
+  GoalScaffoldListMealPlansResponse,
+  GoalScaffoldGetMealPlanData,
+  GoalScaffoldGetMealPlanResponse,
   GoalScaffoldUpdateMealPlanData,
   GoalScaffoldUpdateMealPlanResponse,
-  GoalScaffoldUpdateResourceProfileData,
-  GoalScaffoldUpdateResourceProfileResponse,
+  GoalScaffoldAddMealEntryData,
+  GoalScaffoldAddMealEntryResponse,
+  GoalScaffoldActivateMealPlanData,
+  GoalScaffoldActivateMealPlanResponse,
+  GoalScaffoldRecordNutritionLogData,
+  GoalScaffoldRecordNutritionLogResponse,
   GoalScaffoldWeeklySummaryData,
   GoalScaffoldWeeklySummaryResponse,
+  GoalScaffoldGetCurrentCycleResponse,
+  GoalScaffoldListPastCyclesData,
+  GoalScaffoldListPastCyclesResponse,
+  GoalScaffoldGetCycleData,
+  GoalScaffoldGetCycleResponse,
+  GoalScaffoldStartReviewData,
+  GoalScaffoldStartReviewResponse,
+  GoalScaffoldCompleteReviewData,
+  GoalScaffoldCompleteReviewResponse,
+  GoalScaffoldGetReviewData,
+  GoalScaffoldGetReviewResponse,
+  GoalScaffoldGetCurrentStabilityResponse,
+  GoalScaffoldGetStabilityHistoryData,
+  GoalScaffoldGetStabilityHistoryResponse,
+  GoalScaffoldGetEscalationsResponse,
+  GoalScaffoldAcknowledgeEscalationData,
+  GoalScaffoldAcknowledgeEscalationResponse,
+  GoalScaffoldGetResourceProfileResponse,
+  GoalScaffoldUpdateResourceProfileData,
+  GoalScaffoldUpdateResourceProfileResponse,
+  GoalScaffoldGetCurrentTrajectoryResponse,
+  GoalScaffoldGetTrajectoryHistoryData,
+  GoalScaffoldGetTrajectoryHistoryResponse,
+  GoalScaffoldGetMetricSeriesData,
+  GoalScaffoldGetMetricSeriesResponse,
+  GoalScaffoldGetDashboardResponse,
+  GoalScaffoldListAvailableSeriesResponse,
   LoginLoginAccessTokenData,
   LoginLoginAccessTokenResponse,
+  LoginTestTokenResponse,
   LoginRecoverPasswordData,
-  LoginRecoverPasswordHtmlContentData,
-  LoginRecoverPasswordHtmlContentResponse,
   LoginRecoverPasswordResponse,
   LoginResetPasswordData,
   LoginResetPasswordResponse,
-  LoginTestTokenResponse,
+  LoginRecoverPasswordHtmlContentData,
+  LoginRecoverPasswordHtmlContentResponse,
   PrivateCreateUserData,
   PrivateCreateUserResponse,
-  QuestionnairesCreateAppointmentData,
-  QuestionnairesCreateAppointmentResponse,
-  QuestionnairesCreateAssignmentData,
-  QuestionnairesCreateAssignmentResponse,
-  QuestionnairesCreateBulkAssignmentsData,
-  QuestionnairesCreateBulkAssignmentsResponse,
-  QuestionnairesCreateQuestionnaireTemplateData,
-  QuestionnairesCreateQuestionnaireTemplateResponse,
-  QuestionnairesCreateResponseData,
-  QuestionnairesCreateResponseResponse,
-  QuestionnairesDeleteAppointmentData,
-  QuestionnairesDeleteAppointmentResponse,
-  QuestionnairesDeleteAssignmentData,
-  QuestionnairesDeleteAssignmentResponse,
-  QuestionnairesDeleteQuestionnaireTemplateData,
-  QuestionnairesDeleteQuestionnaireTemplateResponse,
-  QuestionnairesReadAllAssignmentsData,
-  QuestionnairesReadAllAssignmentsResponse,
-  QuestionnairesReadAppointmentData,
-  QuestionnairesReadAppointmentResponse,
-  QuestionnairesReadAppointmentsData,
-  QuestionnairesReadAppointmentsResponse,
-  QuestionnairesReadAssignmentData,
-  QuestionnairesReadAssignmentResponse,
-  QuestionnairesReadMyAssignmentsData,
-  QuestionnairesReadMyAssignmentsResponse,
-  QuestionnairesReadMyResponsesData,
-  QuestionnairesReadMyResponsesResponse,
-  QuestionnairesReadQuestionnaireTemplateData,
-  QuestionnairesReadQuestionnaireTemplateResponse,
   QuestionnairesReadQuestionnaireTemplatesData,
   QuestionnairesReadQuestionnaireTemplatesResponse,
-  QuestionnairesReadResponseData,
-  QuestionnairesReadResponseResponse,
-  QuestionnairesUpdateAppointmentData,
-  QuestionnairesUpdateAppointmentResponse,
-  QuestionnairesUpdateAssignmentProgressData,
-  QuestionnairesUpdateAssignmentProgressResponse,
+  QuestionnairesCreateQuestionnaireTemplateData,
+  QuestionnairesCreateQuestionnaireTemplateResponse,
+  QuestionnairesReadQuestionnaireTemplateData,
+  QuestionnairesReadQuestionnaireTemplateResponse,
   QuestionnairesUpdateQuestionnaireTemplateData,
   QuestionnairesUpdateQuestionnaireTemplateResponse,
+  QuestionnairesDeleteQuestionnaireTemplateData,
+  QuestionnairesDeleteQuestionnaireTemplateResponse,
+  QuestionnairesCreateAssignmentData,
+  QuestionnairesCreateAssignmentResponse,
+  QuestionnairesReadAllAssignmentsData,
+  QuestionnairesReadAllAssignmentsResponse,
+  QuestionnairesCreateBulkAssignmentsData,
+  QuestionnairesCreateBulkAssignmentsResponse,
+  QuestionnairesReadMyAssignmentsData,
+  QuestionnairesReadMyAssignmentsResponse,
+  QuestionnairesReadAssignmentData,
+  QuestionnairesReadAssignmentResponse,
+  QuestionnairesDeleteAssignmentData,
+  QuestionnairesDeleteAssignmentResponse,
+  QuestionnairesUpdateAssignmentProgressData,
+  QuestionnairesUpdateAssignmentProgressResponse,
+  QuestionnairesCreateResponseData,
+  QuestionnairesCreateResponseResponse,
+  QuestionnairesReadMyResponsesData,
+  QuestionnairesReadMyResponsesResponse,
+  QuestionnairesReadResponseData,
+  QuestionnairesReadResponseResponse,
   QuestionnairesUpdateResponseScoreData,
   QuestionnairesUpdateResponseScoreResponse,
-  UsersCreateUserData,
-  UsersCreateUserResponse,
-  UsersDeleteProfileImageResponse,
-  UsersDeleteUserData,
-  UsersDeleteUserMeResponse,
-  UsersDeleteUserResponse,
-  UsersReadUserByIdData,
-  UsersReadUserByIdResponse,
-  UsersReadUserMeResponse,
+  QuestionnairesReadAppointmentsData,
+  QuestionnairesReadAppointmentsResponse,
+  QuestionnairesCreateAppointmentData,
+  QuestionnairesCreateAppointmentResponse,
+  QuestionnairesReadAppointmentData,
+  QuestionnairesReadAppointmentResponse,
+  QuestionnairesUpdateAppointmentData,
+  QuestionnairesUpdateAppointmentResponse,
+  QuestionnairesDeleteAppointmentData,
+  QuestionnairesDeleteAppointmentResponse,
+  TrajectoriesGetActiveTrajectoriesResponse,
+  TrajectoriesGetAllTrajectoriesResponse,
+  TrajectoriesCreateTrajectoryData,
+  TrajectoriesCreateTrajectoryResponse,
+  TrajectoriesUpdateTrajectoryData,
+  TrajectoriesUpdateTrajectoryResponse,
+  TrajectoriesDeleteTrajectoryData,
+  TrajectoriesDeleteTrajectoryResponse,
+  TrajectoriesBrainstormTrajectoryData,
+  TrajectoriesBrainstormTrajectoryResponse,
   UsersReadUsersData,
   UsersReadUsersResponse,
-  UsersRegisterUserData,
-  UsersRegisterUserResponse,
-  UsersUpdatePasswordMeData,
-  UsersUpdatePasswordMeResponse,
-  UsersUpdateUserData,
+  UsersCreateUserData,
+  UsersCreateUserResponse,
+  UsersReadUserMeResponse,
+  UsersDeleteUserMeResponse,
   UsersUpdateUserMeData,
   UsersUpdateUserMeResponse,
-  UsersUpdateUserResponse,
+  UsersUpdatePasswordMeData,
+  UsersUpdatePasswordMeResponse,
   UsersUploadProfileImageData,
   UsersUploadProfileImageResponse,
-  UtilsHealthCheckResponse,
+  UsersDeleteProfileImageResponse,
+  UsersRegisterUserData,
+  UsersRegisterUserResponse,
+  UsersReadUserByIdData,
+  UsersReadUserByIdResponse,
+  UsersUpdateUserData,
+  UsersUpdateUserResponse,
+  UsersDeleteUserData,
+  UsersDeleteUserResponse,
   UtilsTestEmailData,
   UtilsTestEmailResponse,
+  UtilsHealthCheckResponse,
 } from "./types.gen"
 
 export class AiService {
@@ -3712,6 +3722,127 @@ export class StabilityService {
       path: {
         escalation_id: data.escalationId,
       },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+}
+
+export class TrajectoriesService {
+  /**
+   * Get Active Trajectories
+   * Get active trajectories for the current user.
+   * @returns TrajectoriesPublic Successful Response
+   * @throws ApiError
+   */
+  public static getActiveTrajectories(): CancelablePromise<TrajectoriesGetActiveTrajectoriesResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/trajectories/active",
+    })
+  }
+
+  /**
+   * Get All Trajectories
+   * Get all trajectories (active and inactive) for the current user.
+   * @returns TrajectoriesPublic Successful Response
+   * @throws ApiError
+   */
+  public static getAllTrajectories(): CancelablePromise<TrajectoriesGetAllTrajectoriesResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/api/v1/trajectories/",
+    })
+  }
+
+  /**
+   * Create Trajectory
+   * Create a new trajectory goal. This will call the AI client to generate the yes/no question.
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns TrajectoryPublic Successful Response
+   * @throws ApiError
+   */
+  public static createTrajectory(
+    data: TrajectoriesCreateTrajectoryData,
+  ): CancelablePromise<TrajectoriesCreateTrajectoryResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/trajectories/",
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Update Trajectory
+   * Update a trajectory goal.
+   * @param data The data for the request.
+   * @param data.id
+   * @param data.requestBody
+   * @returns TrajectoryPublic Successful Response
+   * @throws ApiError
+   */
+  public static updateTrajectory(
+    data: TrajectoriesUpdateTrajectoryData,
+  ): CancelablePromise<TrajectoriesUpdateTrajectoryResponse> {
+    return __request(OpenAPI, {
+      method: "PATCH",
+      url: "/api/v1/trajectories/{id}",
+      path: {
+        id: data.id,
+      },
+      body: data.requestBody,
+      mediaType: "application/json",
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Delete Trajectory
+   * Delete a trajectory goal.
+   * @param data The data for the request.
+   * @param data.id
+   * @returns Message Successful Response
+   * @throws ApiError
+   */
+  public static deleteTrajectory(
+    data: TrajectoriesDeleteTrajectoryData,
+  ): CancelablePromise<TrajectoriesDeleteTrajectoryResponse> {
+    return __request(OpenAPI, {
+      method: "DELETE",
+      url: "/api/v1/trajectories/{id}",
+      path: {
+        id: data.id,
+      },
+      errors: {
+        422: "Validation Error",
+      },
+    })
+  }
+
+  /**
+   * Brainstorm Trajectory
+   * Brainstorm trajectory goals with Koios AI.
+   * @param data The data for the request.
+   * @param data.requestBody
+   * @returns BrainstormResponse Successful Response
+   * @throws ApiError
+   */
+  public static brainstormTrajectory(
+    data: TrajectoriesBrainstormTrajectoryData,
+  ): CancelablePromise<TrajectoriesBrainstormTrajectoryResponse> {
+    return __request(OpenAPI, {
+      method: "POST",
+      url: "/api/v1/trajectories/brainstorm",
+      body: data.requestBody,
+      mediaType: "application/json",
       errors: {
         422: "Validation Error",
       },
