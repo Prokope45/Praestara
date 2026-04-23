@@ -429,17 +429,17 @@ class AnswerPublic(AnswerBase):
 # Trajectory models
 class TrajectoryBase(SQLModel):
     original_goal: str = Field(sa_type=sa.Text)
-    rephrased_question: str | None = Field(default=None, sa_type=sa.Text)
+    rephrased_morning_question: str | None = Field(default=None, sa_type=sa.Text)
+    rephrased_evening_question: str | None = Field(default=None, sa_type=sa.Text)
     is_active: bool = True
-
 
 class TrajectoryCreate(TrajectoryBase):
     pass
 
-
 class TrajectoryUpdate(SQLModel):
     original_goal: str | None = Field(default=None, sa_type=sa.Text)
-    rephrased_question: str | None = Field(default=None, sa_type=sa.Text)
+    rephrased_morning_question: str | None = Field(default=None, sa_type=sa.Text)
+    rephrased_evening_question: str | None = Field(default=None, sa_type=sa.Text)
     is_active: bool | None = None
 
 

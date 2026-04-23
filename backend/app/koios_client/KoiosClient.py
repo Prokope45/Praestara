@@ -436,19 +436,21 @@ class KoiosClient:
         return int(messages_deleted)
 
     def rephrase_trajectory_goal(self, user_id: str, goal: str) -> str:
-        """Rephrase a trajectory goal into a yes/no question.
+        """Rephrase a trajectory goal into morning and evening yes/no questions.
         
         Args:
             user_id: The user's identifier.
             goal: The original goal text.
             
         Returns:
-            The rephrased yes/no question.
+            A JSON string containing the rephrased questions.
         """
         prompt = (
-            "You are a helpful assistant. Rephrase the following goal into a "
-            "short, actionable yes/no question starting with 'Did you...' or 'Were you...'. "
-            "Respond ONLY with the question itself."
+            "You are a helpful assistant. Rephrase the following goal into two "
+            "short, actionable yes/no questions. One for a morning check-in (e.g. 'Will you...', 'Do you plan to...') "
+            "and one for an evening check-in (e.g. 'Did you...', 'Were you...'). "
+            "Respond ONLY with a valid JSON object in the following format: "
+            '{"morning_question": "...", "evening_question": "..."}'
         )
         details = [
             {"key": "goal", "value": goal, "description": "The goal to rephrase"}

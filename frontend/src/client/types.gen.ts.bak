@@ -709,8 +709,7 @@ export type TrajectoriesPublic = {
 
 export type TrajectoryCreate = {
   original_goal: string
-  rephrased_morning_question?: string | null
-  rephrased_evening_question?: string | null
+  rephrased_question?: string | null
   is_active?: boolean
 }
 
@@ -721,8 +720,7 @@ export type TrajectoryHistoryPublic = {
 
 export type TrajectoryPublic = {
   original_goal: string
-  rephrased_morning_question?: string | null
-  rephrased_evening_question?: string | null
+  rephrased_question?: string | null
   is_active?: boolean
   id: string
   user_id: string
@@ -731,8 +729,7 @@ export type TrajectoryPublic = {
 
 export type TrajectoryUpdate = {
   original_goal?: string | null
-  rephrased_morning_question?: string | null
-  rephrased_evening_question?: string | null
+  rephrased_question?: string | null
   is_active?: boolean | null
 }
 

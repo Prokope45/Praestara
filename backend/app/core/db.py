@@ -14,6 +14,8 @@ engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
 # for more details: https://github.com/fastapi/full-stack-fastapi-template/issues/28
 
 
+from app.core.seed_data import seed_onboarding_questionnaire
+
 def init_db(session: Session) -> None:
     # Tables should be created with Alembic migrations
     # But if you don't want to use migrations, create
@@ -35,3 +37,6 @@ def init_db(session: Session) -> None:
         # Circular import, so lazy load
         from app.user import user_logic
         user = user_logic.create(session=session, user_create=user_in)
+
+    # Seed the onboarding questionnaire template
+    seed_onboarding_questionnaire(session, user)

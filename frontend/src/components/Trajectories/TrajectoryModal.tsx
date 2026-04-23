@@ -122,7 +122,11 @@ function TrajectoryModal({ open, onClose }: TrajectoryModalProps) {
               >
                 <ListItemText
                   primary={t.original_goal}
-                  secondary={t.rephrased_question ? `↳ ${t.rephrased_question}` : "Rephrasing..."}
+                  secondary={
+                    t.rephrased_morning_question && t.rephrased_evening_question
+                      ? `Morning: ${t.rephrased_morning_question} | Evening: ${t.rephrased_evening_question}`
+                      : "Rephrasing..."
+                  }
                 />
               </ListItem>
             ))}

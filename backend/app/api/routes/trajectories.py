@@ -1,7 +1,9 @@
+import json
 import uuid
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 from sqlmodel import Session, select, desc
 
 from app.api.deps import CurrentUser, SessionDep
@@ -61,19 +63,35 @@ def create_trajectory(
     trajectory_in: TrajectoryCreate,
 ) -> Any:
     """
-    Create a new trajectory goal. This will call the AI client to generate the yes/no question.
+    Create a new trajectory goal. This will call the AI client to generate the yes/no questions.
     """
+    morning_q = f"Will you work on: {trajectory_in.original_goal}?"
+    evening_q = f"Did you work on: {trajectory_in.original_goal}?"
+    
     try:
-        rephrased = ai_client.rephrase_trajectory_goal(str(current_user.id), trajectory_in.original_goal)
+        rephrased_json = ai_client.rephrase_trajectory_goal(str(current_user.id), trajectory_in.original_goal)
+        # Strip potential markdown formatting (e.g., ```json ... ```)
+        cleaned_json = rephrased_json.strip()
+        if cleaned_json.startswith("```json"):
+            cleaned_json = cleaned_json[7:]
+        if cleaned_json.startswith("```"):
+            cleaned_json = cleaned_json[3:]
+        if cleaned_json.endswith("```"):
+            cleaned_json = cleaned_json[:-3]
+        
+        parsed = json.loads(cleaned_json.strip())
+        morning_q = parsed.get("morning_question", morning_q)
+        evening_q = parsed.get("evening_question", evening_q)
     except Exception as e:
-        # Fallback to a generic rephrase if AI fails
-        rephrased = f"Did you work on: {trajectory_in.original_goal}?"
+        # Fallback to a generic rephrase if AI fails or JSON parsing fails
+        pass
         
     trajectory = Trajectory.model_validate(
         trajectory_in, 
         update={
             "user_id": current_user.id,
-            "rephrased_question": rephrased
+            "rephrased_morning_question": morning_q,
+            "rephrased_evening_question": evening_q
         }
     )
     session.add(trajectory)
@@ -103,11 +121,25 @@ def update_trajectory(
     
     # If the user changed the original goal, we should rephrase it
     if "original_goal" in update_data and update_data["original_goal"] != trajectory.original_goal:
+        morning_q = f"Will you work on: {update_data['original_goal']}?"
+        evening_q = f"Did you work on: {update_data['original_goal']}?"
+        
         try:
-            rephrased = ai_client.rephrase_trajectory_goal(str(current_user.id), update_data["original_goal"])
-            update_data["rephrased_question"] = rephrased
+            rephrased_json = ai_client.rephrase_trajectory_goal(str(current_user.id), update_data["original_goal"])
+            cleaned_json = rephrased_json.strip()
+            if cleaned_json.startswith("```json"):
+                cleaned_json = cleaned_json[7:]
+            if cleaned_json.startswith("```"):
+                cleaned_json = cleaned_json[3:]
+            if cleaned_json.endswith("```"):
+                cleaned_json = cleaned_json[:-3]
+                
+            parsed = json.loads(cleaned_json.strip())
+            update_data["rephrased_morning_question"] = parsed.get("morning_question", morning_q)
+            update_data["rephrased_evening_question"] = parsed.get("evening_question", evening_q)
         except Exception as e:
-            update_data["rephrased_question"] = f"Did you work on: {update_data['original_goal']}?"
+            update_data["rephrased_morning_question"] = morning_q
+            update_data["rephrased_evening_question"] = evening_q
             
     trajectory.sqlmodel_update(update_data)
     session.add(trajectory)
@@ -136,8 +168,6 @@ def delete_trajectory(
     session.commit()
     return Message(message="Trajectory deleted successfully")
 
-
-from pydantic import BaseModel
 
 class BrainstormRequest(BaseModel):
     message: str

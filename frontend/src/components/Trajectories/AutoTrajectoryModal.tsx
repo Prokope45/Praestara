@@ -26,6 +26,7 @@ function AutoTrajectoryModal() {
         shouldOpen = true
       }
     }
+    shouldOpen = true
     
     if (shouldOpen && !open) {
       setOpen(true)
