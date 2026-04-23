@@ -26,13 +26,23 @@ function AutoTrajectoryModal() {
         shouldOpen = true
       }
     }
-    shouldOpen = true
     
     if (shouldOpen && !open) {
       setOpen(true)
       localStorage.setItem("praestara_trajectory_force", "1")
     }
   }, [user, open])
+
+  useEffect(() => {
+    const handleTrigger = () => {
+      setOpen(true)
+      localStorage.setItem("praestara_trajectory_force", "1")
+    }
+
+    window.addEventListener("praestara_trajectory_trigger", handleTrigger)
+    return () =>
+      window.removeEventListener("praestara_trajectory_trigger", handleTrigger)
+  }, [])
 
   const handleClose = () => {
     setOpen(false)

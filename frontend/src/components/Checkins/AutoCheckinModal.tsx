@@ -119,6 +119,11 @@ function AutoCheckinModal() {
     if (!user?.onboarding_completed_at) return
     if (openType) return
 
+    // Do not show checkin modal if trajectory is due
+    const now = new Date()
+    if (!user.next_trajectory_date) return
+    if (now >= new Date(user.next_trajectory_date)) return
+
     const dayKey = getDayKey()
     const dismissedMorning = localStorage.getItem(
       getDismissKey("morning", dayKey),
@@ -132,7 +137,6 @@ function AutoCheckinModal() {
       return
     }
 
-    const now = new Date()
     if (now.getHours() >= EVENING_HOUR && !eveningDone && !dismissedEvening) {
       setOpenType("evening")
     }
