@@ -1,4 +1,6 @@
 import { Box, Typography } from "@mui/material"
+import { useQuery } from "@tanstack/react-query"
+import React, { useMemo } from "react"
 import ReactFlow, {
   Background,
   Controls,
@@ -10,9 +12,13 @@ import ReactFlow, {
 } from "reactflow"
 import "reactflow/dist/style.css"
 
+import { QuestionnairesService } from "../../client"
+import useAuth from "../../hooks/useAuth"
+
 import {
-  demoValueMapEdges,
-  demoValueMapNodes,
+  generateValueMapData,
+  fallbackValueMapData,
+  type DomainRatingData,
 } from "./valueMapData"
 
 const baseNodeStyles = {
@@ -62,8 +68,21 @@ const typeStyles: Record<string, React.CSSProperties> = {
 }
 
 const ValueNode = ({ data, type }: NodeProps) => {
+  const importance = data.importance ?? 5
+  const consistency = data.consistency ?? 5
+
+  const styleOverrides: React.CSSProperties = {}
+  
+  if (type === "value_statement") {
+    // Dynamic styling based on ratings
+    const opacity = 0.5 + (importance / 10) * 0.5 // Higher importance = more opaque
+    const borderWidth = 1 + (consistency / 10) * 3 // Higher consistency = thicker border
+    styleOverrides.opacity = opacity
+    styleOverrides.borderWidth = `${borderWidth}px`
+  }
+
   return (
-    <Box sx={{ ...baseNodeStyles, ...typeStyles[type ?? "value_domain"] }}>
+    <Box sx={{ ...baseNodeStyles, ...typeStyles[type ?? "value_domain"], ...styleOverrides }}>
       <Typography
         variant="subtitle2"
         sx={{
@@ -167,10 +186,55 @@ const nodeTypes: NodeTypes = {
 }
 
 export function ValueMapDiagram() {
+  const { user } = useAuth()
+
+  const { data: responsesData } = useQuery({
+    queryKey: ["myResponses"],
+    queryFn: () => QuestionnairesService.readMyResponses({ limit: 100 }),
+  })
+
+  const mapData = useMemo(() => {
+    let domainRatings: DomainRatingData[] = []
+    
+    // Parse domain ratings from responses
+    if (responsesData?.data) {
+      for (const response of responsesData.data) {
+        if (response.answers) {
+          for (const answer of response.answers) {
+            if (answer.question?.scale_type === "DOMAIN_RATING" && answer.text_response) {
+              try {
+                const val = JSON.parse(answer.text_response)
+                domainRatings.push({
+                  id: answer.question_id,
+                  label: answer.question.question_text,
+                  importance: val.importance ?? 5,
+                  consistency: val.consistency ?? 5,
+                })
+              } catch (e) {
+                // Ignore parsing errors
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const userName = user?.full_name || "You"
+
+    if (domainRatings.length > 0) {
+      return generateValueMapData(userName, domainRatings)
+    }
+
+    return {
+      nodes: fallbackValueMapData.nodes.map(n => n.id === "user_core" ? { ...n, data: { ...n.data, label: userName } } : n),
+      edges: fallbackValueMapData.edges,
+    }
+  }, [responsesData, user])
+
   return (
     <ReactFlow
-      nodes={demoValueMapNodes}
-      edges={demoValueMapEdges}
+      nodes={mapData.nodes}
+      edges={mapData.edges}
       nodeTypes={nodeTypes}
       nodeOrigin={[0.5, 0.5]}
       fitView
