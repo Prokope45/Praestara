@@ -1,18 +1,23 @@
 import {
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
+  FormGroup,
   Stack,
   TextField,
   Typography,
 } from "@mui/material"
 import { useMutation, useQuery, useQueryClient} from "@tanstack/react-query"
 import { useEffect, useMemo, useState } from "react"
+import { WiSunrise } from "react-icons/wi";
+import { WiSunset } from "react-icons/wi";
 
-import { CheckinsService } from "@/client"
+import { CheckinsService, TrajectoriesService, type CheckinTrajectoryResponseCreate } from "@/client"
 import useAuth from "@/hooks/useAuth"
 
 const isSameDay = (dateString: string) => {
@@ -35,6 +40,7 @@ function AutoCheckinModal() {
   const [openType, setOpenType] = useState<"morning" | "evening" | null>(null)
   const [text, setText] = useState("")
   const [reply, setReply] = useState<string | null>(null)
+  const [trajectoryAnswers, setTrajectoryAnswers] = useState<Record<string, boolean>>({})
   const [initialized, setInitialized] = useState(false)
 
   const { data: morningHistory } = useQuery({
@@ -45,6 +51,12 @@ function AutoCheckinModal() {
   const { data: eveningHistory } = useQuery({
     queryKey: ["checkins", "evening", "latest"],
     queryFn: () => CheckinsService.readCheckins({ type: "evening", limit: 20 }),
+  })
+
+  const { data: activeTrajectories } = useQuery({
+    queryKey: ["trajectories", "active"],
+    queryFn: () => TrajectoriesService.getActiveTrajectories(),
+    enabled: !!openType,
   })
 
   const todayMorningEntry = useMemo(() => {
@@ -68,6 +80,9 @@ function AutoCheckinModal() {
         const parsed = JSON.parse(raw)
         if (parsed?.type === "morning" || parsed?.type === "evening") {
           setOpenType(parsed.type)
+          setText("")
+          setReply(null)
+          setTrajectoryAnswers({})
         }
       } catch {
         // ignore malformed payloads
@@ -83,6 +98,10 @@ function AutoCheckinModal() {
   }, [openType])
 
   useEffect(() => {
+    // If there's an active trajectory modal, don't show the checkin modal yet
+    const rawTrajectoryForce = localStorage.getItem("praestara_trajectory_force")
+    if (rawTrajectoryForce === "1") return
+
     if (openType && !initialized) {
       if (currentEntry) {
         setText(currentEntry.text)
@@ -102,6 +121,11 @@ function AutoCheckinModal() {
     if (!user?.onboarding_completed_at) return
     if (openType) return
 
+    // Do not show checkin modal if trajectory is due
+    const now = new Date()
+    if (!user.next_trajectory_date) return
+    if (now >= new Date(user.next_trajectory_date)) return
+
     const dayKey = getDayKey()
     const dismissedMorning = localStorage.getItem(
       getDismissKey("morning", dayKey),
@@ -115,14 +139,13 @@ function AutoCheckinModal() {
       return
     }
 
-    const now = new Date()
     if (now.getHours() >= EVENING_HOUR && !eveningDone && !dismissedEvening) {
       setOpenType("evening")
     }
   }, [eveningDone, morningDone, openType, user])
 
   const createMutation = useMutation({
-    mutationFn: (payload: { type: "morning" | "evening"; text: string }) =>
+    mutationFn: (payload: { type: "morning" | "evening"; text: string; trajectory_responses?: CheckinTrajectoryResponseCreate[] }) =>
       CheckinsService.createCheckin({ requestBody: payload }),
     onSuccess: (response) => {
       setReply(response.reply)
@@ -149,20 +172,26 @@ function AutoCheckinModal() {
     setOpenType(null)
     setText("")
     setReply(null)
+    setTrajectoryAnswers({})
   }
 
   const handleSubmit = () => {
     if (!openType || !text.trim()) return
+    
+    const responses: CheckinTrajectoryResponseCreate[] = Object.entries(trajectoryAnswers).map(
+      ([id, completed]) => ({ trajectory_id: id, completed })
+    )
     if (currentEntry) {
       updateMutation.mutate({ checkinId: currentEntry.id, text })
     } else {
-      createMutation.mutate({ type: openType, text })
+      createMutation.mutate({ type: openType, text, trajectory_responses: responses })
     }
   }
 
   if (!openType) return null
 
   const isMorning = openType === "morning"
+  const trajectories = activeTrajectories?.data ?? []
   const isPending = createMutation.isPending || updateMutation.isPending
   const isTextUnchanged = currentEntry ? text === currentEntry.text : false
 
@@ -170,11 +199,42 @@ function AutoCheckinModal() {
     <Dialog open fullWidth maxWidth="sm">
       <DialogTitle>
         {isMorning
-          ? "Good morning. Who are you going to be today?"
-          : "Good evening. Who were you today?"}
+          ? 
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <WiSunrise size={36} color="#FF8C00" />
+              Good morning. Who are you going to be today?
+            </Box>
+          : 
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <WiSunset size={36} color="#4B0082" />
+              Good evening. Who were you today?
+            </Box>
+        }
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
+          {trajectories.length > 0 && !reply && (
+            <Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Weekly Trajectories
+              </Typography>
+              <FormGroup>
+                {trajectories.map((t) => (
+                  <FormControlLabel
+                    key={t.id}
+                    control={
+                      <Checkbox
+                        checked={trajectoryAnswers[t.id] || false}
+                        onChange={(e) => setTrajectoryAnswers({ ...trajectoryAnswers, [t.id]: e.target.checked })}
+                      />
+                    }
+                    label={isMorning ? t.rephrased_morning_question || t.original_goal : t.rephrased_evening_question || t.original_goal}
+                  />
+                ))}
+              </FormGroup>
+            </Box>
+          )}
+
           <Typography variant="body2" color="text.secondary">
             Describe today.
           </Typography>

@@ -46,6 +46,10 @@ function Dashboard() {
     window.dispatchEvent(new Event("praestara_checkin_trigger"))
   }
 
+  const triggerTrajectory = () => {
+    window.dispatchEvent(new Event("praestara_trajectory_trigger"))
+  }
+
   const { data: morningHistory } = useQuery({
     queryKey: ["checkins", "morning"],
     queryFn: () =>
@@ -350,13 +354,20 @@ function Dashboard() {
         </Paper>
 
         <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
-            Trajectory overview
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Longitudinal trends across key self-concept and value alignment
-            axes.
-          </Typography>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1 }}>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
+                Trajectory overview
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Longitudinal trends across key self-concept and value alignment
+                axes.
+              </Typography>
+            </Box>
+            <Button variant="outlined" size="small" onClick={triggerTrajectory}>
+              Edit Trajectory
+            </Button>
+          </Box>
           <Box sx={{ height: 320 }}>
             <Line
               data={trajectoryData}
