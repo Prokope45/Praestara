@@ -61,7 +61,12 @@ const fallbackDomainRatings: DomainRatingData[] = [
   { label: "Order, responsibility, life maintenance", importance: 8, consistency: 7 },
 ]
 
-export function ValueMapSunburstChart() {
+export interface ValueMapSunburstChartProps {
+  width?: number
+  height?: number
+}
+
+export function ValueMapSunburstChart({ width = 600, height = 600 }: ValueMapSunburstChartProps) {
   const { user } = useAuth()
   const chartRef = useRef<HTMLDivElement>(null)
 
@@ -69,6 +74,13 @@ export function ValueMapSunburstChart() {
     queryKey: ["myResponses"],
     queryFn: () => QuestionnairesService.readMyResponses({ limit: 100 }),
   })
+
+  const replaceUserName = (displayName: string) => {
+    if (user != undefined && displayName === user.full_name) {
+      return "Central Identity"
+    }
+    return displayName
+  }
 
   const chartData = useMemo(() => {
     let domainRatings: DomainRatingData[] = []
@@ -145,8 +157,8 @@ export function ValueMapSunburstChart() {
 
     const myChart = Sunburst()
       .data(chartData)
-      .width(600)
-      .height(600)
+      .width(width)
+      .height(height)
       .size('value')
       .color((d: any) => d.color || "#ccc")
       .centerRadius(0.2) // inner radius
@@ -165,7 +177,7 @@ export function ValueMapSunburstChart() {
         }
         return `
           <div style="background: rgba(0,0,0,0.8); color: white; padding: 4px 8px; border-radius: 4px;">
-            <strong>${displayName}</strong>
+            <strong>${replaceUserName(displayName)}</strong>
           </div>
         `
       })
@@ -175,7 +187,7 @@ export function ValueMapSunburstChart() {
     return () => {
       // cleanup if necessary
     }
-  }, [chartData])
+  }, [chartData, width, height])
 
   return (
     <Box sx={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative" }}>

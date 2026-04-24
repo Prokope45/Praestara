@@ -244,7 +244,7 @@ function TrajectoryModal({ open, onClose }: TrajectoryModalProps) {
             <Box sx={{ flex: 1, minWidth: 0, borderLeft: "1px solid", borderColor: "divider", pl: 3, display: "flex", flexDirection: "column" }}>
               <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>Value Map Context</Typography>
               <Box sx={{ flex: 1, position: "relative", minHeight: 400, borderRadius: 1, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-                <ValueMapSunburstChart />
+                <ValueMapSunburstChart width={400} height={400} />
               </Box>
             </Box>
           )}
