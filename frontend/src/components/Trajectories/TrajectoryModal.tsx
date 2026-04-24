@@ -26,7 +26,7 @@ import { WiSunset } from "react-icons/wi";
 
 import { TrajectoriesService, UsersService, type TrajectoryPublic, type BrainstormResponse } from "@/client"
 import useAuth from "@/hooks/useAuth"
-import { ValueMapDiagram } from "@/components/ValueMap/ValueMapDiagram"
+import { ValueMapSunburstChart } from "@/components/ValueMap/ValueMapSunburstChart"
 
 interface TrajectoryModalProps {
   open: boolean
@@ -244,7 +244,7 @@ function TrajectoryModal({ open, onClose }: TrajectoryModalProps) {
             <Box sx={{ flex: 1, minWidth: 0, borderLeft: "1px solid", borderColor: "divider", pl: 3, display: "flex", flexDirection: "column" }}>
               <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 600 }}>Value Map Context</Typography>
               <Box sx={{ flex: 1, position: "relative", minHeight: 400, borderRadius: 1, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-                <ValueMapDiagram />
+                <ValueMapSunburstChart />
               </Box>
             </Box>
           )}

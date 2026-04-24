@@ -1,6 +1,6 @@
 import { Box, Container, Paper, Stack, Typography } from "@mui/material"
 import { createFileRoute } from "@tanstack/react-router"
-import { ValueMapDiagram } from "@/components/ValueMap/ValueMapDiagram"
+import { ValueMapSunburstChart } from "@/components/ValueMap/ValueMapSunburstChart"
 
 export const Route = createFileRoute("/_layout/value-map")({
   component: ValueMap,
@@ -20,7 +20,7 @@ function ValueMap() {
         </Box>
 
         <Paper sx={{ height: 700, position: "relative", overflow: "hidden" }}>
-          <ValueMapDiagram />
+          <ValueMapSunburstChart />
         </Paper>
       </Stack>
     </Container>
