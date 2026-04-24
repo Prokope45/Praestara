@@ -14,6 +14,8 @@ import {
 } from "@mui/material"
 import { useMutation, useQuery, useQueryClient} from "@tanstack/react-query"
 import { useEffect, useMemo, useState } from "react"
+import { WiSunrise } from "react-icons/wi";
+import { WiSunset } from "react-icons/wi";
 
 import { CheckinsService, TrajectoriesService, type CheckinTrajectoryResponseCreate } from "@/client"
 import useAuth from "@/hooks/useAuth"
@@ -197,8 +199,17 @@ function AutoCheckinModal() {
     <Dialog open fullWidth maxWidth="sm">
       <DialogTitle>
         {isMorning
-          ? "Good morning. Who are you going to be today?"
-          : "Good evening. Who were you today?"}
+          ? 
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <WiSunrise size={36} color="#FF8C00" />
+              Good morning. Who are you going to be today?
+            </Box>
+          : 
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <WiSunset size={36} color="#4B0082" />
+              Good evening. Who were you today?
+            </Box>
+        }
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
