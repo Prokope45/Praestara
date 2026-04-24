@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material"
 import { useQuery } from "@tanstack/react-query"
-import React, { useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef } from "react"
 import SunburstChart from "sunburst-chart"
 const Sunburst = (SunburstChart as any).default || SunburstChart
 import { QuestionnairesService } from "../../client"
@@ -36,6 +36,16 @@ const schemaColors: Record<string, string> = {
   domain_proficiency: "#0ea5e9",
   domain_faith: "#3b82f6",
   domain_philanthropy: "#6366f1",
+}
+
+function shortenLabel(label: string): string {
+  if (label.length > 15) {
+    const parts = label.split(/\s+and\s+|\s+or\s+|,/i)
+    if (parts.length > 1) {
+      return parts[0].trim()
+    }
+  }
+  return label
 }
 
 const fallbackDomainRatings: DomainRatingData[] = [
@@ -110,7 +120,8 @@ export function ValueMapSunburstChart() {
         name: schema.label,
         color: schemaColors[schema.id] || "#94a3b8",
         children: domains.map(domain => ({
-          name: domain.label,
+          name: shortenLabel(domain.label),
+          fullName: domain.label,
           // Use 'value' instead of 'size' since sunburst-chart defaults to d.value
           value: 1, 
           color: schemaColors[schema.id],
@@ -142,10 +153,11 @@ export function ValueMapSunburstChart() {
       .showLabels(true)
       .labelOrientation("angular")
       .tooltipContent((d: any) => {
+        const displayName = d.fullName || d.name
         if (d.importance !== undefined) {
           return `
             <div style="background: rgba(0,0,0,0.8); color: white; padding: 4px 8px; border-radius: 4px;">
-              <strong>${d.name}</strong><br/>
+              <strong>${displayName}</strong><br/>
               Importance: ${d.importance}<br/>
               Consistency: ${d.consistency}
             </div>
@@ -153,7 +165,7 @@ export function ValueMapSunburstChart() {
         }
         return `
           <div style="background: rgba(0,0,0,0.8); color: white; padding: 4px 8px; border-radius: 4px;">
-            <strong>${d.name}</strong>
+            <strong>${displayName}</strong>
           </div>
         `
       })
