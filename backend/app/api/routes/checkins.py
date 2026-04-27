@@ -7,7 +7,12 @@ from pydantic import BaseModel
 
 from app.api.deps import CurrentUser, SessionDep
 from app.checkin import checkin_logic
-from app.models import Message
+from app.models import Message, CheckinTrajectoryResponseCreate
+
+class CheckinConversationMessage(BaseModel):
+    role: Literal["user", "assistant", "prompt"]
+    text: str
+
 
 router = APIRouter(prefix="/checkins", tags=["checkins"])
 
@@ -15,11 +20,14 @@ router = APIRouter(prefix="/checkins", tags=["checkins"])
 class CheckinRequest(BaseModel):
     type: Literal["morning", "evening"]
     text: str
+    trajectory_responses: list[CheckinTrajectoryResponseCreate] | None = None
+    messages: list[CheckinConversationMessage] | None = None
 
 
 class CheckinResponse(BaseModel):
     reply: str
     checkin_id: str
+    messages: list[CheckinConversationMessage] = []
 
 
 class CheckinPublic(BaseModel):
@@ -31,6 +39,7 @@ class CheckinPublic(BaseModel):
     alignment_score: int | None = None
     onboarding_id: str | None = None
     morning_id: str | None = None
+    messages: list[CheckinConversationMessage] = []
 
 
 class CheckinsPublic(BaseModel):
@@ -40,19 +49,30 @@ class CheckinsPublic(BaseModel):
 
 class CheckinUpdate(BaseModel):
     text: str
+    messages: list[CheckinConversationMessage] | None = None
 
 
 @router.post("/", response_model=CheckinResponse)
 def create_checkin(
     *, session: SessionDep, current_user: CurrentUser, payload: CheckinRequest
 ) -> CheckinResponse:
+    tr_responses = None
+    if payload.trajectory_responses:
+        tr_responses = [tr.model_dump() for tr in payload.trajectory_responses]
+        
     checkin = checkin_logic.create(
         session=session,
         user_id=current_user.id,
         checkin_type=payload.type,
         text=payload.text,
+        trajectory_responses=tr_responses,
+        session_messages=[m.model_dump() for m in payload.messages] if payload.messages else None,
     )
-    return CheckinResponse(reply=checkin.reply, checkin_id=str(checkin.id))
+    reply, messages = checkin_logic.parse_reply_payload(
+        user_text=checkin.text,
+        reply=checkin.reply,
+    )
+    return CheckinResponse(reply=reply, checkin_id=str(checkin.id), messages=messages)
 
 
 @router.get("/", response_model=CheckinsPublic)
@@ -80,15 +100,24 @@ def read_checkins(
     data = []
     for checkin in checkins:
         data.append(
+            # Keep the list API backward-compatible while exposing structured conversation when available.
+            # Frontend can render this as a thread instead of a single reflection block.
             CheckinPublic(
                 id=checkin.id,
                 type=checkin.type,
                 text=checkin.text,
-                reply=checkin.reply,
+                reply=checkin_logic.parse_reply_payload(
+                    user_text=checkin.text,
+                    reply=checkin.reply,
+                )[0],
                 created_at=checkin.created_at,
                 alignment_score=checkin.alignment_score,
                 onboarding_id=checkin.onboarding_id,
                 morning_id=checkin.morning_id,
+                messages=checkin_logic.parse_reply_payload(
+                    user_text=checkin.text,
+                    reply=checkin.reply,
+                )[1],
             )
         )
 
@@ -118,11 +147,18 @@ def read_checkin_timeline(
                 id=checkin.id,
                 type=checkin.type,
                 text=checkin.text,
-                reply=checkin.reply,
+                reply=checkin_logic.parse_reply_payload(
+                    user_text=checkin.text,
+                    reply=checkin.reply,
+                )[0],
                 created_at=checkin.created_at,
                 alignment_score=checkin.alignment_score,
                 onboarding_id=checkin.onboarding_id,
                 morning_id=checkin.morning_id,
+                messages=checkin_logic.parse_reply_payload(
+                    user_text=checkin.text,
+                    reply=checkin.reply,
+                )[1],
             )
         )
 
@@ -144,15 +180,20 @@ def read_checkin(
     if checkin.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
+    reply, messages = checkin_logic.parse_reply_payload(
+        user_text=checkin.text,
+        reply=checkin.reply,
+    )
     return CheckinPublic(
         id=checkin.id,
         type=checkin.type,
         text=checkin.text,
-        reply=checkin.reply,
+        reply=reply,
         created_at=checkin.created_at,
         alignment_score=checkin.alignment_score,
         onboarding_id=checkin.onboarding_id,
         morning_id=checkin.morning_id,
+        messages=messages,
     )
 
 
@@ -175,17 +216,27 @@ def update_checkin(
     if checkin.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    checkin = checkin_logic.update(session=session, db_checkin=checkin, text=checkin_in.text)
+    checkin = checkin_logic.update(
+        session=session,
+        db_checkin=checkin,
+        text=checkin_in.text,
+        session_messages=[m.model_dump() for m in checkin_in.messages] if checkin_in.messages else None,
+    )
 
+    reply, messages = checkin_logic.parse_reply_payload(
+        user_text=checkin.text,
+        reply=checkin.reply,
+    )
     return CheckinPublic(
         id=checkin.id,
         type=checkin.type,
         text=checkin.text,
-        reply=checkin.reply,
+        reply=reply,
         created_at=checkin.created_at,
         alignment_score=checkin.alignment_score,
         onboarding_id=checkin.onboarding_id,
         morning_id=checkin.morning_id,
+        messages=messages,
     )
 
 

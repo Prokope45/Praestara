@@ -1,0 +1,355 @@
+{
+  "version": "besci-theory-pack-v1",
+  "purpose": "Structured retrieval registry for BeSci dimensions, processes, computational axes, higher-order factors, and interpretive principles.",
+  "corpus_families": [
+    {
+      "name": "affective_language_and_psycholinguistics",
+      "contributes_to": [
+        "valence",
+        "arousal",
+        "self_focus",
+        "absolutist_thinking",
+        "self_criticism"
+      ],
+      "interpretive_use": "Grounds direct emotional language, negative style, self-focus, and language-based mental health approximations."
+    },
+    {
+      "name": "computational_psychiatry_and_process_models",
+      "contributes_to": [
+        "dopaminergic_pressure",
+        "control_allocation",
+        "volatility_expectancy",
+        "prediction_error_weighting",
+        "effort_cost_load"
+      ],
+      "interpretive_use": "Explains how reward, effort, uncertainty, and control may shape language over time."
+    },
+    {
+      "name": "reward_motivation_and_anhedonia",
+      "contributes_to": [
+        "reward_seeking",
+        "behavioral_activation",
+        "dopaminergic_pressure",
+        "effort_cost_load",
+        "approach_bias",
+        "avoidance_bias"
+      ],
+      "interpretive_use": "Distinguishes low reward pull, effort burden, and activation from general sadness."
+    },
+    {
+      "name": "social_relational_and_rdco_social_constructs",
+      "contributes_to": [
+        "social_orientation",
+        "social_salience",
+        "social_evaluative_concern",
+        "social_avoidance",
+        "relational_ambivalence",
+        "boundary_diffusion",
+        "negative_audience_effect"
+      ],
+      "interpretive_use": "Keeps social life multi-dimensional and allows performance, attachment, evaluation, and intimacy to vary independently."
+    },
+    {
+      "name": "dimensional_hierarchy_and_symptom_covariance",
+      "contributes_to": [
+        "negative_affectivity",
+        "internalizing_distress",
+        "internalizing_fear",
+        "detachment",
+        "disinhibition",
+        "social_anxious_attachment",
+        "interpersonal_instability",
+        "compulsive_rigidity",
+        "positive_engagement"
+      ],
+      "interpretive_use": "Summarizes covariance patterns without forcing categorical diagnosis."
+    },
+    {
+      "name": "trajectory_and_longitudinal_epidemiology",
+      "contributes_to": [
+        "temporal_scope",
+        "baseline_state",
+        "recent_state",
+        "current_state",
+        "change_from_baseline",
+        "change_from_recent"
+      ],
+      "interpretive_use": "Constrains how same-day, short-horizon, and longer-horizon changes are interpreted."
+    },
+    {
+      "name": "expressive_poetic_and_aesthetic_corpora",
+      "contributes_to": [
+        "imagery_density",
+        "sensory_grounding",
+        "affective_explicitness",
+        "affective_implication",
+        "abstract_reflection",
+        "expressive_symbolization"
+      ],
+      "interpretive_use": "Allows BeSci to treat figurative, image-rich, and symbolic language as meaningful rather than as low-information noise."
+    }
+  ],
+  "dimensions": [
+    {
+      "name": "valence",
+      "family": "base_dimension",
+      "meaning": "Overall emotional tone from more distressed or empty to more supported or positively toned.",
+      "retrieval_tags": ["affect", "tone", "mood"],
+      "llm_rule": "Do not equate valence with diagnosis. Combine with reward, arousal, and domain context before summarizing."
+    },
+    {
+      "name": "arousal",
+      "family": "base_dimension",
+      "meaning": "Level of activation, urgency, vigilance, or embodied calm.",
+      "retrieval_tags": ["activation", "stress", "threat"],
+      "llm_rule": "Use time-scale context. Same-day spikes may reflect event load, fatigue, or circadian movement rather than durable worsening."
+    },
+    {
+      "name": "control",
+      "family": "base_dimension",
+      "meaning": "Felt organization, follow-through, and self-regulatory steadiness.",
+      "retrieval_tags": ["agency", "regulation", "follow_through"],
+      "llm_rule": "Interpret with control_allocation and effort_cost_load when possible."
+    },
+    {
+      "name": "volatility",
+      "family": "base_dimension",
+      "meaning": "Expectation or expression of instability, abrupt shifts, and uncertainty-driven movement.",
+      "retrieval_tags": ["uncertainty", "instability", "changeability"],
+      "llm_rule": "Do not confuse volatility with intensity alone. It is about instability and unpredictability."
+    },
+    {
+      "name": "social_orientation",
+      "family": "base_dimension",
+      "meaning": "How connected, withdrawn, socially active, or interpersonally pulled back the language sounds.",
+      "retrieval_tags": ["connection", "withdrawal", "social"],
+      "llm_rule": "Do not flatten this into one good/bad social score when relational ambivalence or evaluative concern are also high."
+    },
+    {
+      "name": "reward_seeking",
+      "family": "base_dimension",
+      "meaning": "Interest, pull, curiosity, reward sensitivity, and motivational availability.",
+      "retrieval_tags": ["reward", "motivation", "anhedonia"],
+      "llm_rule": "Keep this distinct from valence. Low reward can coexist with partial functioning or even mixed tone."
+    },
+    {
+      "name": "cognitive_flexibility",
+      "family": "base_dimension",
+      "meaning": "Capacity for reframing, adjusting, and moving out of rigid cognitive loops.",
+      "retrieval_tags": ["flexibility", "rigidity", "reframing"],
+      "llm_rule": "Interpret with perseverative_cognition and absolutist_thinking."
+    },
+    {
+      "name": "self_focus",
+      "family": "base_dimension",
+      "meaning": "Degree of inward self-reference and self-directed attention.",
+      "retrieval_tags": ["self_reference", "inward_attention"],
+      "llm_rule": "Self-focus is not automatically pathological; its meaning depends on valence, flexibility, criticism, and domain context."
+    }
+  ],
+  "process_signals": [
+    {
+      "name": "threat_sensitivity",
+      "meaning": "Threat-loading, vigilance, and danger-expectancy.",
+      "llm_rule": "Use to explain anxious or bracing language rather than jumping directly to fear labels."
+    },
+    {
+      "name": "perseverative_cognition",
+      "meaning": "Looping, rumination, and mentally stuck processing.",
+      "llm_rule": "Use as a process explanation when distress keeps circling rather than moving."
+    },
+    {
+      "name": "behavioral_activation",
+      "meaning": "Approach, doing, initiation, and behavioral movement.",
+      "llm_rule": "Distinguish from reward. A person may act without feeling much pull."
+    },
+    {
+      "name": "social_avoidance",
+      "meaning": "Pulling away from contact or reducing social exposure.",
+      "llm_rule": "Do not equate with low social salience; some avoided domains may still be highly organizing."
+    },
+    {
+      "name": "relational_ambivalence",
+      "meaning": "Relationship or intimacy movement that feels mixed, misaligned, or farther than wanted.",
+      "llm_rule": "Support summaries like socially active but relationally misaligned."
+    },
+    {
+      "name": "social_evaluative_concern",
+      "meaning": "Monitoring how one is seen, judged, or evaluated.",
+      "llm_rule": "Use when performance, embarrassment, attraction, or rejection are central."
+    },
+    {
+      "name": "self_criticism",
+      "meaning": "Harsh self-judgment, defectiveness, or shame-oriented language.",
+      "llm_rule": "Distinguish from sadness. This is about stance toward self, not only mood."
+    },
+    {
+      "name": "approach_bias",
+      "meaning": "Movement toward reward, people, goals, or contact.",
+      "llm_rule": "Useful for separating activated pursuit from passive positive tone."
+    },
+    {
+      "name": "avoidance_bias",
+      "meaning": "Movement away from challenge, discomfort, or contact.",
+      "llm_rule": "Use with social and threat processes, not as a standalone explanation."
+    },
+    {
+      "name": "boundary_diffusion",
+      "meaning": "Porous, unclear, or overrun boundaries.",
+      "llm_rule": "Helps explain relational drift, people-pleasing, or weakened agency in relationships."
+    },
+    {
+      "name": "negative_audience_effect",
+      "meaning": "Other people impairing focus, reward, or performance.",
+      "llm_rule": "Useful when social presence alters functioning rather than simply mood."
+    },
+    {
+      "name": "uncertain_threat_anticipation",
+      "meaning": "Fear building because uncertainty is unresolved.",
+      "llm_rule": "Explain anticipatory strain even before clear adverse events happen."
+    },
+    {
+      "name": "agency_awareness",
+      "meaning": "Reflective awareness linked to authorship and intentional response.",
+      "llm_rule": "Use when the person sounds able to notice and redirect rather than only react."
+    },
+    {
+      "name": "somatic_burden",
+      "meaning": "Fatigue, heaviness, or bodily depletion.",
+      "llm_rule": "Keep body-state in view; not all low motivation is purely psychological."
+    },
+    {
+      "name": "imagery_density",
+      "meaning": "Concrete scenes, objects, and image-bearing expression.",
+      "llm_rule": "High imagery means the text may be carrying affect through scenes, not only statements."
+    },
+    {
+      "name": "sensory_grounding",
+      "meaning": "Embodied, sensory, and felt-detail expression.",
+      "llm_rule": "Use to note immediacy and lived quality, not just intensity."
+    },
+    {
+      "name": "affective_explicitness",
+      "meaning": "Direct naming of feelings.",
+      "llm_rule": "High explicitness supports more literal reading of affect words."
+    },
+    {
+      "name": "affective_implication",
+      "meaning": "Indirect communication of feeling through imagery or metaphor.",
+      "llm_rule": "High implication means low direct feeling language should not be mistaken for low affect."
+    },
+    {
+      "name": "abstract_reflection",
+      "meaning": "Meaning-level, symbolic, or conceptual reflection.",
+      "llm_rule": "Use when the person is processing life through pattern, identity, and narrative rather than only event report."
+    }
+  ],
+  "computational_axes": [
+    {
+      "name": "dopaminergic_pressure",
+      "meaning": "Approximate reward drive, incentive salience, and action vigor.",
+      "llm_rule": "Use to explain pull, spark, or blunted wanting. Do not talk as though dopamine was measured."
+    },
+    {
+      "name": "control_allocation",
+      "meaning": "Approximate availability and value of control deployment.",
+      "llm_rule": "Useful when the person knows what to do but cannot hold effort there."
+    },
+    {
+      "name": "volatility_expectancy",
+      "meaning": "Approximate expectation of instability or abrupt change.",
+      "llm_rule": "Use for a world-model organized around unpredictability."
+    },
+    {
+      "name": "prediction_error_weighting",
+      "meaning": "Approximate how hard cues, deviations, or surprises hit.",
+      "llm_rule": "Useful when small events seem to punch through disproportionately."
+    },
+    {
+      "name": "social_salience",
+      "meaning": "Approximate how strongly the social channel is organizing the moment.",
+      "llm_rule": "High salience is not inherently positive; it only means the social field carries weight."
+    },
+    {
+      "name": "effort_cost_load",
+      "meaning": "Approximate how costly action and self-regulation feel.",
+      "llm_rule": "Use to explain uphill effort, depletion, and adherence difficulties."
+    },
+    {
+      "name": "social_reward_coupling",
+      "meaning": "Approximate how strongly reward and performance depend on social context.",
+      "llm_rule": "Useful when other people seem to set value or disrupt access to reward."
+    },
+    {
+      "name": "threat_hazard_expectancy",
+      "meaning": "Approximate the feeling that unresolved time itself increases danger.",
+      "llm_rule": "Use for prolonged waiting, countdown pressure, and escalating unresolved apprehension."
+    },
+    {
+      "name": "agency_coherence",
+      "meaning": "Approximate coherence of awareness, boundaries, and intentional choice.",
+      "llm_rule": "Use to explain fragmentation versus authorship without overclaiming identity disturbance."
+    }
+  ],
+  "higher_order_factors": [
+    {
+      "name": "negative_affectivity",
+      "meaning": "Broad negative tone, threat, criticism, and distress loading.",
+      "llm_rule": "Summary factor only. Do not let it erase lower-level nuance."
+    },
+    {
+      "name": "internalizing_distress",
+      "meaning": "Broader low-valence, low-reward, self-focused distress configuration.",
+      "llm_rule": "Use as a broader pattern summary, not a substitute for symptoms."
+    },
+    {
+      "name": "internalizing_fear",
+      "meaning": "Arousal, volatility, and threat-dominant configuration.",
+      "llm_rule": "Useful when activation and anticipation are dominant."
+    },
+    {
+      "name": "detachment",
+      "meaning": "Low reward, low social ease, and flatter disengagement.",
+      "llm_rule": "Keep distinct from simple introversion or temporary solitude."
+    },
+    {
+      "name": "disinhibition",
+      "meaning": "Arousal and low control configuration.",
+      "llm_rule": "Use carefully and only when control loss is really part of the state."
+    },
+    {
+      "name": "social_anxious_attachment",
+      "meaning": "Social monitoring, relational ambivalence, and interpersonal hyper-attunement.",
+      "llm_rule": "Useful for relational worry or approval sensitivity."
+    },
+    {
+      "name": "interpersonal_instability",
+      "meaning": "Boundary, social-reward, uncertainty, and relationship instability cluster.",
+      "llm_rule": "Use to summarize unstable relational organization across several interpersonal signals."
+    },
+    {
+      "name": "compulsive_rigidity",
+      "meaning": "Perseveration, low flexibility, and rigid control style.",
+      "llm_rule": "Use when the person sounds stuck, totalizing, and unable to loosen their frame."
+    },
+    {
+      "name": "positive_engagement",
+      "meaning": "Protective cluster of reward, connection, flexibility, activation, and positive tone.",
+      "llm_rule": "Do not overstate this if another domain is simultaneously deteriorating."
+    },
+    {
+      "name": "expressive_symbolization",
+      "meaning": "Image-rich, sensory, reflective, and indirect expressive style.",
+      "llm_rule": "Use to explain how the person is communicating, not only what they are feeling."
+    }
+  ],
+  "global_interpretation_rules": [
+    "Prefer dimensional over categorical interpretation.",
+    "Treat current state and trajectory as related but not identical.",
+    "Do not collapse conflicting life domains into one flat mood statement.",
+    "Use time-scale explicitly when interpreting change.",
+    "Respect expressive style as signal, not noise.",
+    "Do not diagnose from text alone.",
+    "Treat scores as approximations of a person-in-context rather than measurements of isolated symptoms."
+  ]
+}

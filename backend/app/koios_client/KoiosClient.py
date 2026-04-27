@@ -435,6 +435,51 @@ class KoiosClient:
         messages_deleted = decrypted_response.get("messages_deleted", 0)
         return int(messages_deleted)
 
+    def rephrase_trajectory_goal(self, user_id: str, goal: str) -> str:
+        """Rephrase a trajectory goal into morning and evening yes/no questions.
+        
+        Args:
+            user_id: The user's identifier.
+            goal: The original goal text.
+            
+        Returns:
+            A JSON string containing the rephrased questions.
+        """
+        prompt = (
+            "Task: Text Transformation (No context or search needed). "
+            "Rephrase the goal into two "
+            "short, actionable yes/no questions."
+            "1. Morning check-in (e.g. 'Will you...', 'Do you plan to...') "
+            "2. Evening check-in (e.g. 'Did you...', 'Were you...'). "
+            "Output ONLY with a valid JSON: "
+            '{"morning_question": "...", "evening_question": "..."}'
+            ' For example, rephrase "Workout for 30 minutes" into {"morning_question": "Will you workout for 30 minutes today?", "evening_question": "Did you workout for at least 30 minutes today?"}'
+        )
+        details = [
+            {"key": "goal", "value": goal, "description": "The goal to rephrase into an actionable question"}
+        ]
+        return self.process_analysis(user_id=user_id, prompt=prompt, details=details, temperature=0.3)
+
+    def brainstorm_trajectory(self, user_id: str, message: str) -> str:
+        """Help the user brainstorm trajectory goals.
+        
+        Args:
+            user_id: The user's identifier.
+            message: The user's message.
+            
+        Returns:
+            The AI's response.
+        """
+        prompt = (
+            "You are Praestara. Help the user brainstorm actionable, yes/no trajectory goals "
+            "to work on over the next week. Keep it brief, non-moralizing, and supportive."
+            "Respond ONLY with the actionable goals as an ordered list."
+        )
+        details = [
+            {"key": "user_message", "value": message, "description": "User's request or idea"}
+        ]
+        return self.process_analysis(user_id=user_id, prompt=prompt, details=details, temperature=0.7)
+
     def clear_token(self) -> None:
         """Clear the cached token (useful for testing or forced refresh)."""
         self._token = None

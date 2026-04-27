@@ -106,8 +106,16 @@ class Settings(BaseSettings):
     # AI Service (Koios RAG) Configuration
     AI_API_URL: AnyUrl | None = None
     AI_ENCRYPTION_KEY: str | None = None  # 64 hex characters (32 bytes) for AES-256-GCM
+    AI_SERVICE_USER_ID: str | None = None
     AI_TIMEOUT_SECONDS: int = 120
     AI_ENABLE_ENCRYPTION: bool = True
+
+    # BeSci measurement service configuration. Praestara should call the standalone
+    # service first and fall back to the frozen local adapter during research iteration.
+    BESCI_API_URL: AnyUrl | None = None
+    BESCI_TIMEOUT_SECONDS: int = 15
+    BESCI_USE_REMOTE: bool = True
+    BESCI_FALLBACK_LOCAL: bool = True
 
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":

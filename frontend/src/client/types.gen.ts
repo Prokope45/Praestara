@@ -82,6 +82,14 @@ export type Body_users_upload_profile_image = {
   file: Blob | File
 }
 
+export type BrainstormRequest = {
+  message: string
+}
+
+export type BrainstormResponse = {
+  response: string
+}
+
 /**
  * Response model for chat history.
  */
@@ -108,11 +116,19 @@ export type type = "morning" | "evening"
 export type CheckinRequest = {
   type: "morning" | "evening"
   text: string
+  trajectory_responses?: Array<CheckinTrajectoryResponseCreate> | null
+  messages?: Array<CheckinConversationMessage> | null
+}
+
+export type CheckinConversationMessage = {
+  role: "user" | "assistant" | "prompt"
+  text: string
 }
 
 export type CheckinResponse = {
   reply: string
   checkin_id: string
+  messages?: Array<CheckinConversationMessage>
 }
 
 export type CheckinsPublic = {
@@ -120,8 +136,14 @@ export type CheckinsPublic = {
   count: number
 }
 
+export type CheckinTrajectoryResponseCreate = {
+  trajectory_id: string
+  completed: boolean
+}
+
 export type CheckinUpdate = {
   text: string
+  messages?: Array<CheckinConversationMessage> | null
 }
 
 /**
@@ -688,9 +710,38 @@ export type Token = {
   token_type?: string
 }
 
+export type TrajectoriesPublic = {
+  data: Array<TrajectoryPublic>
+  count: number
+}
+
+export type TrajectoryCreate = {
+  original_goal: string
+  rephrased_morning_question?: string | null
+  rephrased_evening_question?: string | null
+  is_active?: boolean
+}
+
 export type TrajectoryHistoryPublic = {
   data: Array<TrajectoryVectorPublic>
   count: number
+}
+
+export type TrajectoryPublic = {
+  original_goal: string
+  rephrased_morning_question?: string | null
+  rephrased_evening_question?: string | null
+  is_active?: boolean
+  id: string
+  user_id: string
+  created_at: string
+}
+
+export type TrajectoryUpdate = {
+  original_goal?: string | null
+  rephrased_morning_question?: string | null
+  rephrased_evening_question?: string | null
+  is_active?: boolean | null
 }
 
 export type TrajectoryVectorPublic = {
@@ -718,6 +769,8 @@ export type UserCreate = {
   profile_image?: string | null
   onboarding_completed_at?: string | null
   can_delete_account?: boolean
+  trajectory_update_day?: number
+  next_trajectory_date?: string | null
   password: string
 }
 
@@ -729,6 +782,8 @@ export type UserPublic = {
   profile_image?: string | null
   onboarding_completed_at?: string | null
   can_delete_account?: boolean
+  trajectory_update_day: number
+  next_trajectory_date: string | null
   id: string
 }
 
@@ -770,12 +825,16 @@ export type UserUpdate = {
   profile_image?: string | null
   onboarding_completed_at?: string | null
   can_delete_account?: boolean
+  trajectory_update_day?: number
+  next_trajectory_date?: string | null
   password?: string | null
 }
 
 export type UserUpdateMe = {
   full_name?: string | null
   email?: string | null
+  trajectory_update_day?: number | null
+  next_trajectory_date?: string | null
 }
 
 export type ValidationError = {
@@ -1373,6 +1432,35 @@ export type QuestionnairesDeleteAppointmentData = {
 }
 
 export type QuestionnairesDeleteAppointmentResponse = Message
+
+export type TrajectoriesGetActiveTrajectoriesResponse = TrajectoriesPublic
+
+export type TrajectoriesGetAllTrajectoriesResponse = TrajectoriesPublic
+
+export type TrajectoriesCreateTrajectoryData = {
+  requestBody: TrajectoryCreate
+}
+
+export type TrajectoriesCreateTrajectoryResponse = TrajectoryPublic
+
+export type TrajectoriesUpdateTrajectoryData = {
+  id: string
+  requestBody: TrajectoryUpdate
+}
+
+export type TrajectoriesUpdateTrajectoryResponse = TrajectoryPublic
+
+export type TrajectoriesDeleteTrajectoryData = {
+  id: string
+}
+
+export type TrajectoriesDeleteTrajectoryResponse = Message
+
+export type TrajectoriesBrainstormTrajectoryData = {
+  requestBody: BrainstormRequest
+}
+
+export type TrajectoriesBrainstormTrajectoryResponse = BrainstormResponse
 
 export type UsersReadUsersData = {
   limit?: number

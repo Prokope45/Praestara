@@ -45,6 +45,10 @@ class UserBase(SQLModel):
         default=None, sa_type=sa.DateTime(timezone=True)
     )
     can_delete_account: bool = False
+    trajectory_update_day: int = Field(default=6, ge=0, le=6)
+    next_trajectory_date: datetime | None = Field(
+        default=None, sa_type=sa.DateTime(timezone=True)
+    )
 
 
 # Properties to receive via API on creation
@@ -67,6 +71,8 @@ class UserUpdate(UserBase):
 class UserUpdateMe(SQLModel):
     full_name: str | None = Field(default=None, max_length=255)
     email: EmailStr | None = Field(default=None, max_length=255)
+    trajectory_update_day: int | None = Field(default=None, ge=0, le=6)
+    next_trajectory_date: datetime | None = None
 
 
 class UpdatePassword(SQLModel):
@@ -88,11 +94,16 @@ class User(UserBase, table=True):
     engine89_results: list["Engine89Result"] = Relationship(
         back_populates="owner", cascade_delete=True
     )
+    trajectories: list["Trajectory"] = Relationship(
+        back_populates="user", cascade_delete=True
+    )
 
 
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
     id: uuid.UUID
+    trajectory_update_day: int
+    next_trajectory_date: datetime | None
 
 
 class UsersPublic(SQLModel):
@@ -415,6 +426,49 @@ class AnswerPublic(AnswerBase):
     question: QuestionPublic
 
 
+# Trajectory models
+class TrajectoryBase(SQLModel):
+    original_goal: str = Field(sa_type=sa.Text)
+    rephrased_morning_question: str | None = Field(default=None, sa_type=sa.Text)
+    rephrased_evening_question: str | None = Field(default=None, sa_type=sa.Text)
+    is_active: bool = True
+
+class TrajectoryCreate(TrajectoryBase):
+    pass
+
+class TrajectoryUpdate(SQLModel):
+    original_goal: str | None = Field(default=None, sa_type=sa.Text)
+    rephrased_morning_question: str | None = Field(default=None, sa_type=sa.Text)
+    rephrased_evening_question: str | None = Field(default=None, sa_type=sa.Text)
+    is_active: bool | None = None
+
+
+class Trajectory(TrajectoryBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", nullable=False, ondelete="CASCADE"
+    )
+    user: Optional["User"] = Relationship(back_populates="trajectories")
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_type=sa.DateTime(timezone=True),
+    )
+    checkin_responses: list["CheckinTrajectoryResponse"] = Relationship(
+        back_populates="trajectory", cascade_delete=True
+    )
+
+
+class TrajectoryPublic(TrajectoryBase):
+    id: uuid.UUID
+    user_id: uuid.UUID
+    created_at: datetime
+
+
+class TrajectoriesPublic(SQLModel):
+    data: list[TrajectoryPublic]
+    count: int
+
+
 # Checkin models
 class CheckinBase(SQLModel):
     type: str = Field(max_length=50)
@@ -425,8 +479,34 @@ class CheckinBase(SQLModel):
     morning_id: str | None = None
 
 
-class CheckinCreate(CheckinBase):
+class CheckinTrajectoryResponseBase(SQLModel):
+    trajectory_id: uuid.UUID
+    completed: bool
+
+
+class CheckinTrajectoryResponseCreate(CheckinTrajectoryResponseBase):
     pass
+
+
+class CheckinTrajectoryResponse(CheckinTrajectoryResponseBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    checkin_id: uuid.UUID = Field(
+        foreign_key="checkin.id", nullable=False, ondelete="CASCADE"
+    )
+    trajectory_id: uuid.UUID = Field(
+        foreign_key="trajectory.id", nullable=False, ondelete="CASCADE"
+    )
+    checkin: Optional["Checkin"] = Relationship(back_populates="trajectory_responses")
+    trajectory: Optional["Trajectory"] = Relationship(back_populates="checkin_responses")
+
+
+class CheckinTrajectoryResponsePublic(CheckinTrajectoryResponseBase):
+    id: uuid.UUID
+    checkin_id: uuid.UUID
+
+
+class CheckinCreate(CheckinBase):
+    trajectory_responses: list[CheckinTrajectoryResponseCreate] | None = None
 
 
 class Checkin(CheckinBase, table=True):
@@ -439,12 +519,16 @@ class Checkin(CheckinBase, table=True):
         default_factory=lambda: datetime.now(timezone.utc),
         sa_type=sa.DateTime(timezone=True),
     )
+    trajectory_responses: list["CheckinTrajectoryResponse"] = Relationship(
+        back_populates="checkin", cascade_delete=True
+    )
 
 
 class CheckinPublic(CheckinBase):
     id: uuid.UUID
     user_id: uuid.UUID
     created_at: datetime
+    trajectory_responses: list[CheckinTrajectoryResponsePublic] = []
 
 
 class CheckinsPublic(SQLModel):

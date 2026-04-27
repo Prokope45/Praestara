@@ -4,12 +4,16 @@ Integrates with the Koios RAG AI service for intelligent responses.
 """
 
 import logging
+import re
+from datetime import datetime
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
 from app.koios_client import ai_client
 from app.api.deps import CurrentUser
+from app.besci_client import besci_client
+from app.besci_local.models import BeSciTextSample
 from app.core.config import settings
 from app.models import AnalyzeRequest, AnalyzeResponse, Message
 from app.koios_client.models import ChatMessage, ChatHistoryResponse, ClearHistoryResponse
@@ -17,6 +21,55 @@ from app.koios_client.models import ChatMessage, ChatHistoryResponse, ClearHisto
 logger = logging.getLogger(__name__)
 
 ai_router = APIRouter(prefix="/ai", tags=["ai"])
+
+
+def _build_besci_augmented_query(user_id: str, message: str) -> str:
+    try:
+        history = ai_client.get_history(user_id=user_id)
+    except Exception:
+        history = []
+
+    samples: list[BeSciTextSample] = []
+    for item in history:
+        role = item.get("role")
+        content = item.get("content")
+        if role != "user" or not isinstance(content, str) or not content.strip():
+            continue
+        samples.append(BeSciTextSample(text=content.strip()))
+
+    samples.append(BeSciTextSample(text=message.strip(), occurred_at=datetime.utcnow()))
+    context = besci_client.chat_context(samples)
+    if not context:
+        return message
+
+    return (
+        f"{context}\n\n"
+        "Use the BeSci context to gently tune tone, pacing, and longitudinal awareness. "
+        "Do not present it as diagnosis or certainty.\n\n"
+        f"User message:\n{message}"
+    )
+
+
+def _build_local_chat_reply(message: str) -> str:
+    user_message = message.strip()
+    if not user_message:
+      return "I’m here. What would you like to work on next?"
+
+    match = re.search(r"User message:\n(.+)$", user_message, flags=re.DOTALL)
+    if match:
+        user_message = match.group(1).strip()
+
+    first_sentence = user_message.split(".")[0].strip()
+    if len(first_sentence) > 120:
+        first_sentence = f"{first_sentence[:117]}..."
+
+    if not first_sentence:
+        first_sentence = "something important"
+
+    return (
+        f"That sounds like a real direction toward {first_sentence}. "
+        "What is the smallest next step you want to take right now?"
+    )
 
 
 @ai_router.post("/chat", response_model=Message)
@@ -51,10 +104,11 @@ def chat_with_ai(*, current_user: CurrentUser, payload: Message) -> Message:
 
     try:
         logger.info(f"Asking: {payload.message}")
+        augmented_query = _build_besci_augmented_query(user_id=user_id, message=payload.message)
         # Process the query through the AI client
         generation = ai_client.process_query(
             user_id=user_id,
-            query=payload.message,
+            query=augmented_query,
             temperature=settings.LLM_TEMPERATURE,
         )
 
@@ -62,17 +116,11 @@ def chat_with_ai(*, current_user: CurrentUser, payload: Message) -> Message:
 
     except ValueError as e:
         logger.error("AI service validation error: %s", e)
-        raise HTTPException(
-            status_code=502,
-            detail=f"AI service error: {e}"
-        ) from e
+        return Message(message=_build_local_chat_reply(payload.message))
 
     except Exception as e:
         logger.error("AI service request failed: %s", e)
-        raise HTTPException(
-            status_code=502,
-            detail=f"AI service request failed: {e}"
-        ) from e
+        return Message(message=_build_local_chat_reply(payload.message))
 
 
 @ai_router.post("/analyze", response_model=AnalyzeResponse)

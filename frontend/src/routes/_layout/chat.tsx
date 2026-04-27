@@ -96,7 +96,7 @@ function Chat() {
         {
           role: "assistant",
           content:
-            "The assistant is unavailable right now. Please try again shortly.",
+            "I’m having trouble reaching Koios right now, but the thread is still alive. What is the next small step you want to take?",
         },
       ])
     },

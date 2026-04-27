@@ -35,6 +35,58 @@ ChartJS.register(
   Legend,
 )
 
+type BeSciState = {
+  arousal: number
+  valence: number
+  control: number
+  volatility: number
+  social_orientation: number
+  reward_seeking: number
+  cognitive_flexibility: number
+  self_focus: number
+}
+
+type BeSciSignal = {
+  name: string
+  score: number
+  rationale: string
+}
+
+type BeSciSnapshot = {
+  id: string
+  user_id: string
+  sample_count: number
+  checkin_sample_count: number
+  chat_sample_count: number
+  trajectory_score: number
+  current_state: BeSciState
+  baseline_state: BeSciState
+  change_from_baseline: BeSciState
+  summary: string
+  signals: BeSciSignal[]
+  computed_at: string
+}
+
+type BeSciHistory = {
+  data: BeSciSnapshot[]
+  count: number
+}
+
+const fetchBeSci = async <T,>(path: string): Promise<T> => {
+  const token = localStorage.getItem("access_token") || ""
+  const response = await fetch(`/api/v1${path}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  if (!response.ok) {
+    throw new Error(`BeSci request failed with status ${response.status}`)
+  }
+  return response.json()
+}
+
+const normalizeBeSci = (value: number) => Math.round((value + 1) * 50)
+
 function Dashboard() {
   const { user: currentUser } = useAuth()
   const navigate = useNavigate()
@@ -44,6 +96,10 @@ function Dashboard() {
       JSON.stringify({ type, ts: Date.now() }),
     )
     window.dispatchEvent(new Event("praestara_checkin_trigger"))
+  }
+
+  const triggerTrajectory = () => {
+    window.dispatchEvent(new Event("praestara_trajectory_trigger"))
   }
 
   const { data: morningHistory } = useQuery({
@@ -83,6 +139,16 @@ function Dashboard() {
     queryKey: ["questionnaire-assignments", "me"],
     queryFn: () =>
       QuestionnairesService.readMyAssignments({ skip: 0, limit: 100 }),
+  })
+
+  const { data: besciCurrent } = useQuery({
+    queryKey: ["besci", "current"],
+    queryFn: () => fetchBeSci<BeSciSnapshot>("/besci/current"),
+  })
+
+  const { data: besciHistory } = useQuery({
+    queryKey: ["besci", "history"],
+    queryFn: () => fetchBeSci<BeSciHistory>("/besci/history?limit=12"),
   })
 
   const adherenceSeries = useMemo(() => {
@@ -176,6 +242,57 @@ function Dashboard() {
       ],
     }
   }, [])
+
+  const besciSeries = useMemo(() => {
+    const snapshots = (besciHistory?.data ?? []).slice().reverse()
+    if (snapshots.length === 0) {
+      return null
+    }
+
+    return {
+      labels: snapshots.map((snapshot) =>
+        new Date(snapshot.computed_at).toLocaleDateString(),
+      ),
+      datasets: [
+        {
+          label: "BeSci trajectory",
+          data: snapshots.map((snapshot) =>
+            normalizeBeSci(snapshot.trajectory_score),
+          ),
+          borderColor: "#1d4ed8",
+          backgroundColor: "rgba(29, 78, 216, 0.12)",
+          tension: 0.35,
+        },
+        {
+          label: "Valence",
+          data: snapshots.map((snapshot) =>
+            normalizeBeSci(snapshot.current_state.valence),
+          ),
+          borderColor: "#16a34a",
+          backgroundColor: "rgba(22, 163, 74, 0.08)",
+          tension: 0.35,
+        },
+        {
+          label: "Control",
+          data: snapshots.map((snapshot) =>
+            normalizeBeSci(snapshot.current_state.control),
+          ),
+          borderColor: "#ea580c",
+          backgroundColor: "rgba(234, 88, 12, 0.08)",
+          tension: 0.35,
+        },
+        {
+          label: "Flexibility",
+          data: snapshots.map((snapshot) =>
+            normalizeBeSci(snapshot.current_state.cognitive_flexibility),
+          ),
+          borderColor: "#9333ea",
+          backgroundColor: "rgba(147, 51, 234, 0.08)",
+          tension: 0.35,
+        },
+      ],
+    }
+  }, [besciHistory])
 
   const radarData = useMemo(() => {
     const labels = [
@@ -351,12 +468,92 @@ function Dashboard() {
 
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
-            Trajectory overview
+            BeSci language trajectory
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Longitudinal trends across key self-concept and value alignment
-            axes.
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Passive longitudinal signals estimated from check-ins and chat text.
           </Typography>
+          <Typography variant="body2" sx={{ mb: 3, color: "text.secondary" }}>
+            {besciCurrent?.summary ||
+              "BeSci snapshots will appear here once enough text history has been gathered."}
+          </Typography>
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={2}
+            sx={{ mb: 3 }}
+          >
+            <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+              <Typography variant="overline" color="text.secondary">
+                Current trajectory
+              </Typography>
+              <Typography variant="h4">
+                {besciCurrent
+                  ? `${normalizeBeSci(besciCurrent.trajectory_score)}`
+                  : "--"}
+              </Typography>
+            </Paper>
+            <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+              <Typography variant="overline" color="text.secondary">
+                Text samples
+              </Typography>
+              <Typography variant="h4">
+                {besciCurrent ? besciCurrent.sample_count : "--"}
+              </Typography>
+            </Paper>
+            <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+              <Typography variant="overline" color="text.secondary">
+                Chat / check-in mix
+              </Typography>
+              <Typography variant="h6">
+                {besciCurrent
+                  ? `${besciCurrent.chat_sample_count} chat, ${besciCurrent.checkin_sample_count} check-ins`
+                  : "--"}
+              </Typography>
+            </Paper>
+          </Stack>
+          {besciSeries ? (
+            <Box sx={{ height: 320 }}>
+              <Line
+                data={besciSeries}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: { legend: { position: "bottom" } },
+                  scales: { y: { min: 0, max: 100, ticks: { stepSize: 20 } } },
+                }}
+              />
+            </Box>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              Not enough stored BeSci history yet to draw a trajectory.
+            </Typography>
+          )}
+        </Paper>
+
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              mb: 1,
+              gap: 2,
+              flexWrap: "wrap",
+            }}
+          >
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
+                Trajectory overview
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Longitudinal trends across key self-concept and value alignment
+                axes.
+              </Typography>
+            </Box>
+            <Button variant="outlined" size="small" onClick={triggerTrajectory}>
+              Edit Trajectory
+            </Button>
+          </Box>
           <Box sx={{ height: 320 }}>
             <Line
               data={trajectoryData}
