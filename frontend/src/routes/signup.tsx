@@ -48,7 +48,17 @@ function SignUp() {
     },
   })
 
-  const onSubmit: SubmitHandler<UserRegisterForm> = (data) => {
+  const onSubmit: SubmitHandler<UserRegisterForm> = (data, event) => {
+    // Safari autofill doesn't trigger React onChange — read from DOM as fallback
+    const form = event?.target as HTMLFormElement | undefined
+    if (form) {
+      const inputs = form.querySelectorAll('input')
+      inputs.forEach((el) => {
+        if (el.name && el.value) {
+          (data as any)[el.name] = el.value
+        }
+      })
+    }
     signUpMutation.mutate(data)
   }
 

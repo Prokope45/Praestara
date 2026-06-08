@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "@tanstack/react-router"
 import { useState } from "react"
+import { enqueueSnackbar } from "notistack"
 
 import {
   type Body_login_login_access_token as AccessToken,
@@ -10,7 +11,7 @@ import {
   type UserRegister,
   UsersService,
 } from "@/client"
-import { handleError } from "@/utils"
+import { useHandleError } from "@/utils"
 
 const isLoggedIn = () => {
   return localStorage.getItem("access_token") !== null
@@ -20,25 +21,11 @@ const useAuth = () => {
   const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const handleError = useHandleError()
   const { data: user } = useQuery<UserPublic | null, Error>({
     queryKey: ["currentUser"],
     queryFn: UsersService.readUserMe,
     enabled: isLoggedIn(),
-  })
-
-  const signUpMutation = useMutation({
-    mutationFn: (data: UserRegister) =>
-      UsersService.registerUser({ requestBody: data }),
-
-    onSuccess: () => {
-      navigate({ to: "/login" })
-    },
-    onError: (err: ApiError) => {
-      handleError(err)
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] })
-    },
   })
 
   const login = async (data: AccessToken) => {
@@ -48,12 +35,43 @@ const useAuth = () => {
     localStorage.setItem("access_token", response.access_token)
   }
 
+  const signUpMutation = useMutation({
+    mutationFn: (data: UserRegister) =>
+      UsersService.registerUser({ requestBody: data }),
+
+    onSuccess: async (_user, variables) => {
+      // Auto-login after signup instead of redirecting to login page
+      try {
+        await login({ username: variables.email, password: variables.password })
+        enqueueSnackbar("Account created! Welcome to Praestara.", {
+          variant: "success",
+          anchorOrigin: { vertical: "top", horizontal: "right" },
+        })
+        navigate({ to: "/" })
+      } catch {
+        // Login failed after signup — redirect to login with a message
+        enqueueSnackbar("Account created! Please log in.", {
+          variant: "success",
+          anchorOrigin: { vertical: "top", horizontal: "right" },
+        })
+        navigate({ to: "/login" })
+      }
+    },
+    onError: (err: ApiError) => {
+      handleError(err)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] })
+    },
+  })
+
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: () => {
       navigate({ to: "/" })
     },
     onError: (err: ApiError) => {
+      setError("Incorrect email or password")
       handleError(err)
     },
   })

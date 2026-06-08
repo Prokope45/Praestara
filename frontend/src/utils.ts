@@ -1,3 +1,4 @@
+import { enqueueSnackbar } from 'notistack'
 import type { ApiError } from "./client"
 import useCustomToast from "./hooks/useCustomToast"
 
@@ -7,7 +8,7 @@ export const emailPattern = {
 }
 
 export const namePattern = {
-  value: /^[A-Za-z\s\u00C0-\u017F]{1,30}$/,
+  value: /^[A-Za-z\sÀ-ſ]{1,30}$/,
   message: "Invalid name",
 }
 
@@ -44,12 +45,28 @@ export const confirmPasswordRules = (
   return rules
 }
 
+// Plain function — uses notistack's standalone API (works outside React components)
 export const handleError = (err: ApiError) => {
-  const { showErrorToast } = useCustomToast()
   const errDetail = (err.body as any)?.detail
   let errorMessage = errDetail || "Something went wrong."
   if (Array.isArray(errDetail) && errDetail.length > 0) {
     errorMessage = errDetail[0].msg
   }
-  showErrorToast(errorMessage)
+  enqueueSnackbar(errorMessage, {
+    variant: 'error',
+    anchorOrigin: { vertical: 'top', horizontal: 'right' },
+  })
+}
+
+// Hook version — kept for useAuth.ts compatibility
+export const useHandleError = () => {
+  const { showErrorToast } = useCustomToast()
+  return (err: ApiError) => {
+    const errDetail = (err.body as any)?.detail
+    let errorMessage = errDetail || "Something went wrong."
+    if (Array.isArray(errDetail) && errDetail.length > 0) {
+      errorMessage = errDetail[0].msg
+    }
+    showErrorToast(errorMessage)
+  }
 }

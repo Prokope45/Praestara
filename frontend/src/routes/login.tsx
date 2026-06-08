@@ -42,10 +42,19 @@ function Login() {
     },
   })
 
-  const onSubmit: SubmitHandler<AccessToken> = async (data) => {
+  const onSubmit: SubmitHandler<AccessToken> = async (data, event) => {
     if (isSubmitting) return
 
     resetError()
+
+    // Safari autofill doesn't trigger React onChange — read from DOM as fallback
+    const form = event?.target as HTMLFormElement | undefined
+    if (form) {
+      const emailEl = form.querySelector('input[type="email"]') as HTMLInputElement | null
+      const passEl = form.querySelector('input[type="password"]') as HTMLInputElement | null
+      if (emailEl?.value) data.username = emailEl.value
+      if (passEl?.value) data.password = passEl.value
+    }
 
     try {
       await loginMutation.mutateAsync(data)

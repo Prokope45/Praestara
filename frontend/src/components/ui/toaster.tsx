@@ -1,15 +1,18 @@
+import type { PropsWithChildren } from 'react'
 import { SnackbarProvider } from 'notistack'
 
-export const Toaster = () => {
+export const Toaster = ({ children }: PropsWithChildren) => {
   return (
-    <SnackbarProvider 
+    <SnackbarProvider
       maxSnack={3}
       anchorOrigin={{
         vertical: 'top',
         horizontal: 'right',
       }}
       autoHideDuration={5000}
-    />
+    >
+      {children}
+    </SnackbarProvider>
   )
 }
 

@@ -11,7 +11,11 @@ from app.models import (
     Orientation,
 )
 
-engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
+engine = create_engine(
+    str(settings.SQLALCHEMY_DATABASE_URI),
+    pool_pre_ping=True,
+    pool_recycle=300,
+)
 
 
 # make sure all SQLModel models are imported (app.models) before initializing DB
