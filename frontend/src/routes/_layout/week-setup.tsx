@@ -2,10 +2,10 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   Container,
   Grid,
   Paper,
-  Slider,
   Stack,
   TextField,
   Typography,
@@ -21,6 +21,12 @@ export const Route = createFileRoute("/_layout/week-setup")({
   component: WeekSetup,
 })
 
+const WEEK_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+const DAY_SHORT: Record<string, string> = {
+  Monday: "Mon", Tuesday: "Tue", Wednesday: "Wed", Thursday: "Thu",
+  Friday: "Fri", Saturday: "Sat", Sunday: "Sun",
+}
+
 function WeekSetup() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -28,10 +34,15 @@ function WeekSetup() {
   const [scheduleNote, setScheduleNote] = useState("")
   const [reflection, setReflection] = useState("")
   const [goalNotes, setGoalNotes] = useState<Record<string, string>>({})
-  const [targetOverrides, setTargetOverrides] = useState<Record<string, number>>({})
+  const [targetOverrides] = useState<Record<string, number>>({})
+  const [selectedDays, setSelectedDays] = useState<Record<string, string[]>>({})
   const [scheduleDays, setScheduleDays] = useState<
     { day: string; available_hours: number; notes?: string | null }[]
   >([])
+
+  // Normalise day names from API to match WEEK_DAYS casing
+  const normDay = (d: string) =>
+    WEEK_DAYS.find((w) => w.toLowerCase() === d.toLowerCase()) ?? d
 
   const flowQuery = useQuery({
     queryKey: ["app-flow"],
@@ -64,21 +75,37 @@ function WeekSetup() {
   const proposals = setupQuery.data?.proposed_goals ?? []
 
   useEffect(() => {
-    if (!setupQuery.data?.schedule_days || scheduleDays.length > 0) {
-      return
-    }
+    if (!setupQuery.data?.schedule_days || scheduleDays.length > 0) return
     setScheduleDays(setupQuery.data.schedule_days)
   }, [scheduleDays.length, setupQuery.data?.schedule_days])
 
+  // Seed day bubbles from suggested_days on first load
+  useEffect(() => {
+    if (!setupQuery.data?.proposed_goals || Object.keys(selectedDays).length > 0) return
+    const init: Record<string, string[]> = {}
+    for (const p of setupQuery.data.proposed_goals) {
+      init[p.goal_id] = (p.suggested_days ?? []).map(normDay)
+    }
+    setSelectedDays(init)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setupQuery.data?.proposed_goals])
+
   const submit = () => {
     mutation.mutate({
-      goals: proposals.map((proposal) => ({
-        goal_id: proposal.goal_id,
-        accepted: true,
-        target_value: targetOverrides[proposal.goal_id] ?? proposal.target_value,
-        intensity_level: proposal.intensity_level,
-        note: goalNotes[proposal.goal_id] || undefined,
-      })),
+      goals: proposals.map((proposal) => {
+        // day bubbles are the source of truth for target count
+        const days = selectedDays[proposal.goal_id]
+        const target = days !== undefined
+          ? Math.max(1, days.length)
+          : (targetOverrides[proposal.goal_id] ?? proposal.target_value)
+        return {
+          goal_id: proposal.goal_id,
+          accepted: true,
+          target_value: target,
+          intensity_level: proposal.intensity_level,
+          note: goalNotes[proposal.goal_id] || undefined,
+        }
+      }),
       schedule_days: scheduleDays,
       schedule_note: scheduleNote || undefined,
       reflection: reflection || undefined,
@@ -191,7 +218,19 @@ function WeekSetup() {
             </Paper>
 
             {proposals.map((proposal) => {
-              const currentTarget = targetOverrides[proposal.goal_id] ?? proposal.target_value
+              const days = selectedDays[proposal.goal_id] ?? []
+              const sessionCount = Math.max(1, days.length)
+
+              const toggleDay = (day: string) => {
+                setSelectedDays((prev) => {
+                  const current = prev[proposal.goal_id] ?? []
+                  const next = current.includes(day)
+                    ? current.filter((d) => d !== day)
+                    : [...current, day]
+                  return { ...prev, [proposal.goal_id]: next }
+                })
+              }
+
               return (
                 <Paper key={proposal.goal_id} sx={{ p: 3 }}>
                   <Stack spacing={2}>
@@ -201,31 +240,28 @@ function WeekSetup() {
                         {proposal.rationale}
                       </Typography>
                     </Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Suggested days: {proposal.suggested_days.join(", ")}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Confidence signal: {Math.round(proposal.confidence_signal * 100)} / 100
-                    </Typography>
+
                     <Box>
                       <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                        Target: {currentTarget} {proposal.target_unit}
+                        Pick your days — {sessionCount} {proposal.target_unit} per week
                       </Typography>
-                      <Slider
-                        value={currentTarget}
-                        min={1}
-                        max={7}
-                        step={1}
-                        marks
-                        valueLabelDisplay="auto"
-                        onChange={(_, value) =>
-                          setTargetOverrides((current) => ({
-                            ...current,
-                            [proposal.goal_id]: value as number,
-                          }))
-                        }
-                      />
+                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                        {WEEK_DAYS.map((day) => {
+                          const selected = days.includes(day)
+                          return (
+                            <Chip
+                              key={day}
+                              label={DAY_SHORT[day]}
+                              onClick={() => toggleDay(day)}
+                              color={selected ? "primary" : "default"}
+                              variant={selected ? "filled" : "outlined"}
+                              sx={{ fontWeight: selected ? 700 : 400, minWidth: 48 }}
+                            />
+                          )
+                        })}
+                      </Box>
                     </Box>
+
                     <TextField
                       label="History / friction / context"
                       multiline

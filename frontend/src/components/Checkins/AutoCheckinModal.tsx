@@ -92,7 +92,12 @@ function AutoCheckinModal() {
     mutationFn: (payload: { type: "morning" | "evening"; text: string }) =>
       CheckinsService.createCheckin({ requestBody: payload }),
     onSuccess: (response) => {
-      setReply(response.reply)
+      if (response.reply) {
+        setReply(response.reply)
+      } else {
+        // No reflection to show — close immediately
+        handleClose()
+      }
     },
   })
 
@@ -143,20 +148,23 @@ function AutoCheckinModal() {
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button variant="outlined" onClick={handleClose}>
-          Dismiss
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={mutation.isPending || !text.trim() || Boolean(reply)}
-        >
-          {mutation.isPending ? "Submitting..." : "Submit"}
-        </Button>
-        {reply && (
-          <Button variant="contained" color="success" onClick={handleClose}>
-            Continue
+        {reply ? (
+          <Button variant="contained" color="success" onClick={handleClose} fullWidth>
+            Done
           </Button>
+        ) : (
+          <>
+            <Button variant="outlined" onClick={handleClose}>
+              Dismiss
+            </Button>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={mutation.isPending || !text.trim()}
+            >
+              {mutation.isPending ? "Submitting..." : "Submit"}
+            </Button>
+          </>
         )}
       </DialogActions>
     </Dialog>

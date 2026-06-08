@@ -51,7 +51,7 @@ ONBOARDING_QUESTIONS: list[OnboardingQuestionSpec] = [
     OnboardingQuestionSpec("How many minutes before bed do you usually get off screens", ScaleType.CUSTOM_NUMERIC, 0, 180, "minutes"),
     OnboardingQuestionSpec("On how many nights each week is your bedtime within the same 30-minute window", ScaleType.CUSTOM_NUMERIC, 0, 7, "nights"),
     OnboardingQuestionSpec("On how many mornings each week is your wake time within the same 30-minute window", ScaleType.CUSTOM_NUMERIC, 0, 7, "mornings"),
-    OnboardingQuestionSpec("How many hours each week feel truly discretionary after work, care, and commute", ScaleType.CUSTOM_NUMERIC, 0, 60, "hours"),
+    OnboardingQuestionSpec("How many hours of free time do you have in a typical week", ScaleType.CUSTOM_NUMERIC, 0, 60, "hours"),
     OnboardingQuestionSpec("My current week has enough openings to cook or prep meals on purpose", ScaleType.LIKERT_5),
     OnboardingQuestionSpec("Which meal pattern is most realistic for you right now: cooking daily, meal prep, or a mix", ScaleType.TEXT),
     OnboardingQuestionSpec("Describe your average weekly schedule, including fixed commitments and open windows", ScaleType.TEXT),
