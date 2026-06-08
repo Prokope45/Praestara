@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import datetime
 
@@ -15,6 +16,8 @@ from app.goal_scaffold.self_concept.models import (
     QualitativeObservation,
     SelfConceptSnapshot,
 )
+
+logger = logging.getLogger(__name__)
 
 _DOMAIN = "self_concept"
 
@@ -81,8 +84,17 @@ def record_observation(
     text: str,
     context: ObservationContext,
 ) -> QualitativeObservation:
+    from app.ai_utils.besci_client import call_mind_state
+    from app.goal_scaffold.resource_profile import service as resource_service
+    from app.goal_scaffold.self_concept.besci_bridge import (
+        besci_to_dimension_targets,
+        blend_dimensions,
+        extract_mind_state,
+    )
+
     current_dims = _get_current_dimension_map(session, user_id)
 
+    # --- stub internal decoder (baseline signal) ---
     decoding = decode_qualitative_text(
         QualitativeDecodingRequest(
             user_id=user_id,
@@ -92,17 +104,44 @@ def record_observation(
         )
     )
 
+    # --- BeSci enrichment (primary quantitative signal) ---
+    # Fetch survey-derived user context so BeSci LLM interprets this text
+    # in the context of who this person is, what they value, and how they regulate.
+    profile = resource_service.get_or_create_profile(session, user_id)
+    besci_raw = call_mind_state([text], user_context=profile.besci_context_text)
+    besci_ms = extract_mind_state(besci_raw) if besci_raw else None
+    besci_dim_updates: dict[str, float] = {}
+    decoded_by = "stub"
+
+    if besci_ms:
+        targets = besci_to_dimension_targets(besci_ms)
+        besci_dim_updates = blend_dimensions(current_dims, targets)
+        decoded_by = "besci_v4.6"
+        logger.info(
+            "BeSci updated %d dimensions for user %s (context=%s)",
+            len(besci_dim_updates), user_id, context.value,
+        )
+
+    # merge: besci overrides stub where present
+    merged_dims = {**decoding.decoded_dimensions, **{k: v - current_dims.get(k, 0.5) for k, v in besci_dim_updates.items()}}
+
     obs = QualitativeObservation(
         user_id=user_id,
         text=text,
         context=context,
-        decoded_dimensions=decoding.decoded_dimensions,
-        decoded_by="stub",
+        decoded_dimensions={
+            **decoding.decoded_dimensions,
+            **(besci_ms or {}),  # store raw BeSci mind_state alongside stub dims
+        },
+        decoded_by=decoded_by,
     )
     session.add(obs)
     session.flush()
 
+    # apply stub deltas
     for dim_name, delta in decoding.decoded_dimensions.items():
+        if dim_name in besci_dim_updates:
+            continue  # BeSci takes precedence
         stmt = select(ConceptDimension).where(
             ConceptDimension.user_id == user_id,
             ConceptDimension.name == dim_name,
@@ -110,6 +149,16 @@ def record_observation(
         dim = session.exec(stmt).first()
         if dim:
             new_value = max(0.0, min(1.0, dim.value + delta))
+            update_dimension(session, dim.id, new_value, DimensionSource.OBSERVATION)
+
+    # apply BeSci-derived absolute targets
+    for dim_name, new_value in besci_dim_updates.items():
+        stmt = select(ConceptDimension).where(
+            ConceptDimension.user_id == user_id,
+            ConceptDimension.name == dim_name,
+        )
+        dim = session.exec(stmt).first()
+        if dim:
             update_dimension(session, dim.id, new_value, DimensionSource.OBSERVATION)
 
     emit(
@@ -120,10 +169,25 @@ def record_observation(
         payload={
             "observation_id": str(obs.id),
             "context": context.value,
+            "decoded_by": decoded_by,
             "decoded_dimensions": decoding.decoded_dimensions,
+            "besci_updates": besci_dim_updates,
         },
     )
     return obs
+
+
+def get_baseline_snapshot(
+    session: Session,
+    user_id: uuid.UUID,
+) -> SelfConceptSnapshot | None:
+    """Return the survey-completion baseline snapshot, or None if not yet set."""
+    return session.exec(
+        select(SelfConceptSnapshot).where(
+            SelfConceptSnapshot.user_id == user_id,
+            SelfConceptSnapshot.is_baseline == True,  # noqa: E712
+        )
+    ).first()
 
 
 def compute_snapshot(
@@ -131,6 +195,7 @@ def compute_snapshot(
     user_id: uuid.UUID,
     cycle_id: uuid.UUID | None = None,
     identity_consistency_index: float | None = None,
+    is_baseline: bool = False,
 ) -> SelfConceptSnapshot:
     dims = _get_current_dimension_map(session, user_id)
 
@@ -139,6 +204,7 @@ def compute_snapshot(
         dimensions=dims,
         identity_consistency_index=identity_consistency_index,
         cycle_id=cycle_id,
+        is_baseline=is_baseline,
     )
     session.add(snapshot)
     session.flush()
@@ -152,6 +218,7 @@ def compute_snapshot(
             "snapshot_id": str(snapshot.id),
             "dimension_count": len(dims),
             "cycle_id": str(cycle_id) if cycle_id else None,
+            "is_baseline": is_baseline,
         },
     )
     return snapshot

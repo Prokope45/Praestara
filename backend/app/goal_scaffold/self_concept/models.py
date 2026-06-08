@@ -91,6 +91,9 @@ class SelfConceptSnapshot(SQLModel, table=True):
     cycle_id: uuid.UUID | None = Field(
         default=None, foreign_key="gs_weekly_cycle.id", nullable=True
     )
+    # Marks the snapshot taken immediately after onboarding survey completion.
+    # All future snapshots are compared against this to compute deltas.
+    is_baseline: bool = Field(default=False)
 
 
 class SelfConceptSnapshotPublic(SQLModel):
@@ -100,6 +103,7 @@ class SelfConceptSnapshotPublic(SQLModel):
     identity_consistency_index: float | None
     computed_at: datetime
     cycle_id: uuid.UUID | None
+    is_baseline: bool
 
 
 # ---------------------------------------------------------------------------

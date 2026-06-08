@@ -303,13 +303,126 @@ def _seed_self_concept(
                 DimensionSource.QUESTIONNAIRE,
             )
 
+    # Build and persist user context for BeSci — all subsequent observations
+    # will prepend this so the LLM interprets text in light of this person's
+    # survey-declared values, identity, coping patterns, and psychological baseline.
+    numeric_answers = _collect_numeric_answers(answer_rows)
+    domain_ratings = _collect_domain_ratings(answer_rows)
+    besci_ctx = _build_besci_context_text(answer_rows, dimension_values, numeric_answers, domain_ratings)
+    resource_service.update_profile(
+        session,
+        user_id,
+        UserResourceProfileUpdate(besci_context_text=besci_ctx),
+    )
+
     ici = self_concept_service.compute_ici(session, user_id, cycle_id)
+    # is_baseline=True marks this as the survey-completion anchor point —
+    # all future snapshots are compared against this to compute deltas.
     self_concept_service.compute_snapshot(
         session,
         user_id,
         cycle_id=cycle_id,
         identity_consistency_index=ici.value,
+        is_baseline=True,
     )
+
+
+def _build_besci_context_text(
+    answer_rows: list[tuple[Answer, Question]],
+    dimension_values: dict[str, float],
+    numeric_answers: dict[str, float],
+    domain_ratings: dict[str, dict[str, float]],
+) -> str:
+    """Build a structured user-profile preamble for BeSci LLM calls.
+
+    This string is prepended to every observation text so BeSci can
+    interpret behavioral signals in the context of who this person is,
+    what they value, and how they tend to regulate.
+    """
+    # --- text answers ---
+    text_map: dict[str, str] = {}
+    for answer, question in answer_rows:
+        if answer.text_response and question.scale_type not in ("DOMAIN_RATING",):
+            text_map[question.question_text] = answer.text_response.strip()
+
+    def _t(key: str, fallback: str = "") -> str:
+        v = text_map.get(key, fallback)
+        return v[:300] if v else fallback  # cap token usage
+
+    values_text = _t("In your own words, what feels most worth building, protecting, or moving toward in your life right now")
+    authenticity_text = _t("When you feel most like yourself, what are you usually doing")
+    regret_text = _t("What do you tend to regret not doing more than doing")
+    identity_aspiration = _t("In a few sentences, describe the kind of person you are trying to become")
+    coping_text = _t("When you are under stress, what tends to help you return to yourself")
+
+    # --- psychological baseline (0=low 1=high) ---
+    def _pct(v: float) -> str:
+        if v >= 0.75:
+            return "high"
+        if v >= 0.45:
+            return "moderate"
+        return "low"
+
+    se = dimension_values.get("self_efficacy", 0.5)
+    gc = dimension_values.get("goal_clarity", 0.5)
+    mo = dimension_values.get("motivation", 0.5)
+    re = dimension_values.get("resilience", 0.5)
+    op = dimension_values.get("optimism", 0.5)
+    wb = dimension_values.get("well_being", 0.5)
+    sl = dimension_values.get("stress_load", 0.5)
+
+    psych_lines = [
+        f"  self-efficacy={se:.2f} ({_pct(se)})",
+        f"  goal-clarity={gc:.2f} ({_pct(gc)})",
+        f"  motivation={mo:.2f} ({_pct(mo)})",
+        f"  resilience={re:.2f} ({_pct(re)})",
+        f"  optimism={op:.2f} ({_pct(op)})",
+        f"  well-being={wb:.2f} ({_pct(wb)})",
+        f"  stress-load={sl:.2f} ({_pct(sl)})",
+    ]
+
+    # --- top domain priorities ---
+    priorities = sorted(
+        [
+            (k, _priority(v.get("importance", 0.0), v.get("consistency", 0.0)))
+            for k, v in domain_ratings.items()
+        ],
+        key=lambda x: x[1],
+        reverse=True,
+    )[:5]
+    domain_lines = [f"  {name}: {score:.2f}" for name, score in priorities]
+
+    # --- sleep / schedule facts ---
+    sleep_h = numeric_answers.get(SLEEP_HOURS_QUESTION, 0)
+    sleep_n = numeric_answers.get(SLEEP_NIGHTS_QUESTION, 0)
+    disc_h = numeric_answers.get(DISCRETIONARY_HOURS_QUESTION, 0)
+
+    parts = ["[USER PROFILE — baseline context for behavioral inference]"]
+
+    if values_text:
+        parts.append(f"Core values/direction: {values_text}")
+    if authenticity_text:
+        parts.append(f"Authentic self (feels most like themselves when): {authenticity_text}")
+    if identity_aspiration:
+        parts.append(f"Identity aspiration: {identity_aspiration}")
+    if regret_text:
+        parts.append(f"Tends to regret: {regret_text}")
+    if coping_text:
+        parts.append(f"Stress coping strategy: {coping_text}")
+
+    parts.append("Psychological baseline (survey-derived):\n" + "\n".join(psych_lines))
+
+    if domain_lines:
+        parts.append("Top life domains by priority:\n" + "\n".join(domain_lines))
+
+    if sleep_h or sleep_n:
+        parts.append(
+            f"Sleep: ~{sleep_h:.0f}h/night, adequate on {sleep_n:.0f}/7 nights; "
+            f"{disc_h:.0f}h/week discretionary time"
+        )
+
+    parts.append("[END USER PROFILE]")
+    return "\n\n".join(parts)
 
 
 def _compute_likert_dimension(

@@ -23,6 +23,12 @@ class UserResourceProfile(SQLModel, table=True):
     cooking_access: str = Field(default="full_kitchen", max_length=50)
     time_variability: float = Field(default=0.5, ge=0.0, le=1.0)
     stress_baseline: float = Field(default=0.5, ge=0.0, le=1.0)
+    # Structured user-profile text built from survey answers at onboarding.
+    # Prepended to every BeSci call so the LLM interprets text in the context
+    # of this specific person's values, history, and psychological baseline.
+    besci_context_text: str | None = Field(
+        default=None, sa_column=Column(sa.Text, nullable=True)
+    )
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -40,6 +46,7 @@ class UserResourceProfileUpdate(SQLModel):
     cooking_access: str | None = Field(default=None, max_length=50)
     time_variability: float | None = Field(default=None, ge=0.0, le=1.0)
     stress_baseline: float | None = Field(default=None, ge=0.0, le=1.0)
+    besci_context_text: str | None = None
 
 
 class UserResourceProfilePublic(SQLModel):
