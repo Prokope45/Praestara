@@ -249,6 +249,21 @@ def create_checkin(
     session.commit()
     session.refresh(response)
 
+    # --- BeSci latent state update (fire-and-update after commit) ---
+    try:
+        from app.goal_scaffold.enums import ObservationContext
+        from app.goal_scaffold.self_concept import service as sc_service
+        ctx = (
+            ObservationContext.MORNING_CHECKIN
+            if payload.type == "morning"
+            else ObservationContext.EVENING_CHECKIN
+        )
+        sc_service.record_observation(session, current_user.id, payload.text, ctx)
+        session.commit()
+    except Exception:
+        import logging
+        logging.getLogger(__name__).warning("BeSci checkin update failed", exc_info=True)
+
     return CheckinResponse(reply=reply, checkin_id=str(response.id))
 
 

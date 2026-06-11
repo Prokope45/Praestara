@@ -98,6 +98,9 @@ class ObservationContext(str, Enum):
     WEEKLY_REFLECTION = "weekly_reflection"
     GOAL_NOTE = "goal_note"
     HABIT_NOTE = "habit_note"
+    MORNING_CHECKIN = "morning_checkin"
+    EVENING_CHECKIN = "evening_checkin"
+    AI_CONVERSATION = "ai_conversation"
 
 
 class DimensionSource(str, Enum):

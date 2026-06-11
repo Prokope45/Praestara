@@ -109,6 +109,11 @@ class Settings(BaseSettings):
     AI_TIMEOUT_SECONDS: int = 120
     AI_ENABLE_ENCRYPTION: bool = True
 
+    # BeSci Service Configuration
+    BESCI_URL: str = "https://praestara-besci.fly.dev"
+    BESCI_TIMEOUT_SECONDS: int = 15
+    BESCI_WEIGHT: float = 0.35  # how strongly BeSci signal moves latent dimensions (0..1)
+
     def _check_default_secret(self, var_name: str, value: str | None) -> None:
         if value == "changethis":
             message = (

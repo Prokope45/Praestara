@@ -1,0 +1,42 @@
+# Praestara Backend — Fly.io config
+app = "praestara-api"
+primary_region = "dfw"
+
+[build]
+
+[env]
+  ENVIRONMENT = "production"
+  POSTGRES_PORT = "5432"
+  POSTGRES_DB = "praestara"
+  POSTGRES_USER = "praestara"
+  FRONTEND_HOST = "https://praestara.app"
+  BACKEND_CORS_ORIGINS = "https://praestara.app,https://www.praestara.app"
+
+[[services]]
+  internal_port = 8000
+  protocol = "tcp"
+  processes = ["app"]
+
+  [[services.ports]]
+    handlers = ["http"]
+    port = 80
+    force_https = true
+
+  [[services.ports]]
+    handlers = ["tls", "http"]
+    port = 443
+
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
+
+[deploy]
+  release_command = "bash scripts/prestart.sh"
+
+[processes]
+  app = "fastapi run --workers 1 app/main.py"

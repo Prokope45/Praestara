@@ -522,6 +522,83 @@ class Engine89Result(Engine89ResultBase, table=True):
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
     owner: Optional["User"] = Relationship(back_populates="engine89_results")
+
+
+# ---------------------------------------------------------------------------
+# Program system
+# ---------------------------------------------------------------------------
+
+class ProgramMemberRole(str, Enum):
+    ADMIN = "admin"
+    MEMBER = "member"
+
+
+class ProgramBase(SQLModel):
+    name: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, sa_type=sa.Text)
+    is_active: bool = True
+
+
+class ProgramCreate(ProgramBase):
+    pass
+
+
+class ProgramUpdate(SQLModel):
+    name: str | None = Field(default=None, max_length=255)
+    description: str | None = None
+    is_active: bool | None = None
+
+
+class Program(ProgramBase, table=True):
+    __tablename__ = "program"
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_by_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), sa_type=sa.DateTime(timezone=True))
+    memberships: list["ProgramMembership"] = Relationship(back_populates="program", cascade_delete=True)
+
+
+class ProgramPublic(ProgramBase):
+    id: uuid.UUID
+    created_by_id: uuid.UUID
+    created_at: datetime
+
+
+class ProgramsPublic(SQLModel):
+    data: list[ProgramPublic]
+    count: int
+
+
+class ProgramMembershipBase(SQLModel):
+    role: ProgramMemberRole = ProgramMemberRole.MEMBER
+    is_graduated: bool = False
+
+
+class ProgramMembershipCreate(SQLModel):
+    user_id: uuid.UUID
+    role: ProgramMemberRole = ProgramMemberRole.MEMBER
+
+
+class ProgramMembership(ProgramMembershipBase, table=True):
+    __tablename__ = "program_membership"
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    program_id: uuid.UUID = Field(foreign_key="program.id", nullable=False, ondelete="CASCADE")
+    user_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    enrolled_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), sa_type=sa.DateTime(timezone=True))
+    graduated_at: datetime | None = Field(default=None, sa_type=sa.DateTime(timezone=True))
+    program: Optional["Program"] = Relationship(back_populates="memberships")
+
+
+class ProgramMembershipPublic(ProgramMembershipBase):
+    id: uuid.UUID
+    program_id: uuid.UUID
+    user_id: uuid.UUID
+    enrolled_at: datetime
+    graduated_at: datetime | None
+
+
+class ProgramMembershipsPublic(SQLModel):
+    data: list[ProgramMembershipPublic]
+    count: int
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc),
         sa_type=sa.DateTime(timezone=True),

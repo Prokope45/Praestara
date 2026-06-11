@@ -5,9 +5,10 @@ Integrates with the Koios RAG AI service for intelligent responses.
 
 import logging
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from sqlmodel import Session
 
-from app.api.deps import CurrentUser
+from app.api.deps import CurrentUser, SessionDep
 from app.core.config import settings
 from app.models import Message
 from app.ai_utils.ai_client import ai_client
@@ -39,7 +40,7 @@ class ClearHistoryResponse:
 
 
 @router.post("/chat", response_model=Message)
-def chat_with_ai(*, current_user: CurrentUser, payload: Message) -> Message:
+def chat_with_ai(*, session: SessionDep, current_user: CurrentUser, payload: Message) -> Message:
     """Send a message to the AI service and return the reply.
 
     This endpoint integrates with the Koios RAG AI service, which provides
@@ -76,6 +77,17 @@ def chat_with_ai(*, current_user: CurrentUser, payload: Message) -> Message:
             query=payload.message,
             temperature=settings.LLM_TEMPERATURE,
         )
+
+        # BeSci: update latent state from user message text
+        try:
+            from app.goal_scaffold.enums import ObservationContext
+            from app.goal_scaffold.self_concept import service as sc_service
+            sc_service.record_observation(
+                session, current_user.id, payload.message, ObservationContext.AI_CONVERSATION
+            )
+            session.commit()
+        except Exception:
+            logger.warning("BeSci AI conversation update failed", exc_info=True)
 
         return Message(message=generation)
 
