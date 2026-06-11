@@ -85,7 +85,6 @@ def record_observation(
     context: ObservationContext,
 ) -> QualitativeObservation:
     from app.ai_utils.besci_client import call_mind_state
-    from app.goal_scaffold.resource_profile import service as resource_service
     from app.goal_scaffold.self_concept.besci_bridge import (
         besci_to_dimension_targets,
         blend_dimensions,
@@ -105,17 +104,19 @@ def record_observation(
     )
 
     # --- BeSci enrichment (primary quantitative signal) ---
-    # Fetch survey-derived user context so BeSci LLM interprets this text
-    # in the context of who this person is, what they value, and how they regulate.
-    profile = resource_service.get_or_create_profile(session, user_id)
-    besci_raw = call_mind_state([text], user_context=profile.besci_context_text)
+    # Raw text only: /mind-state is deterministic, profile context would
+    # be scored as user text. besci_context_text is reserved for LLM paths.
+    besci_raw = call_mind_state([text])
     besci_ms = extract_mind_state(besci_raw) if besci_raw else None
     besci_dim_updates: dict[str, float] = {}
     decoded_by = "stub"
 
     if besci_ms:
         targets = besci_to_dimension_targets(besci_ms)
-        besci_dim_updates = blend_dimensions(current_dims, targets)
+        # scale blend by BeSci's own inference confidence
+        besci_dim_updates = blend_dimensions(
+            current_dims, targets, confidence=besci_ms.get("confidence")
+        )
         decoded_by = "besci_v4.6"
         logger.info(
             "BeSci updated %d dimensions for user %s (context=%s)",
@@ -183,10 +184,12 @@ def get_baseline_snapshot(
 ) -> SelfConceptSnapshot | None:
     """Return the survey-completion baseline snapshot, or None if not yet set."""
     return session.exec(
-        select(SelfConceptSnapshot).where(
+        select(SelfConceptSnapshot)
+        .where(
             SelfConceptSnapshot.user_id == user_id,
             SelfConceptSnapshot.is_baseline == True,  # noqa: E712
         )
+        .order_by(SelfConceptSnapshot.computed_at.asc())
     ).first()
 
 

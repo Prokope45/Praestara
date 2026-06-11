@@ -21,24 +21,25 @@ def _sample(text: str) -> dict[str, str]:
 
 
 def _with_context(text: str, user_context: str | None) -> str:
-    """Prepend user profile preamble so BeSci LLM interprets text in context."""
+    """Prepend user profile preamble so an LLM interprets text in context."""
     if not user_context:
         return text
     return f"{user_context}\n\n[CURRENT OBSERVATION]\n{text}"
 
 
-def call_mind_state(texts: list[str], user_context: str | None = None) -> dict[str, Any] | None:
+def call_mind_state(texts: list[str]) -> dict[str, Any] | None:
     """POST texts to BeSci /mind-state. Returns parsed JSON or None on failure.
 
-    user_context: survey-derived user profile string. If provided, prepended
-    to each text sample so the LLM interprets signals through this person's
-    declared values, identity, and psychological baseline.
+    Sends raw text only. /mind-state is a deterministic (lexicon-based)
+    analyzer — prepending profile context would be scored as user text
+    and pollute the signal. User context belongs only on LLM-backed
+    endpoints (call_analyze).
     """
     if not texts:
         return None
 
     url = f"{settings.BESCI_URL.rstrip('/')}/mind-state"
-    payload = {"samples": [_sample(_with_context(t, user_context)) for t in texts if t.strip()]}
+    payload = {"samples": [_sample(t) for t in texts if t.strip()]}
 
     try:
         with httpx.Client(timeout=settings.BESCI_TIMEOUT_SECONDS) as client:
@@ -54,13 +55,18 @@ def call_mind_state(texts: list[str], user_context: str | None = None) -> dict[s
     return None
 
 
-def call_analyze(texts: list[str]) -> dict[str, Any] | None:
-    """POST texts to BeSci /analyze. Returns parsed JSON or None on failure."""
+def call_analyze(texts: list[str], user_context: str | None = None) -> dict[str, Any] | None:
+    """POST texts to BeSci /analyze. Returns parsed JSON or None on failure.
+
+    user_context: survey-derived user profile string. Safe to prepend here —
+    /analyze can route through an LLM that interprets the profile as context
+    rather than scoring it as user text.
+    """
     if not texts:
         return None
 
     url = f"{settings.BESCI_URL.rstrip('/')}/analyze"
-    payload = {"samples": [_sample(t) for t in texts if t.strip()]}
+    payload = {"samples": [_sample(_with_context(t, user_context)) for t in texts if t.strip()]}
 
     try:
         with httpx.Client(timeout=settings.BESCI_TIMEOUT_SECONDS) as client:

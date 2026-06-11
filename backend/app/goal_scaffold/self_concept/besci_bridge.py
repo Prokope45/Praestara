@@ -1,16 +1,20 @@
 """BeSci → Praestara latent dimension bridge.
 
 Takes a BeSci mind_state response and maps it onto Praestara's
-ConceptDimension names as a delta dict. The caller decides the
-blending weight (settings.BESCI_WEIGHT).
+ConceptDimension names as target values. The caller decides the
+blending weight (settings.BESCI_WEIGHT), optionally scaled by the
+model's own confidence score.
 
-BeSci mind_state dimensions (all -1..1 signed floats):
-  arousal, valence, control, volatility,
-  social_orientation, reward_seeking, cognitive_flexibility, self_focus
+BeSci deterministic_mind_state_v1 dimensions (all 0..1 unipolar loads):
+  affective_load, control_capacity, volatility_load, threat_weighting,
+  reward_drive, social_salience, self_focus_load, cognitive_flexibility,
+  agency_coherence, perspective_rigidity, behavioral_activation,
+  avoidance_pressure, confidence
 
 Praestara ConceptDimension names (0..1 bounded):
   vitality, recovery, motivation, self_efficacy, goal_clarity,
-  stress_load, nutrition_stability, adherence_confidence, constraint_pressure
+  stress_load, nutrition_stability, adherence_confidence,
+  constraint_pressure, resilience, optimism, well_being
 """
 from __future__ import annotations
 
@@ -23,37 +27,51 @@ logger = logging.getLogger(__name__)
 
 # Maps each BeSci dim to (praestara_dim, weight).
 # Multiple BeSci dims can contribute to one Praestara dim — they are summed
-# then normalised. Negative weight = inverse relationship.
+# then normalised. Negative weight = inverse relationship (value flipped).
+# BeSci values are already 0..1; no re-normalisation needed.
 _MAPPING: list[tuple[str, str, float]] = [
-    # arousal raises vitality and stress_load
-    ("arousal",             "vitality",             0.55),
-    ("arousal",             "stress_load",          0.30),
-    # valence raises motivation, self_efficacy, adherence_confidence
-    ("valence",             "motivation",           0.60),
-    ("valence",             "self_efficacy",        0.40),
-    ("valence",             "adherence_confidence", 0.30),
-    # control → self_efficacy, goal_clarity, adherence_confidence
-    ("control",             "self_efficacy",        0.55),
-    ("control",             "goal_clarity",         0.45),
-    ("control",             "adherence_confidence", 0.35),
-    # volatility → constraint_pressure (+), adherence_confidence (-)
-    ("volatility",          "constraint_pressure",  0.50),
-    ("volatility",          "adherence_confidence", -0.40),
-    # reward_seeking → motivation
-    ("reward_seeking",      "motivation",           0.45),
-    # cognitive_flexibility → goal_clarity, self_efficacy
-    ("cognitive_flexibility", "goal_clarity",       0.50),
-    ("cognitive_flexibility", "self_efficacy",      0.35),
-    # self_focus → goal_clarity (+), stress_load (+slight)
-    ("self_focus",          "goal_clarity",         0.30),
-    ("self_focus",          "stress_load",          0.15),
-    # social_orientation → adherence_confidence (+slight)
-    ("social_orientation",  "adherence_confidence", 0.20),
+    # affective_load: emotional burden carried in the text
+    ("affective_load",        "stress_load",          0.60),
+    ("affective_load",        "well_being",           -0.50),
+    ("affective_load",        "vitality",             -0.30),
+    # control_capacity: sense of being able to steer the situation
+    ("control_capacity",      "self_efficacy",        0.55),
+    ("control_capacity",      "resilience",           0.40),
+    ("control_capacity",      "adherence_confidence", 0.35),
+    # volatility_load: instability / churn in circumstances
+    ("volatility_load",       "constraint_pressure",  0.50),
+    ("volatility_load",       "resilience",           -0.35),
+    ("volatility_load",       "adherence_confidence", -0.30),
+    # threat_weighting: how threat-colored the appraisal is
+    ("threat_weighting",      "stress_load",          0.40),
+    ("threat_weighting",      "optimism",             -0.50),
+    # reward_drive: pull toward rewarding outcomes
+    ("reward_drive",          "motivation",           0.45),
+    ("reward_drive",          "optimism",             0.20),
+    # self_focus_load: rumination-leaning self-focus
+    ("self_focus_load",       "stress_load",          0.15),
+    # cognitive_flexibility: capacity to reframe
+    ("cognitive_flexibility", "goal_clarity",         0.40),
+    ("cognitive_flexibility", "resilience",           0.35),
+    # agency_coherence: ownership of one's own actions
+    ("agency_coherence",      "self_efficacy",        0.50),
+    ("agency_coherence",      "goal_clarity",         0.45),
+    ("agency_coherence",      "optimism",             0.30),
+    # perspective_rigidity: stuckness in one frame
+    ("perspective_rigidity",  "goal_clarity",         -0.20),
+    ("perspective_rigidity",  "resilience",           -0.25),
+    # behavioral_activation: doing vs. withdrawing
+    ("behavioral_activation", "motivation",           0.50),
+    ("behavioral_activation", "vitality",             0.45),
+    ("behavioral_activation", "well_being",           0.25),
+    # avoidance_pressure: pull away from aversive tasks
+    ("avoidance_pressure",    "motivation",           -0.35),
+    ("avoidance_pressure",    "adherence_confidence", -0.30),
 ]
 
-# normalise signed BeSci value (-1..1) to 0..1
-def _to_unit(v: float) -> float:
-    return max(0.0, min(1.0, (v + 1.0) / 2.0))
+# blend weight scaling bounds for the model's own confidence
+_CONFIDENCE_FLOOR = 0.25
+_CONFIDENCE_CEIL = 1.0
 
 
 def besci_to_dimension_targets(mind_state: dict[str, Any]) -> dict[str, float]:
@@ -62,7 +80,6 @@ def besci_to_dimension_targets(mind_state: dict[str, Any]) -> dict[str, float]:
     Returns a dict of {dim_name: target_value (0..1)} weighted by the mapping.
     Only dimensions present in the mapping are returned.
     """
-    # accumulate weighted sums and total weights per Praestara dim
     sums: dict[str, float] = {}
     weights: dict[str, float] = {}
 
@@ -75,7 +92,7 @@ def besci_to_dimension_targets(mind_state: dict[str, Any]) -> dict[str, float]:
         except (TypeError, ValueError):
             continue
 
-        unit = _to_unit(val)
+        unit = max(0.0, min(1.0, val))
         # for negative weights flip the value
         effective = (1.0 - unit) if weight < 0 else unit
         abs_w = abs(weight)
@@ -95,13 +112,23 @@ def blend_dimensions(
     current: dict[str, float],
     targets: dict[str, float],
     weight: float | None = None,
+    confidence: float | None = None,
 ) -> dict[str, float]:
     """Blend current dimension values toward BeSci targets.
 
     weight=0.35 means BeSci contributes 35% of the movement toward target.
+    If confidence is given (BeSci's own inference confidence, 0..1), the
+    weight is scaled by it so low-confidence inferences move dims less.
     Returns only dims that changed.
     """
     w = weight if weight is not None else settings.BESCI_WEIGHT
+    if confidence is not None:
+        try:
+            c = max(_CONFIDENCE_FLOOR, min(_CONFIDENCE_CEIL, float(confidence)))
+            w *= c
+        except (TypeError, ValueError):
+            pass
+
     result: dict[str, float] = {}
     for dim, target in targets.items():
         current_val = current.get(dim, 0.5)

@@ -316,14 +316,15 @@ def _seed_self_concept(
     )
 
     ici = self_concept_service.compute_ici(session, user_id, cycle_id)
-    # is_baseline=True marks this as the survey-completion anchor point —
-    # all future snapshots are compared against this to compute deltas.
+    # Baseline = first onboarding completion only. Retakes refresh dims and
+    # besci_context_text but never move the anchor point.
+    existing_baseline = self_concept_service.get_baseline_snapshot(session, user_id)
     self_concept_service.compute_snapshot(
         session,
         user_id,
         cycle_id=cycle_id,
         identity_consistency_index=ici.value,
-        is_baseline=True,
+        is_baseline=existing_baseline is None,
     )
 
 

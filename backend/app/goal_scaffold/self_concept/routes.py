@@ -79,6 +79,45 @@ def get_snapshot_history(
     return list(session.exec(stmt).all())
 
 
+@router.get("/baseline-delta")
+def get_baseline_delta(
+    session: SessionDep,
+    current_user: CurrentUser,
+) -> dict:
+    """Compare current dimensions against the onboarding baseline snapshot.
+
+    Returns baseline values, current values, and per-dimension deltas so the
+    user can see where they started and how far they've moved.
+    """
+    baseline = service.get_baseline_snapshot(session, current_user.id)
+    if baseline is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No baseline yet — complete the onboarding questionnaire first.",
+        )
+
+    current = service.get_current_dimensions(session, current_user.id)
+    baseline_dims: dict[str, float] = baseline.dimensions or {}
+
+    dimensions = []
+    for name in sorted(set(baseline_dims) | set(current)):
+        b = baseline_dims.get(name)
+        c = current.get(name)
+        dimensions.append(
+            {
+                "name": name,
+                "baseline": b,
+                "current": c,
+                "delta": round(c - b, 4) if b is not None and c is not None else None,
+            }
+        )
+
+    return {
+        "baseline_at": baseline.computed_at.isoformat(),
+        "dimensions": dimensions,
+    }
+
+
 @router.get("/ici", response_model=IdentityConsistencyIndexPublic | None)
 def get_latest_ici(
     session: SessionDep,

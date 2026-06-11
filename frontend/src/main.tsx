@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/react"
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { RouterProvider, createRouter } from "@tanstack/react-router"
 import React, { StrictMode } from "react"
@@ -7,7 +8,16 @@ import { routeTree } from "./routeTree.gen"
 import { ApiError, OpenAPI } from "./client"
 import { CustomProvider } from "./components/ui/provider"
 
-OpenAPI.BASE = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1"
+// Error monitoring — no-op unless VITE_SENTRY_DSN is set
+if (import.meta.env.VITE_SENTRY_DSN) {
+  Sentry.init({
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    environment: import.meta.env.MODE,
+  })
+}
+
+// SDK paths already include /api/v1 — BASE must be the bare domain
+OpenAPI.BASE = import.meta.env.VITE_API_URL || "http://localhost:8000"
 OpenAPI.TOKEN = async () => {
   return localStorage.getItem("access_token") || ""
 }

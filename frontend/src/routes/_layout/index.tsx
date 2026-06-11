@@ -22,6 +22,7 @@ import {
   QuestionnairesService,
 } from "@/client"
 import { appFlowApi } from "@/api/appFlow"
+import { selfConceptApi } from "@/api/selfConcept"
 import { PendingQuestionnaireWidget } from "@/components/Questionnaires/PendingQuestionnaireWidget"
 import useAuth from "@/hooks/useAuth"
 
@@ -71,6 +72,12 @@ function Dashboard() {
   const { data: flow } = useQuery({
     queryKey: ["app-flow"],
     queryFn: appFlowApi.getFlow,
+  })
+
+  const { data: baselineDelta } = useQuery({
+    queryKey: ["self-concept", "baseline-delta"],
+    queryFn: selfConceptApi.getBaselineDelta,
+    retry: false, // 404 until onboarding completes
   })
 
   const dimensions = (latestSnapshot?.dimensions ?? {}) as Record<string, number>
@@ -325,6 +332,60 @@ function Dashboard() {
             </Typography>
           )}
         </Paper>
+
+        {baselineDelta && baselineDelta.dimensions.length > 0 ? (
+          <Paper sx={{ p: 3, mb: 3 }}>
+            <Typography variant="h5" sx={{ fontWeight: "bold", mb: 1 }}>
+              Since your baseline
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              How each dimension has moved since you completed onboarding on{" "}
+              {new Date(baselineDelta.baseline_at).toLocaleDateString()}.
+            </Typography>
+            <Stack spacing={1.5}>
+              {baselineDelta.dimensions
+                .filter((d) => d.baseline !== null && d.current !== null)
+                .map((d) => {
+                  // for these, a decrease is the good direction
+                  const lowerIsBetter = ["stress_load", "constraint_pressure"].includes(d.name)
+                  const delta = d.delta ?? 0
+                  const improved = lowerIsBetter ? delta < -0.005 : delta > 0.005
+                  const declined = lowerIsBetter ? delta > 0.005 : delta < -0.005
+                  const label = d.name
+                    .split("_")
+                    .map((w) => w[0].toUpperCase() + w.slice(1))
+                    .join(" ")
+                  return (
+                    <Box
+                      key={d.name}
+                      sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                    >
+                      <Typography variant="body2" sx={{ width: 180, fontWeight: 600 }}>
+                        {label}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ width: 110 }}>
+                        {Math.round((d.baseline ?? 0) * 100)} → {Math.round((d.current ?? 0) * 100)}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 700,
+                          color: improved
+                            ? "success.main"
+                            : declined
+                              ? "warning.main"
+                              : "text.secondary",
+                        }}
+                      >
+                        {delta > 0 ? "+" : ""}
+                        {Math.round(delta * 100)}
+                      </Typography>
+                    </Box>
+                  )
+                })}
+            </Stack>
+          </Paper>
+        ) : null}
 
         <Paper sx={{ p: 3, mb: 3 }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
